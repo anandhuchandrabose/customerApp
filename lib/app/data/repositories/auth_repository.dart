@@ -4,8 +4,6 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../services/api_service.dart';
 
-
-
 class AuthRepository {
   final ApiService api;
 
@@ -53,4 +51,6 @@ class AuthRepository {
       throw Exception(jsonDecode(response.body)['message']);
     }
   }
+
+  saveName(value) {}
 }

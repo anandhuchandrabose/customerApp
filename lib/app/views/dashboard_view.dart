@@ -3,8 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/dashboard_controller.dart';
-import 'home_view.dart'; // Home Screen
-import 'cart_view.dart'; // Cart Screen
+import 'home_view.dart';    // Home Screen
+import 'cart_view.dart';    // Cart Screen
 import 'profile_view.dart'; // Profile Screen
 
 class DashboardView extends GetView<DashboardController> {
@@ -17,11 +17,11 @@ class DashboardView extends GetView<DashboardController> {
         // Display the current page based on the selected tab index
         switch (controller.selectedIndex.value) {
           case 0:
-            return const HomeView(); // Replace with your HomeView
+            return const HomeView();
           case 1:
-            return const CartView(); // Replace with your CartView
+            return const CartView();
           case 2:
-            return const ProfileView(); // Replace with your ProfileView
+            return const ProfileView();
           default:
             return const HomeView();
         }
@@ -29,7 +29,10 @@ class DashboardView extends GetView<DashboardController> {
       bottomNavigationBar: Obx(() {
         return BottomNavigationBar(
           currentIndex: controller.selectedIndex.value,
-          onTap: controller.changeTabIndex, // Update the selected index
+          onTap: controller.changeTabIndex,
+          // --- Add these lines to control the item colors:
+          selectedItemColor: const Color(0xFFFF3008), 
+          unselectedItemColor: Colors.grey, // or any color you prefer
           items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.home),

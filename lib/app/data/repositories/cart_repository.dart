@@ -1,35 +1,94 @@
-// import 'package:dio/dio.dart';
-// import 'package:http/src/response.dart';
-// import '../services/api_service.dart';
+// lib/app/data/repositories/cart_repository.dart
 
-// class CartRepository {
-//   final ApiService api;
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../services/api_service.dart';
 
-//   CartRepository({required this.api});
+class CartRepository {
+  final ApiService api;
 
-//   // For example: add item to cart
-//   Future<Response> addItemToCart({
-//     required String userId,
-//     required String itemId,
-//     required int quantity,
-//   }) async {
-//     // POST /cart
-//     final response = await api.post('/cart', body: {
-//       'userId': userId,
-//       'itemId': itemId,
-//       'quantity': quantity,
-//     });
-//     return response;
-//   }
+  CartRepository({required this.api});
 
-//   // For example: fetch cart items
-//   Future<Response> fetchCart(String userId) async {
-//     // GET /cart?userId=xxx
-//     final response = await api.get('/cart', queryParams: {
-//       'userId': userId,
-//     });
-//     return response;
-//   }
+  /// GET /api/customer-cart/get-cart
+  /// Returns JSON like: { "items": [ ... ] }
+  Future<Map<String, dynamic>> fetchCartItems() async {
+    final response = await api.get('/api/customer-cart/get-cart');
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['message'] ?? 'Failed to fetch cart items');
+    }
+  }
 
-//   // More cart operations as needed
-// }
+  /// POST /api/customer-cart/add-item
+  /// Body: { "vendorDishId": "...", "quantity": 1, "mealType": "..." }
+  /// On success: e.g. { "message": "Item added to cart successfully." }
+  Future<Map<String, dynamic>> addItemToCart({
+    required String vendorDishId,
+    required int quantity,
+    required String mealType,
+  }) async {
+    final response = await api.post(
+      '/api/customer-cart/add-item',
+      {
+        'vendorDishId': vendorDishId,
+        'quantity': quantity,
+        'mealType': mealType,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['message'] ?? 'Failed to add item to cart');
+    }
+  }
+
+  /// POST /api/customer-cart/increase
+  /// Body: { "vendorDishId": "...", "mealType": "..." }
+  /// On success: { "message": "Item quantity increased.", "cartItem": { "quantity": x, ... } }
+  Future<Map<String, dynamic>> increaseQuantity({
+    required String vendorDishId,
+    required String mealType,
+  }) async {
+    final response = await api.post(
+      '/api/customer-cart/increase',
+      {
+        'vendorDishId': vendorDishId,
+        'mealType': mealType,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['message'] ?? 'Failed to increase item quantity');
+    }
+  }
+
+  /// POST /api/customer-cart/decrease
+  /// Body: { "vendorDishId": "...", "mealType": "..." }
+  /// On success: { "message": "Item quantity decreased.", "cartItem": { "quantity": x, ... } }
+  Future<Map<String, dynamic>> decreaseQuantity({
+    required String vendorDishId,
+    required String mealType,
+  }) async {
+    final response = await api.post(
+      '/api/customer-cart/decrease',
+      {
+        'vendorDishId': vendorDishId,
+        'mealType': mealType,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['message'] ?? 'Failed to decrease item quantity');
+    }
+  }
+}

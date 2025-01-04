@@ -1,15 +1,18 @@
 // lib/app/routes/app_pages.dart
 
 import 'package:get/get.dart';
+import 'package:vendorapp/app/controllers/cart_controller.dart';
 import 'package:vendorapp/app/controllers/complete_signup_controller.dart';
 import 'package:vendorapp/app/controllers/dashboard_controller.dart';
+import 'package:vendorapp/app/controllers/profile_controller.dart';
 import 'package:vendorapp/app/controllers/restaurant_details_controller.dart';
+import 'package:vendorapp/app/views/cart_view.dart';
 import 'package:vendorapp/app/views/complete_signup_view.dart';
 import 'package:vendorapp/app/views/dashboard_view.dart';
+import 'package:vendorapp/app/views/profile_view.dart';
 import '../controllers/login_controller.dart';
 import '../controllers/otp_controller.dart';
 import '../controllers/home_controller.dart';
-import '../controllers/restaurant_details_controller.dart';
 import '../views/login_view.dart';
 import '../views/otp_view.dart';
 import '../views/home_view.dart';
@@ -36,6 +39,7 @@ class AppPages {
       }),
     ),
 
+    // 1) Home
     GetPage(
       name: '/home',
       page: () => const HomeView(),
@@ -44,10 +48,12 @@ class AppPages {
       }),
     ),
 
+    // 2) Restaurant Details
     GetPage(
       name: '/restaurant-details',
-      page: () => const RestaurantDetailsView(),
+      page: () => RestaurantDetailsView(),
       binding: BindingsBuilder(() {
+        // Bind the controller so it can be used inside RestaurantDetailsView
         Get.lazyPut<RestaurantDetailsController>(
             () => RestaurantDetailsController());
       }),
@@ -62,7 +68,6 @@ class AppPages {
         Get.lazyPut<CompleteSignupController>(() => CompleteSignupController());
       }),
     ),
-
     // lib/app/routes/app_pages.dart
 
     GetPage(
@@ -75,13 +80,20 @@ class AppPages {
         // Get.lazyPut<ProfileController>(() => ProfileController());
       }),
     ),
+    GetPage(
+      name: '/cart',
+      page: () => const CartView(),
+      binding:BindingsBuilder(() {
+        Get.lazyPut<CartController>(() => CartController());
+      }),
+    ),
 
     GetPage(
-      name: '/restaurant-details',
-      page: () => const RestaurantDetailsView(),
+      name: '/profile',
+      page: () => const ProfileView(),
       binding: BindingsBuilder(() {
-        Get.lazyPut<RestaurantDetailsController>(
-            () => RestaurantDetailsController());
+        // Register ProfileController
+        Get.lazyPut<ProfileController>(() => ProfileController());
       }),
     ),
   ];

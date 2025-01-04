@@ -10,9 +10,11 @@ dependencies:
   dio: ^5.7.0
   flutter:
     sdk: flutter
+  flutter_svg: ^2.0.16
   get: ^4.6.6
   get_storage: ^2.1.1
   http: ^1.2.2
+  slide_to_act: ^2.0.0
 
 dev_dependencies:
   flutter_test:
@@ -21,3 +23,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/img/webpng.png

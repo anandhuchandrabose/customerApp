@@ -1,6 +1,7 @@
 // lib/app/data/repositories/restaurant_repository.dart
 
 import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../services/api_service.dart';
 
 class RestaurantRepository {
@@ -8,11 +9,14 @@ class RestaurantRepository {
 
   RestaurantRepository({required this.api});
 
-  // Fetch dishes for a specific vendor
+  /// POST /api/customer/get-dishes with payload { "vendorId": "xxx" }
   Future<Map<String, dynamic>> fetchDishes(String vendorId) async {
-    final response = await api.post('/api/customer/vendor-dishes', {
-      'vendorId': vendorId,
-    });
+    final response = await api.post(
+      '/api/customer/get-dishes',
+      {
+        'vendorId': vendorId,
+      },
+    );
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
