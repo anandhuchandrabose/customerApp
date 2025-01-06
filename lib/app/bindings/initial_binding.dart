@@ -1,11 +1,11 @@
 // lib/app/bindings/initial_binding.dart
 
 import 'package:get/get.dart';
+import 'package:vendorapp/app/controllers/cart_controller.dart';
 import 'package:vendorapp/app/controllers/profile_controller.dart';
-// import '../controllers/profile_controller.dart';
-import '../controllers/cart_controller.dart';
-// ... other imports
-
+import 'package:vendorapp/app/data/repositories/order_repository.dart';
+import 'package:vendorapp/app/views/cart_view.dart';
+// import '../controllers/cart_controller.dart';
 import '../data/services/api_service.dart';
 import '../data/repositories/auth_repository.dart';
 import '../data/repositories/restaurant_repository.dart';
@@ -17,8 +17,7 @@ class InitialBinding extends Bindings {
   void dependencies() {
     // 1) Register ApiService
     Get.lazyPut<ApiService>(
-      () => ApiService(
-          baseUrl: 'http://127.0.0.1:3000'), 
+      () => ApiService(baseUrl: 'http://127.0.0.1:3000'),
       fenix: true,
     );
 
@@ -45,6 +44,8 @@ class InitialBinding extends Bindings {
         fenix: true);
     // Then register CartController
     Get.lazyPut<CartController>(() => CartController(), fenix: true);
+    Get.put<OrderRepository>(OrderRepository(api: Get.find<ApiService>()),
+        permanent: true);
 
     // 3) Register Controllers
     Get.lazyPut<ProfileController>(() => ProfileController());

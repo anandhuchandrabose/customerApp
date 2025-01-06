@@ -117,7 +117,7 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                     final vendorDishId = dish['vendorDishId'] ?? '';
                     final mealType = dish['mealType'] ?? 'lunch';
                     final imagePath = dish['imagePath'] != null
-                        ? 'http://10.0.2.2:3000/${dish['imagePath']}'
+                        ? 'http://127.0.0.1:3000/${dish['imagePath']}'
                         : null;
 
                     return _buildDishCard(

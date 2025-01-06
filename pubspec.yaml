@@ -15,6 +15,9 @@ dependencies:
   get_storage: ^2.1.1
   http: ^1.2.2
   slide_to_act: ^2.0.0
+  razorpay_flutter: ^1.2.7
+  uuid: ^3.0.6
+  fluttertoast: ^8.2.10
 
 dev_dependencies:
   flutter_test:

@@ -1,8 +1,5 @@
-// lib/app/views/cart_view.dart
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:slide_to_act/slide_to_act.dart';
 import '../controllers/cart_controller.dart';
 
 class CartView extends GetView<CartController> {
@@ -26,11 +23,15 @@ class CartView extends GetView<CartController> {
             ),
           );
         }
+        // If the items array is empty, show a message
         if (cartCtrl.cartItems.isEmpty) {
           return const Center(child: Text('Your cart is empty.'));
         }
 
-        // Use a SingleChildScrollView so we can show items + the price breakdown in one scroll
+        // Debugging: Display number of items
+        print("Number of items in cart: ${cartCtrl.cartItems.length}");
+
+        // Otherwise, show cart items + price breakdown
         return SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -42,7 +43,6 @@ class CartView extends GetView<CartController> {
                 itemCount: cartCtrl.cartItems.length,
                 itemBuilder: (context, index) {
                   final item = cartCtrl.cartItems[index];
-                  final itemId = item['id'] ?? '';
                   final quantity = item['quantity'] ?? 1;
 
                   final vendorDish = item['vendorDish'] as Map<String, dynamic>?;
@@ -55,7 +55,9 @@ class CartView extends GetView<CartController> {
                   final vendorName = vendor?['kitchenName'] ?? 'Unknown Kitchen';
 
                   return Card(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                     margin: const EdgeInsets.symmetric(vertical: 8),
                     child: ListTile(
                       isThreeLine: true,
@@ -93,13 +95,25 @@ class CartView extends GetView<CartController> {
 
               const SizedBox(height: 16),
 
-              // 2) Price Details
+              // 2) Price Breakdowns
               _buildPriceBreakdown(cartCtrl),
 
               const SizedBox(height: 24),
 
-              // 3) Slide to Pay
-              _buildSlideToPay(cartCtrl),
+              // 3) A button to initiate new Razorpay integration
+              ElevatedButton(
+                onPressed: () => cartCtrl.initiatePayment(),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: const Text(
+                  'Proceed to Pay',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
             ],
           ),
         );
@@ -108,12 +122,17 @@ class CartView extends GetView<CartController> {
   }
 
   Widget _buildPriceBreakdown(CartController cartCtrl) {
-    // Access cartData fields from the controller
-    final subtotal = cartCtrl.cartData['subtotal'] ?? 0;
+    final subtotal       = cartCtrl.cartData['subtotal']       ?? 0;
     final deliveryCharge = cartCtrl.cartData['deliveryCharge'] ?? 0;
-    final tax = cartCtrl.cartData['tax'] ?? 0;
-    final platformFees = cartCtrl.cartData['platformFees'] ?? 0;
-    final total = cartCtrl.cartData['total'] ?? 0;
+    final tax            = cartCtrl.cartData['tax']            ?? 0;
+    final platformFees   = cartCtrl.cartData['platformFees']   ?? 0;
+    final total          = cartCtrl.cartData['total']          ?? 0;
+
+    // Debugging: Print price details
+    print(
+      "Price Details - Subtotal: $subtotal, Delivery: $deliveryCharge, "
+      "Tax: $tax, Fees: $platformFees, Total: $total",
+    );
 
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -146,20 +165,6 @@ class CartView extends GetView<CartController> {
         Text(label, style: TextStyle(fontWeight: isBold ? FontWeight.bold : FontWeight.normal)),
         Text(value, style: TextStyle(fontWeight: isBold ? FontWeight.bold : FontWeight.normal)),
       ],
-    );
-  }
-
-  Widget _buildSlideToPay(CartController cartCtrl) {
-    return SlideAction(
-      text: 'Slide to Pay',
-      textStyle: const TextStyle(color: Colors.white, fontSize: 18),
-      innerColor: Colors.green,
-      outerColor: Colors.green.shade700,
-      borderRadius: 8,
-      onSubmit: () {
-        // Trigger the checkout
-        cartCtrl.checkoutCart();
-      },
     );
   }
 }

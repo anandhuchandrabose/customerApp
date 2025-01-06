@@ -10,6 +10,7 @@ import 'package:vendorapp/app/views/cart_view.dart';
 import 'package:vendorapp/app/views/complete_signup_view.dart';
 import 'package:vendorapp/app/views/dashboard_view.dart';
 import 'package:vendorapp/app/views/profile_view.dart';
+import 'package:vendorapp/app/views/razorpay_test_view.dart';
 import '../controllers/login_controller.dart';
 import '../controllers/otp_controller.dart';
 import '../controllers/home_controller.dart';
@@ -95,6 +96,10 @@ class AppPages {
         // Register ProfileController
         Get.lazyPut<ProfileController>(() => ProfileController());
       }),
+    ),
+    GetPage(
+      name: '/razorpay-test',
+      page: () => const RazorpayTestView(),
     ),
   ];
 }
