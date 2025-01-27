@@ -1,7 +1,6 @@
 // lib/app/data/repositories/home_repository.dart
 
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import '../services/api_service.dart';
 
 class HomeRepository {
@@ -9,23 +8,22 @@ class HomeRepository {
 
   HomeRepository({required this.api});
 
-  /// Fetch list of vendors from the API
-  Future<List<Map<String, dynamic>>> fetchVendors() async {
+  /// Fetch both vendors and categories from the API
+  Future<Map<String, dynamic>> fetchHomeData() async {
     final response = await api.get('/api/customer/vendors-and-categories');
-    // or another endpoint, e.g. '/api/vendors'
 
     if (response.statusCode == 200) {
+      // Full JSON response, e.g.:
+      // {
+      //   "vendors": [...],
+      //   "categories": [...]
+      // }
       final data = jsonDecode(response.body);
-      // Suppose data is { "vendors": [...], "categories": [...] }
-      if (data['vendors'] is List) {
-        final List vendors = data['vendors'];
-        return vendors.map((e) => e as Map<String, dynamic>).toList();
-      } else {
-        return [];
-      }
+      return data;
     } else {
+      // Parse error
       final error = jsonDecode(response.body);
-      throw Exception(error['message'] ?? 'Failed to fetch vendors');
+      throw Exception(error['message'] ?? 'Failed to fetch data');
     }
   }
 }

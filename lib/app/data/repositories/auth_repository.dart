@@ -1,7 +1,6 @@
 // lib/app/data/repositories/auth_repository.dart
 
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import '../services/api_service.dart';
 
 class AuthRepository {

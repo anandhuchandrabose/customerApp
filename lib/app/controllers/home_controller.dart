@@ -6,28 +6,45 @@ import '../data/repositories/home_repository.dart';
 class HomeController extends GetxController {
   final HomeRepository _homeRepo = Get.find<HomeRepository>();
 
+  // Observables
   var vendors = <Map<String, dynamic>>[].obs;
+  var categories = <Map<String, dynamic>>[].obs;
+
   var isLoading = false.obs;
   var errorMessage = ''.obs;
-
-  get kitchens => null;
-
-  get categories => null;
 
   @override
   void onInit() {
     super.onInit();
-    fetchVendors();
+    fetchHomeData(); 
   }
 
-  Future<void> fetchVendors() async {
+  Future<void> fetchHomeData() async {
     try {
       isLoading.value = true;
       errorMessage.value = '';
 
-      final data = await _homeRepo.fetchVendors();
-      // data is a List<Map<String, dynamic>>
-      vendors.value = data;
+      // 1) Get the entire map with {vendors: [...], categories: [...]}
+      final data = await _homeRepo.fetchHomeData();
+
+      // 2) Safely parse and assign vendors
+      if (data['vendors'] is List) {
+        vendors.value = (data['vendors'] as List)
+            .map((v) => v as Map<String, dynamic>)
+            .toList();
+      } else {
+        vendors.clear();
+      }
+
+      // 3) Safely parse and assign categories
+      if (data['categories'] is List) {
+        categories.value = (data['categories'] as List)
+            .map((c) => c as Map<String, dynamic>)
+            .toList();
+      } else {
+        categories.clear();
+      }
+
     } catch (e) {
       errorMessage.value = e.toString();
     } finally {

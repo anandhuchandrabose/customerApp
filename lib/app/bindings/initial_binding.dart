@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'package:vendorapp/app/controllers/cart_controller.dart';
 import 'package:vendorapp/app/controllers/profile_controller.dart';
 import 'package:vendorapp/app/data/repositories/order_repository.dart';
-import 'package:vendorapp/app/views/cart_view.dart';
 // import '../controllers/cart_controller.dart';
 import '../data/services/api_service.dart';
 import '../data/repositories/auth_repository.dart';

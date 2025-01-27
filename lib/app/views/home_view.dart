@@ -1,5 +1,8 @@
-import 'dart:math';
+// lib/app/views/home_view.dart
 
+import 'dart:convert';
+import 'dart:math';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/home_controller.dart';
@@ -11,7 +14,6 @@ class HomeView extends GetView<HomeController> {
   Widget build(BuildContext context) {
     final homeCtrl = Get.find<HomeController>();
 
-    // Same logic as before:
     final placeholderOptions = [
       'Search for bakery...',
       'Search for sweets...',
@@ -23,7 +25,6 @@ class HomeView extends GetView<HomeController> {
         placeholderOptions[Random().nextInt(placeholderOptions.length)];
 
     return Scaffold(
-      // Remove the original AppBar (since we’ll use the stacked/transparent AppBar from the first snippet)
       backgroundColor: Colors.white,
       body: Obx(() {
         if (homeCtrl.isLoading.value) {
@@ -33,212 +34,173 @@ class HomeView extends GetView<HomeController> {
           return Center(
             child: Text(
               'Error: ${homeCtrl.errorMessage.value}',
-              style: const TextStyle(color: Colors.red),
+              style: const TextStyle(color: Colors.red, fontSize: 16),
             ),
           );
         }
 
-        final vendors = homeCtrl.vendors;
+        final vendors = homeCtrl.vendors;       // from controller
+        final categories = homeCtrl.categories; // from controller
 
-        // ========== REUSED UI FROM FIRST SNIPPET (Stack + Column) ==========
         return SingleChildScrollView(
           child: Column(
             children: [
-              // Top Section with Image and Transparent AppBar
+              // =======================================
+              // Banner & Search Section (unchanged)
+              // =======================================
               Stack(
                 children: [
-                  // Background Image
+                  // Banner with gradient
                   Container(
-                    height: MediaQuery.of(context).size.height * 0.45,
+                    height: MediaQuery.of(context).size.height * 0.35,
                     decoration: const BoxDecoration(
-                      image: DecorationImage(
-                        image: AssetImage('assets/img/webpng.png'),
-                        fit: BoxFit.cover,
+                      gradient: LinearGradient(
+                        colors: [Color(0xFF00BCD4), Color(0xFF00838F)],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
                       ),
                     ),
                   ),
-
-                  // Transparent AppBar
-                  AppBar(
-                    backgroundColor: Colors.transparent,
-                    elevation: 0,
-                    title: const Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Icon(Icons.location_pin, color: Colors.white),
-                        SizedBox(width: 8),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Home',
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              '1234 Some Street',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        )
-                      ],
-                    ),
-                    actions: [
-                      IconButton(
-                        icon: const Icon(Icons.account_circle,
-                            color: Colors.white),
-                        onPressed: () {
-                          // Your profile navigate logic can stay here if needed
-                        },
-                      ),
-                    ],
-                  ),
-
-                  // Positioned Search Field (replacing currentHint with randomPlaceholder)
+                  // Location Selector
                   Positioned(
-                    top: kToolbarHeight + 60,
+                    top: kToolbarHeight - 10,
                     left: 16,
                     right: 16,
-                    child: TextField(
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: Colors.white,
-                        hintText: '', // We'll show randomPlaceholder manually
-                        hintStyle: const TextStyle(color: Colors.grey),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide.none,
-                        ),
-                        prefixIcon: Row(
-                          mainAxisSize: MainAxisSize.min,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
                           children: [
+                            const Icon(Icons.location_pin, color: Colors.white),
                             const SizedBox(width: 8),
-                            const Icon(Icons.search, color: Colors.grey),
-                            const SizedBox(width: 8),
-                            // Use randomPlaceholder from second snippet's logic
-                            Text(
-                              randomPlaceholder,
-                              key: ValueKey<String>(randomPlaceholder),
-                              style: const TextStyle(color: Colors.grey),
+                            GestureDetector(
+                              onTap: () {
+                                // Trigger location selection logic
+                              },
+                              child: const Text(
+                                'Select Location',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
-                            const SizedBox(width: 8),
                           ],
                         ),
-                        contentPadding:
-                            const EdgeInsets.symmetric(vertical: 14),
+                        IconButton(
+                          icon: const Icon(Icons.account_circle,
+                              color: Colors.white),
+                          onPressed: () {},
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Search Bar
+                  Positioned(
+                    top: MediaQuery.of(context).size.height * 0.23,
+                    left: 16,
+                    right: 16,
+                    child: Material(
+                      elevation: 5,
+                      borderRadius: BorderRadius.circular(12),
+                      child: TextField(
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.white,
+                          hintText: randomPlaceholder,
+                          hintStyle: const TextStyle(color: Colors.grey),
+                          prefixIcon:
+                              const Icon(Icons.search, color: Colors.grey),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
                       ),
-                      onChanged: (value) {
-                        // If you want search logic, keep it from second snippet
-                      },
                     ),
                   ),
                 ],
               ),
+              const SizedBox(height: 16),
 
-              // Remaining Content: Explore, Categories, Kitchens, etc.
+              // =======================================
+              // Categories Section
+              // =======================================
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Center(
-                      child: Text(
-                        'Explore',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.normal,
-                          color: Colors.grey[700],
-                          letterSpacing: 2,
-                        ),
+                    const Text(
+                      'Explore Categories',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 10),
 
-                    // Horizontal List of Food Categories
-                    // SizedBox(
-                    //   height: 120,
-                    //   child: ListView(
-                    //     scrollDirection: Axis.horizontal,
-                    //     children: [
-                    //       _buildHorizontalImageItem(
-                    //           'assets/svg/burger.svg', 'Burger'),
-                    //       _buildHorizontalImageItem(
-                    //           'assets/svg/noodles.svg', 'Noodles'),
-                    //       _buildHorizontalImageItem(
-                    //           'assets/svg/pizza.svg', 'Pizza'),
-                    //       _buildHorizontalImageItem(
-                    //           'assets/svg/momos.svg', 'Momos'),
-                    //     ],
-                    //   ),
-                    // ),
-                    const SizedBox(height: 16),
+                    // If no categories, show a fallback
+                    if (categories.isEmpty)
+                      const Text('No categories found.')
+                    else
+                      SizedBox(
+                        height: 100,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: categories.length,
+                          itemBuilder: (context, index) {
+                            final cat = categories[index];
+                            final catName = cat['name'] ?? 'No Name';
+                            // We might have "data:image/png;base64,..."
+                            final catImage = cat['image'] ?? '';
 
-                    // Row with Filter (Left) and "All Kitchens" (Right)
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        TextButton.icon(
-                          onPressed: () {
-                            // Filter action from first snippet, or keep your existing logic
+                            return _buildCategoryCard(catName, catImage);
                           },
-                          icon: const Icon(Icons.filter_list,
-                              color: Colors.black),
-                          label: const Text(
-                            'Filter',
-                            style: TextStyle(color: Colors.black),
-                          ),
                         ),
-                        const Text(
-                          'All Kitchens',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
 
-                    // Instead of _kitchens, we map over your 'vendors'
-                    // preserving the second snippet's onTap logic if desired
-                    if (vendors.isEmpty) ...[
-                      const Center(child: Text('No vendors found.')),
-                    ] else ...[
+              // =======================================
+              // Vendor Section
+              // =======================================
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Nearby Kitchens',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    if (vendors.isEmpty)
+                      const Center(child: Text('No vendors found.'))
+                    else
                       Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: vendors.map((vendor) {
+                          final vendorId = vendor['id'] ?? '';
                           final name = vendor['kitchenName'] ?? 'No Name';
-                          final imageUrl = vendor['imageUrl'] ?? '';
-                          final rating =
-                              vendor['rating']?.toString() ?? '4.5';
-                          // If you have a field for isVeg or not:
+                          final imageUrl = vendor['profile']?['profileImage'] ?? '';
+                          final rating = vendor['rating']?.toString() ?? '4.5';
                           final isVeg = vendor['isVeg'] ?? false;
 
-                          // Wrap with GestureDetector so we preserve navigation logic
-                          return GestureDetector(
-                            onTap: () {
-                              // Navigate to details (same as the second snippet logic)
-                              Get.toNamed('/restaurant-details', arguments: {
-                                'vendorId': vendor['id'],
-                              });
-                            },
-                            child: _buildKitchenCard(
-                              name,
-                              imageUrl,
-                              rating,
-                              isVeg,
-                            ),
+                          return _buildKitchenCard(
+                            name,
+                            imageUrl,
+                            rating,
+                            isVeg,
+                            vendorId,
                           );
                         }).toList(),
                       ),
-                    ],
                   ],
                 ),
               ),
@@ -249,81 +211,120 @@ class HomeView extends GetView<HomeController> {
     );
   }
 
-  // ============= HELPERS (UI-ONLY) BELOW ============= //
+  // Category Card
+  Widget _buildCategoryCard(String catName, String base64Image) {
+    // If your "image" is base64, decode & show with Image.memory
+    // (like in the previous code snippet)
+    // or if it's an actual URL, call Image.network
+    // For demonstration, let's assume base64 decoding:
+    Uint8List? catImageBytes;
+    try {
+      // If there's a prefix like "data:image/png;base64," remove it
+      if (base64Image.contains(',')) {
+        base64Image = base64Image.split(',').last;
+      }
+      catImageBytes = base64Decode(base64Image);
+    } catch (e) {
+      // If decoding fails, it stays null
+    }
 
-  // Horizontal food category item (like the burger/noodles/pizza in first snippet)
-  Widget _buildHorizontalImageItem(String assetPath, String label) {
     return Padding(
       padding: const EdgeInsets.only(right: 16),
       child: Column(
         children: [
-          // Replace with your choice of svg or image
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              shape: BoxShape.circle,
-            ),
-            child: Image.asset(
-              'assets/img/fallback.png', // fallback image if needed
-              width: 30,
-              height: 30,
-            ),
-            // If you have an SVG, use an SVG widget from flutter_svg, e.g.:
-            // SvgPicture.asset(assetPath, width: 30, height: 30),
+          CircleAvatar(
+            radius: 30,
+            backgroundColor: Colors.grey[200],
+            child: (catImageBytes != null)
+                ? Image.memory(catImageBytes, width: 30, height: 30)
+                : const Icon(Icons.fastfood, size: 30, color: Colors.grey),
           ),
           const SizedBox(height: 8),
-          Text(label, style: const TextStyle(fontSize: 14)),
+          Text(catName, style: const TextStyle(fontSize: 14)),
         ],
       ),
     );
   }
 
-  // Adapted from your first snippet’s _buildKitchenCard but we keep it as 
-  // a Card (or Container) and preserve minimal logic from second snippet.
+  // Kitchen Card
   Widget _buildKitchenCard(
     String name,
-    String imageUrl,
+    String base64Image,
     String rating,
     bool isVeg,
+    String vendorId,
   ) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 2,
-      child: Row(
-        children: [
-          // Kitchen Image
-          ClipRRect(
-            borderRadius: const BorderRadius.horizontal(
-              left: Radius.circular(12),
+    // If you have base64 images for vendor as well, decode them
+    Uint8List? vendorImageBytes;
+    try {
+      if (base64Image.contains(',')) {
+        base64Image = base64Image.split(',').last;
+      }
+      vendorImageBytes = base64Decode(base64Image);
+    } catch (e) {
+      vendorImageBytes = null;
+    }
+
+    return GestureDetector(
+      onTap: () {
+        // Navigate to the kitchen details page with vendorId
+        Get.toNamed(
+          '/restaurant-details',
+          arguments: {
+            'vendorId': vendorId,
+            'kitchenName': name,
+            'imageUrl': base64Image,
+            'rating': rating,
+            'isVeg': isVeg,
+          },
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.2),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
-            child: imageUrl.isNotEmpty
-                ? Image.network(
-                    imageUrl,
-                    height: 80,
-                    width: 80,
-                    fit: BoxFit.cover,
-                  )
-                : Container(
-                    height: 80,
-                    width: 80,
-                    color: Colors.grey.shade300,
-                    child: const Icon(
-                      Icons.image,
-                      size: 40,
-                      color: Colors.white70,
-                    ),
-                  ),
-          ),
-          // Info
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image Section
+            ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(12)),
+              child: AspectRatio(
+                aspectRatio: 3 / 2, // Maintains image proportions
+                child: (vendorImageBytes != null)
+                    ? Image.memory(
+                        vendorImageBytes,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          color: Colors.grey.shade300,
+                          child: const Icon(Icons.broken_image,
+                              size: 50, color: Colors.grey),
+                        ),
+                      )
+                    : Container(
+                        color: Colors.grey.shade300,
+                        child: const Icon(Icons.image,
+                            size: 50, color: Colors.grey),
+                      ),
+              ),
+            ),
+            // Info Section
+            Padding(
+              padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Name
+                  // Kitchen Name
                   Text(
                     name,
                     style: const TextStyle(
@@ -333,29 +334,34 @@ class HomeView extends GetView<HomeController> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  // Rating & Veg indicator row
+                  const SizedBox(height: 4),
+                  // Rating and Veg/Non-Veg Indicator
                   Row(
                     children: [
-                      const Icon(
-                        Icons.star,
-                        color: Colors.amber,
-                        size: 16,
+                      const Icon(Icons.star, color: Colors.amber, size: 16),
+                      const SizedBox(width: 4),
+                      Text(
+                        rating,
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                      const Spacer(),
+                      Icon(
+                        Icons.circle,
+                        color: isVeg ? Colors.green : Colors.red,
+                        size: 12,
                       ),
                       const SizedBox(width: 4),
-                      Text(rating),
-                      const SizedBox(width: 10),
-                      if (isVeg)
-                        const Icon(Icons.circle, color: Colors.green, size: 12)
-                      else
-                        const Icon(Icons.circle,
-                            color: Colors.red, size: 12),
+                      Text(
+                        isVeg ? 'Veg' : 'Non-Veg',
+                        style: const TextStyle(fontSize: 14),
+                      ),
                     ],
                   ),
                 ],
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

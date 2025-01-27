@@ -1,7 +1,6 @@
 // lib/app/data/repositories/cart_repository.dart
 
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import '../services/api_service.dart';
 
 class CartRepository {

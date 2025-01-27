@@ -83,7 +83,7 @@ class AppPages {
     ),
     GetPage(
       name: '/cart',
-      page: () => const CartView(),
+      page: () =>  CartView(),
       binding:BindingsBuilder(() {
         Get.lazyPut<CartController>(() => CartController());
       }),

@@ -2,10 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:vendorapp/app/controllers/cart_controller.dart';
 import '../controllers/dashboard_controller.dart';
-import 'home_view.dart';    // Home Screen
-import 'cart_view.dart';    // Cart Screen
+import 'home_view.dart'; // Home Screen
+import 'cart_view.dart'; // Cart Screen
 import 'profile_view.dart'; // Profile Screen
 
 class DashboardView extends GetView<DashboardController> {
@@ -20,7 +19,7 @@ class DashboardView extends GetView<DashboardController> {
           case 0:
             return const HomeView();
           case 1:
-            return const CartView();
+            return CartView();
           case 2:
             return const ProfileView();
           default:
@@ -32,7 +31,7 @@ class DashboardView extends GetView<DashboardController> {
           currentIndex: controller.selectedIndex.value,
           onTap: controller.changeTabIndex,
           // --- Add these lines to control the item colors:
-          selectedItemColor: const Color(0xFFFF3008), 
+          selectedItemColor: const Color(0xFFFF3008),
           unselectedItemColor: Colors.grey, // or any color you prefer
           items: const [
             BottomNavigationBarItem(
