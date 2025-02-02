@@ -1,9 +1,12 @@
 // lib/app/bindings/initial_binding.dart
 
+import 'package:customerapp/app/controllers/cart_controller.dart';
+import 'package:customerapp/app/controllers/profile_controller.dart';
+import 'package:customerapp/app/data/repositories/order_repository.dart';
 import 'package:get/get.dart';
-import 'package:vendorapp/app/controllers/cart_controller.dart';
-import 'package:vendorapp/app/controllers/profile_controller.dart';
-import 'package:vendorapp/app/data/repositories/order_repository.dart';
+// import 'package:vendorapp/app/controllers/cart_controller.dart';
+// import 'package:vendorapp/app/controllers/profile_controller.dart';
+// import 'package:vendorapp/app/data/repositories/order_repository.dart';
 // import '../controllers/cart_controller.dart';
 import '../data/services/api_service.dart';
 import '../data/repositories/auth_repository.dart';
@@ -16,7 +19,8 @@ class InitialBinding extends Bindings {
   void dependencies() {
     // 1) Register ApiService
     Get.lazyPut<ApiService>(
-      () => ApiService(baseUrl: 'http://127.0.0.1:3000'),
+      // () => ApiService(baseUrl: 'http://127.0.0.1:3000'),
+      () => ApiService(baseUrl: 'https://www.fresmo.in'),
       fenix: true,
     );
 

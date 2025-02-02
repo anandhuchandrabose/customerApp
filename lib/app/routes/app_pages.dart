@@ -1,16 +1,26 @@
 // lib/app/routes/app_pages.dart
 
+import 'package:customerapp/app/controllers/cart_controller.dart';
+import 'package:customerapp/app/controllers/complete_signup_controller.dart';
+import 'package:customerapp/app/controllers/dashboard_controller.dart';
+import 'package:customerapp/app/controllers/profile_controller.dart';
+import 'package:customerapp/app/controllers/restaurant_details_controller.dart';
+import 'package:customerapp/app/views/cart_view.dart';
+import 'package:customerapp/app/views/complete_signup_view.dart';
+import 'package:customerapp/app/views/dashboard_view.dart';
+import 'package:customerapp/app/views/profile_view.dart';
+import 'package:customerapp/app/views/razorpay_test_view.dart';
 import 'package:get/get.dart';
-import 'package:vendorapp/app/controllers/cart_controller.dart';
-import 'package:vendorapp/app/controllers/complete_signup_controller.dart';
-import 'package:vendorapp/app/controllers/dashboard_controller.dart';
-import 'package:vendorapp/app/controllers/profile_controller.dart';
-import 'package:vendorapp/app/controllers/restaurant_details_controller.dart';
-import 'package:vendorapp/app/views/cart_view.dart';
-import 'package:vendorapp/app/views/complete_signup_view.dart';
-import 'package:vendorapp/app/views/dashboard_view.dart';
-import 'package:vendorapp/app/views/profile_view.dart';
-import 'package:vendorapp/app/views/razorpay_test_view.dart';
+// import 'package:vendorapp/app/controllers/cart_controller.dart';
+// import 'package:vendorapp/app/controllers/complete_signup_controller.dart';
+// import 'package:vendorapp/app/controllers/dashboard_controller.dart';
+// import 'package:vendorapp/app/controllers/profile_controller.dart';
+// import 'package:vendorapp/app/controllers/restaurant_details_controller.dart';
+// import 'package:vendorapp/app/views/cart_view.dart';
+// import 'package:vendorapp/app/views/complete_signup_view.dart';
+// import 'package:vendorapp/app/views/dashboard_view.dart';
+// import 'package:vendorapp/app/views/profile_view.dart';
+// import 'package:vendorapp/app/views/razorpay_test_view.dart';
 import '../controllers/login_controller.dart';
 import '../controllers/otp_controller.dart';
 import '../controllers/home_controller.dart';

@@ -23,6 +23,7 @@ class CartController extends GetxController {
 
   @override
   void onClose() {
+    // Clear Razorpay resources
     try {
       _razorpay.clear();
     } catch (_) {}
@@ -52,16 +53,15 @@ class CartController extends GetxController {
   Future<void> increaseItemQuantity(String vendorDishId, String mealType) async {
     try {
       isLoading.value = true;
-      final data = await _cartRepo.increaseQuantity(
+
+      // Make the API call to increase quantity
+      await _cartRepo.increaseQuantity(
         vendorDishId: vendorDishId,
         mealType: mealType,
       );
 
-      final updatedItem = data['cartItem'] as Map<String, dynamic>?;
-      if (updatedItem != null) {
-        _updateLocalCartItem(updatedItem);
-      }
-      _updateCartData(data);
+      // Refetch the entire cart to ensure totals (subtotal, total) are updated
+      await fetchCartItems();
     } catch (e) {
       // If server says "item not found on cart", re-fetch the cart to sync
       errorMessage.value = e.toString();
@@ -79,16 +79,15 @@ class CartController extends GetxController {
   Future<void> decreaseItemQuantity(String vendorDishId, String mealType) async {
     try {
       isLoading.value = true;
-      final data = await _cartRepo.decreaseQuantity(
+
+      // Make the API call to decrease quantity
+      await _cartRepo.decreaseQuantity(
         vendorDishId: vendorDishId,
         mealType: mealType,
       );
 
-      final updatedItem = data['cartItem'] as Map<String, dynamic>?;
-      if (updatedItem != null) {
-        _updateLocalCartItem(updatedItem);
-      }
-      _updateCartData(data);
+      // Refetch the entire cart to ensure totals are updated
+      await fetchCartItems();
     } catch (e) {
       // If server says "item not found on cart", re-fetch the cart to sync
       errorMessage.value = e.toString();
@@ -110,26 +109,22 @@ class CartController extends GetxController {
   }) async {
     try {
       isLoading.value = true;
-      final data = await _cartRepo.addItemToCart(
+      await _cartRepo.addItemToCart(
         vendorDishId: vendorDishId,
         quantity: quantity,
         mealType: mealType,
       );
-
-      // Some APIs return the updated cart or item. If so, parse it here.
-      // Or force a re-fetch if the server doesn't return the entire cart.
-      // e.g.:
+      // After adding item, refetch so the UI is up to date
       await fetchCartItems();
     } catch (e) {
       errorMessage.value = e.toString();
-      // Optionally handle "item not found" or other errors
     } finally {
       isLoading.value = false;
     }
   }
 
   // ============================
-  // Helpers
+  // Helpers to parse cart data
   // ============================
   void _parseCartResponse(Map<String, dynamic> data) {
     final items = data['items'] ?? [];
@@ -146,28 +141,6 @@ class CartController extends GetxController {
     cartData['total']          = data['total']          ?? 0;
   }
 
-  void _updateLocalCartItem(Map<String, dynamic> newCartItem) {
-    final itemId = newCartItem['id'];
-    if (itemId == null) return;
-
-    final index = cartItems.indexWhere((item) => item['id'] == itemId);
-    if (index != -1) {
-      // Update the quantity or other fields
-      cartItems[index] = {
-        ...cartItems[index],
-        'quantity': newCartItem['quantity'],
-      };
-    }
-  }
-
-  void _updateCartData(Map<String, dynamic> data) {
-    if (data['subtotal'] != null)       cartData['subtotal']       = data['subtotal'];
-    if (data['deliveryCharge'] != null) cartData['deliveryCharge'] = data['deliveryCharge'];
-    if (data['tax'] != null)            cartData['tax']            = data['tax'];
-    if (data['platformFees'] != null)   cartData['platformFees']   = data['platformFees'];
-    if (data['total'] != null)          cartData['total']          = data['total'];
-  }
-
   // ============================
   // 5) Payment Logic
   // ============================
@@ -182,7 +155,7 @@ class CartController extends GetxController {
       _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, handleExternalWallet);
 
       var options = {
-        'key': 'rzp_test_fOAj9IBqaGPNY5',
+        'key': 'rzp_test_fOAj9IBqaGPNY5', // Replace with your test/public key
         'amount': (cartData['total'] * 100),
         'name': 'My Awesome App',
         'description': 'Payment for your order',
@@ -241,16 +214,10 @@ class CartController extends GetxController {
     errorMessage.value = '';
 
     try {
-      final payload = {
-        'razorpay_order_id': razorpayOrderId,
-        'razorpay_payment_id': razorpayPaymentId,
-        'razorpay_signature': razorpaySignature,
-      };
-
       final response = await _orderRepo.verifyPayment(
-        payload['razorpay_order_id']!,
-        payload['razorpay_payment_id']!,
-        payload['razorpay_signature']!,
+        razorpayOrderId,
+        razorpayPaymentId,
+        razorpaySignature,
       );
 
       if (response['success'] == true) {

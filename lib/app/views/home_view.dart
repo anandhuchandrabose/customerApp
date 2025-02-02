@@ -39,7 +39,7 @@ class HomeView extends GetView<HomeController> {
           );
         }
 
-        final vendors = homeCtrl.vendors;       // from controller
+        final vendors = homeCtrl.vendors; // from controller
         final categories = homeCtrl.categories; // from controller
 
         return SingleChildScrollView(
@@ -188,7 +188,8 @@ class HomeView extends GetView<HomeController> {
                         children: vendors.map((vendor) {
                           final vendorId = vendor['id'] ?? '';
                           final name = vendor['kitchenName'] ?? 'No Name';
-                          final imageUrl = vendor['profile']?['profileImage'] ?? '';
+                          final imageUrl =
+                              vendor['profile']?['profileImage'] ?? '';
                           final rating = vendor['rating']?.toString() ?? '4.5';
                           final isVeg = vendor['isVeg'] ?? false;
 
@@ -212,35 +213,45 @@ class HomeView extends GetView<HomeController> {
   }
 
   // Category Card
+  // Category Card
   Widget _buildCategoryCard(String catName, String base64Image) {
-    // If your "image" is base64, decode & show with Image.memory
-    // (like in the previous code snippet)
-    // or if it's an actual URL, call Image.network
-    // For demonstration, let's assume base64 decoding:
+    // Decode base64 image
     Uint8List? catImageBytes;
     try {
-      // If there's a prefix like "data:image/png;base64," remove it
       if (base64Image.contains(',')) {
         base64Image = base64Image.split(',').last;
       }
       catImageBytes = base64Decode(base64Image);
     } catch (e) {
-      // If decoding fails, it stays null
+      catImageBytes = null;
     }
 
     return Padding(
       padding: const EdgeInsets.only(right: 16),
       child: Column(
         children: [
-          CircleAvatar(
-            radius: 30,
-            backgroundColor: Colors.grey[200],
-            child: (catImageBytes != null)
-                ? Image.memory(catImageBytes, width: 30, height: 30)
-                : const Icon(Icons.fastfood, size: 30, color: Colors.grey),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(30),
+            child: Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+              ),
+              child: (catImageBytes != null)
+                  ? Image.memory(
+                      catImageBytes,
+                      fit: BoxFit.cover, // Ensure the image fills the container
+                    )
+                  : const Icon(Icons.fastfood, size: 30, color: Colors.grey),
+            ),
           ),
           const SizedBox(height: 8),
-          Text(catName, style: const TextStyle(fontSize: 14)),
+          Text(
+            catName,
+            style: const TextStyle(fontSize: 14),
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );

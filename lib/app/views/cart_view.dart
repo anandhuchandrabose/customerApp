@@ -1,7 +1,9 @@
+// lib/app/views/cart_view.dart
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:slide_to_act/slide_to_act.dart';
-import 'package:lottie/lottie.dart'; // <-- Lottie import
+import 'package:lottie/lottie.dart';
 
 import '../controllers/cart_controller.dart';
 
@@ -51,23 +53,27 @@ class CartView extends GetView<CartController> {
     );
   }
 
-  /// The normal "cart" UI when items exist
+  /// If the cart is not empty, build the list of grouped items + summary
   Widget _buildCartContent(BuildContext context) {
     final cartCtrl = Get.find<CartController>();
     final cartItems = cartCtrl.cartItems;
 
+    // Group items by mealType
+    final groupedItems = _groupCartItemsByMealType(cartItems);
+
     // If you have a breakdown in cartData
-    final subtotal = cartCtrl.cartData['subtotal'] ?? 0;
+    final subtotal       = cartCtrl.cartData['subtotal']       ?? 0;
     final deliveryCharge = cartCtrl.cartData['deliveryCharge'] ?? 0;
-    final tax = cartCtrl.cartData['tax'] ?? 0;
-    final platformFees = cartCtrl.cartData['platformFees'] ?? 0;
-    final total = cartCtrl.cartData['total'] ?? 0;
+    final tax            = cartCtrl.cartData['tax']            ?? 0;
+    final platformFees   = cartCtrl.cartData['platformFees']   ?? 0;
+    final total          = cartCtrl.cartData['total']          ?? 0;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ===== Items Title =====
+          // ===== Title =====
           Container(
             color: Colors.white,
             width: double.infinity,
@@ -78,115 +84,47 @@ class CartView extends GetView<CartController> {
             ),
           ),
 
-          // ===== Cart Items List =====
-          Container(
-            color: Colors.white,
-            child: ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: cartItems.length,
-              separatorBuilder: (ctx, idx) => const Divider(height: 1),
-              itemBuilder: (context, index) {
-                final item = cartItems[index];
-                final quantity = item['quantity'] ?? 1;
+          // ===== Display each mealType group =====
+          ...groupedItems.entries.map((entry) {
+            final mealType = entry.key; // e.g. "lunch", "dinner", etc.
+            final items    = entry.value;
 
-                final vendorDish = item['vendorDish'] as Map<String, dynamic>?;
-                final dish = vendorDish?['dish'] as Map<String, dynamic>?;
-                final dishName = dish?['name'] ?? 'Unknown Dish';
-
-                // If your API has a real image, set here:
-                final imageUrl = ''; // dish?['imageUrl'] ?? '';
-
-                final price = vendorDish?['vendorSpecificPrice'] ?? '0.00';
-                final double priceDouble =
-                    double.tryParse(price.toString()) ?? 0.0;
-                final lineTotal = priceDouble * quantity;
-
-                return Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildDishImage(imageUrl),
-                      const SizedBox(width: 12),
-
-                      // Dish info + plus/minus
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Name
-                            Text(
-                              dishName,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 15,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              'Price per: ₹${priceDouble.toStringAsFixed(2)}',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey.shade600,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-
-                            // Stepper row
-                            Row(
-                              children: [
-                                _circleButton(
-                                  icon: Icons.remove,
-                                  onTap: () {
-                                    cartCtrl.decreaseItemQuantity(
-                                      vendorDish?['id'] ?? '',
-                                      vendorDish?['mealType'] ?? '',
-                                    );
-                                  },
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 12),
-                                  child: Text(
-                                    '$quantity',
-                                    style: const TextStyle(fontSize: 15),
-                                  ),
-                                ),
-                                _circleButton(
-                                  icon: Icons.add,
-                                  onTap: () {
-                                    cartCtrl.increaseItemQuantity(
-                                      vendorDish?['id'] ?? '',
-                                      vendorDish?['mealType'] ?? '',
-                                    );
-                                  },
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+            return Container(
+              color: Colors.white,
+              margin: const EdgeInsets.only(top: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Meal Type Label (e.g. "Dinner" or "Lunch")
+                  Padding(
+                    padding: const EdgeInsets.only(
+                      left: 16, right: 16, top: 10, bottom: 6,
+                    ),
+                    child: Text(
+                      mealType.capitalizeFirst ?? mealType, // "Dinner"/"Lunch"
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.orange,
                       ),
-
-                      // Line total
-                      Text(
-                        '₹${lineTotal.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                );
-              },
-            ),
-          ),
+
+                  // The items list for this mealType
+                  ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: items.length,
+                    separatorBuilder: (ctx, idx) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final item = items[index];
+                      return _buildCartItemRow(item);
+                    },
+                  ),
+                ],
+              ),
+            );
+          }),
 
           // ===== Address Section =====
           Container(
@@ -247,15 +185,17 @@ class CartView extends GetView<CartController> {
                   ),
                 ),
                 const Divider(height: 1),
-                _summaryRow('Subtotal', subtotal.toStringAsFixed(2)),
+                _summaryRow('Subtotal',         subtotal.toStringAsFixed(2)),
                 const SizedBox(height: 4),
-                _summaryRow('Delivery Charge', deliveryCharge.toString()),
+                _summaryRow('Delivery Charge',  deliveryCharge.toString()),
                 const SizedBox(height: 4),
-                _summaryRow('Tax', tax.toString()),
+                _summaryRow('Tax',              tax.toString()),
                 const SizedBox(height: 4),
-                _summaryRow('Platform Fees', platformFees.toString()),
+                _summaryRow('Platform Fees',    platformFees.toString()),
                 const Divider(height: 1),
-                _summaryRow('Total', total.toStringAsFixed(2), isTotal: true),
+                _summaryRow('Total',            total.toStringAsFixed(2),
+                  isTotal: true,
+                ),
               ],
             ),
           ),
@@ -274,7 +214,7 @@ class CartView extends GetView<CartController> {
                 fontWeight: FontWeight.w600,
               ),
               onSubmit: () {
-                cartCtrl.initiatePayment();
+                Get.find<CartController>().initiatePayment();
                 return null;
               },
             ),
@@ -284,7 +224,106 @@ class CartView extends GetView<CartController> {
     );
   }
 
-  /// The Lottie-based empty cart screen
+  /// Build a single Cart Item row (with dish image, name, +/- buttons, total)
+  Widget _buildCartItemRow(Map<String, dynamic> item) {
+    final cartCtrl = Get.find<CartController>();
+    final quantity = item['quantity'] ?? 1;
+
+    final vendorDish = item['vendorDish'] as Map<String, dynamic>?;
+    final dish = vendorDish?['dish'] as Map<String, dynamic>?;
+    final dishName = dish?['name'] ?? 'Unknown Dish';
+
+    // Use the real image URL if available (otherwise show fallback)
+    final imageUrl = (dish?['imageUrl'] ?? '') as String;
+    
+    final price = vendorDish?['vendorSpecificPrice'] ?? '0.00';
+    final double priceDouble = double.tryParse(price.toString()) ?? 0.0;
+    final lineTotal = priceDouble * quantity;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 14,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildDishImage(imageUrl),
+          const SizedBox(width: 12),
+
+          // Dish info + plus/minus
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Name
+                Text(
+                  dishName,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Price per: ₹${priceDouble.toStringAsFixed(2)}',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                // Stepper row
+                Row(
+                  children: [
+                    _circleButton(
+                      icon: Icons.remove,
+                      onTap: () {
+                        cartCtrl.decreaseItemQuantity(
+                          vendorDish?['id'] ?? '',
+                          vendorDish?['mealType'] ?? '',
+                        );
+                      },
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Text(
+                        '$quantity',
+                        style: const TextStyle(fontSize: 15),
+                      ),
+                    ),
+                    _circleButton(
+                      icon: Icons.add,
+                      onTap: () {
+                        cartCtrl.increaseItemQuantity(
+                          vendorDish?['id'] ?? '',
+                          vendorDish?['mealType'] ?? '',
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          // Line total
+          Text(
+            '₹${lineTotal.toStringAsFixed(2)}',
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Lottie-based empty cart screen
   Widget _buildEmptyCart() {
     return Center(
       child: Padding(
@@ -297,7 +336,7 @@ class CartView extends GetView<CartController> {
               width: 200,
               height: 200,
               child: Lottie.asset(
-                'assets/lottie/empty_cart.json', // The JSON you shared
+                'assets/lottie/empty_cart.json',
                 fit: BoxFit.contain,
               ),
             ),
@@ -319,29 +358,26 @@ class CartView extends GetView<CartController> {
             ),
             const SizedBox(height: 24),
 
-            // ElevatedButton(
-            //   onPressed: () {
-            //     // Example: navigate to home or categories
-            //     Get.offAllNamed('/home');
-            //   },
-            //   style: ElevatedButton.styleFrom(
-            //     padding: const EdgeInsets.symmetric(
-            //       horizontal: 24,
-            //       vertical: 12,
-            //     ),
-            //     shape: RoundedRectangleBorder(
-            //       borderRadius: BorderRadius.circular(8),
-            //     ),
-            //   ),
-            //   child: const Text(
-            //     'Explore Menu',
-            //     style: TextStyle(fontSize: 16),
-            //   ),
-            // ),
+            // Optional button...
           ],
         ),
       ),
     );
+  }
+
+  /// Group items by mealType
+  Map<String, List<Map<String, dynamic>>> _groupCartItemsByMealType(
+      List<Map<String, dynamic>> items) {
+    final Map<String, List<Map<String, dynamic>>> grouped = {};
+
+    for (final item in items) {
+      final vendorDish = item['vendorDish'] ?? {};
+      final mealType = vendorDish['mealType'] ?? 'unknown'; // e.g. "lunch"/"dinner"
+      grouped.putIfAbsent(mealType, () => []);
+      grouped[mealType]!.add(item);
+    }
+
+    return grouped;
   }
 
   /// Builds each summary row
@@ -395,9 +431,8 @@ class CartView extends GetView<CartController> {
     );
   }
 
-  /// Dish image with a more interesting look
+  /// Dish image with a fallback if empty
   Widget _buildDishImage(String imageUrl) {
-    // If your JSON had dish?["imageUrl"], decode it or load it as below:
     if (imageUrl.isNotEmpty) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(8),
@@ -415,7 +450,7 @@ class CartView extends GetView<CartController> {
         ),
       );
     }
-    // Otherwise, show a Lottie fallback or an icon
+    // Fallback if no URL
     return Container(
       width: 60,
       height: 60,

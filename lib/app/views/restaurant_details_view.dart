@@ -1,18 +1,13 @@
-// lib/app/views/restaurant_details_view.dart
-
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/restaurant_details_controller.dart';
 
 class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
-  // We keep your filter in an RxString
+  static const Color kPrimaryColor = Color(0xFFFF3008);
   final RxString selectedFilter = ''.obs;
 
-  // Our new base color #FF3008
-  static const Color kPrimaryColor = Color(0xFFFF3008);
-
-  // Filter labels
-  final List<String> chipLabels = const ['Lunch', 'Dinner', 'Veg', 'NonVeg'];
+  final List<String> chipLabels = const ['All', 'Lunch', 'Dinner', 'Veg', 'NonVeg'];
 
   RestaurantDetailsView({Key? key}) : super(key: key);
 
@@ -22,16 +17,12 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-
-      // A bottom bar that shows total items, total price, and a "View Cart" button
       bottomNavigationBar: Obx(() {
-        final itemCount = detailsCtrl.cartItemCount.value;    // from controller
-        final totalPrice = detailsCtrl.cartTotalPrice.value;  // from controller
-
+        final itemCount = detailsCtrl.cartItemCount.value;
+        final totalPrice = detailsCtrl.cartTotalPrice.value;
         if (itemCount == 0) {
-          return const SizedBox.shrink(); // Hide if no items in cart
+          return const SizedBox.shrink();
         }
-
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: const BoxDecoration(
@@ -53,29 +44,22 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
               ),
               const Spacer(),
               ElevatedButton(
-                onPressed: () {
-                  // Navigate to your cart page
-                  Get.toNamed('/cart');
-                },
+                onPressed: () => Get.toNamed('/cart'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: kPrimaryColor,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                child: const Text(
-                  'View Cart',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
+                child: const Text('View Cart',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
               )
             ],
           ),
         );
       }),
-
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -91,19 +75,14 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
         actions: [
           IconButton(
             icon: const Icon(Icons.search, color: Colors.black),
-            onPressed: () {
-              // search logic
-            },
+            onPressed: () {},
           ),
           IconButton(
             icon: const Icon(Icons.person, color: Colors.black),
-            onPressed: () {
-              // user profile logic
-            },
+            onPressed: () {},
           ),
         ],
       ),
-
       body: Obx(() {
         if (detailsCtrl.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
@@ -117,31 +96,22 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
           );
         }
 
-        // Grab these dynamic fields from the controller:
         final restaurantName = detailsCtrl.restaurantName.value;
         final restaurantImageUrl = detailsCtrl.restaurantImageUrl.value;
         final rating = detailsCtrl.rating.value.toStringAsFixed(1);
-        final servingTime = detailsCtrl.servingTime.value;
-
         final allDishes = detailsCtrl.dishes;
+
         if (allDishes.isEmpty) {
           return const Center(child: Text('No dishes available.'));
         }
 
-        // Filter logic
+        // Filtering
         final filteredDishes = allDishes.where((dish) {
-          if (selectedFilter.value.isEmpty) return true;
-
-          if (selectedFilter.value == 'Veg') {
-            // If nonveg == 0 => Veg
-            return dish['nonveg'] == 0;
-          } else if (selectedFilter.value == 'NonVeg') {
-            return dish['nonveg'] == 1;
-          } else if (selectedFilter.value == 'Lunch') {
-            return (dish['mealType'] == 'lunch');
-          } else if (selectedFilter.value == 'Dinner') {
-            return (dish['mealType'] == 'dinner');
-          }
+          if (selectedFilter.value.isEmpty || selectedFilter.value == 'All') return true;
+          if (selectedFilter.value == 'Veg') return dish['nonveg'] == 0;
+          if (selectedFilter.value == 'NonVeg') return dish['nonveg'] == 1;
+          if (selectedFilter.value == 'Lunch') return dish['mealType'] == 'lunch';
+          if (selectedFilter.value == 'Dinner') return dish['mealType'] == 'dinner';
           return true;
         }).toList();
 
@@ -151,7 +121,6 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
             child: Column(
               children: [
                 const SizedBox(height: 8),
-                // A circle avatar for the restaurant
                 CircleAvatar(
                   radius: 60,
                   backgroundColor: Colors.grey.shade200,
@@ -162,21 +131,16 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                             width: 120,
                             height: 120,
                             fit: BoxFit.cover,
-                            errorBuilder: (ctx, err, stack) =>
+                            errorBuilder: (_, __, ___) =>
                                 const Icon(Icons.restaurant, size: 50),
                           )
                         : const Icon(Icons.restaurant, size: 50),
                   ),
                 ),
                 const SizedBox(height: 12),
-
-                // Restaurant Name & star rating
                 Text(
                   restaurantName,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 4),
                 Row(
@@ -191,55 +155,31 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                       ),
                     ),
                     const SizedBox(width: 4),
-                    const Icon(
-                      Icons.star,
-                      color: Colors.orange,
-                      size: 16,
-                    ),
+                    const Icon(Icons.star, color: Colors.orange, size: 16),
                   ],
                 ),
                 const SizedBox(height: 8),
-
-                // Filter chips
                 _buildFilterChips(),
-
-                const SizedBox(height: 4),
-
-                // Serving time
-                Text(
-                  'Serves Between $servingTime',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                  ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Lunch serves between 12 PM to 2PM\nDinner serves between 8PM to 10PM',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 13, color: Colors.grey),
                 ),
-
                 const SizedBox(height: 16),
-
-                // Title + filter icon row: "Explore food Items"
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
                       'Explore food Items',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                     ),
                     IconButton(
-                      onPressed: () {
-                        // sorting/filtering logic if needed
-                      },
-                      icon: const Icon(
-                        Icons.filter_list,
-                        color: Colors.grey,
-                      ),
-                    )
+                      onPressed: () {},
+                      icon: const Icon(Icons.filter_list, color: Colors.grey),
+                    ),
                   ],
                 ),
-
-                // List of filtered dishes
                 ListView.builder(
                   itemCount: filteredDishes.length,
                   shrinkWrap: true,
@@ -249,45 +189,50 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                     final dishName = dish['name'] ?? '';
                     final dishDescription = dish['description'] ?? '';
                     final price = dish['price'] ?? '0.00';
-                    final rating = '4.9'; // or dish['rating'] if you have it
-                    final nonveg = dish['nonveg'] ?? 0; // 0 => veg, 1 => nonveg
+                    final dishRating = '4.9'; 
+                    final nonveg = dish['nonveg'] ?? 0; // 0=veg, 1=nonveg
                     final isVeg = (nonveg == 0);
                     final mealType = dish['mealType'] ?? 'lunch';
                     final vendorDishId = dish['vendorDishId'] ?? '';
+                    final dishImageUrl = dish['image'] ?? '';
 
-                    // If you have a real quantity, fetch from the controller
+                    // Retrieve local quantity from the controller
                     final quantity = detailsCtrl.dishQuantity(vendorDishId);
 
                     return _buildDishTile(
                       dishName: dishName,
                       description: dishDescription,
-                      rating: rating,
+                      rating: dishRating,
                       price: price.toString(),
                       isVeg: isVeg,
                       mealType: mealType,
                       quantity: quantity,
+                      dishImageUrl: dishImageUrl,
                       onAdd: () {
-                        detailsCtrl.addItemToCart(
+                        // FIRST TIME => /add-item
+                        detailsCtrl.addNewItemToCart(
                           vendorDishId: vendorDishId,
-                          quantity: 1,
                           mealType: mealType,
                         );
                       },
                       onIncrement: () {
-                        detailsCtrl.addItemToCart(
+                        // SUBSEQUENT => /increase
+                        detailsCtrl.increaseItemQuantity(
                           vendorDishId: vendorDishId,
-                          quantity: 1,
                           mealType: mealType,
                         );
                       },
                       onDecrement: () {
-                        detailsCtrl.removeItemFromCart(vendorDishId);
+                        // SUBSEQUENT => /decrease
+                        detailsCtrl.decreaseItemQuantity(
+                          vendorDishId: vendorDishId,
+                          mealType: mealType,
+                        );
                       },
                     );
                   },
                 ),
-
-                const SizedBox(height: 80), // space above bottom bar
+                const SizedBox(height: 80),
               ],
             ),
           ),
@@ -296,240 +241,252 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
     );
   }
 
-  /// A row of filter chips: Lunch, Dinner, Veg, NonVeg
   Widget _buildFilterChips() {
-    return Obx(
-      () {
-        return Wrap(
-          spacing: 8.0,
-          runSpacing: 4.0,
-          alignment: WrapAlignment.center,
-          children: chipLabels.map((label) {
-            final isSelected = (selectedFilter.value == label);
-            return ChoiceChip(
-              label: Text(
-                label,
-                style: TextStyle(
-                  color: isSelected ? Colors.white : Colors.black87,
-                  fontWeight: FontWeight.w500,
-                ),
+    return Obx(() {
+      return Wrap(
+        spacing: 8.0,
+        runSpacing: 4.0,
+        alignment: WrapAlignment.center,
+        children: chipLabels.map((label) {
+          final isSelected = (selectedFilter.value == label);
+          return ChoiceChip(
+            label: Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? Colors.white : Colors.black87,
+                fontWeight: FontWeight.w500,
               ),
-              selected: isSelected,
-              selectedColor: kPrimaryColor,
-              backgroundColor: Colors.grey.shade200,
-              onSelected: (bool value) {
-                selectedFilter.value = value ? label : '';
-              },
-            );
-          }).toList(),
-        );
-      },
+            ),
+            selected: isSelected,
+            selectedColor: kPrimaryColor,
+            backgroundColor: Colors.grey.shade200,
+            onSelected: (bool value) {
+              selectedFilter.value = value ? label : '';
+            },
+          );
+        }).toList(),
+      );
+    });
+  }
+
+  Widget _buildDishTile({
+    required String dishName,
+    required String description,
+    required String rating,
+    required String price,
+    required bool isVeg,
+    required String mealType,
+    required int quantity,
+    String? dishImageUrl,
+    required VoidCallback onAdd,
+    required VoidCallback onIncrement,
+    required VoidCallback onDecrement,
+  }) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 3,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            _buildDishImage(dishImageUrl, isVeg),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          dishName,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.circle,
+                        color: isVeg ? Colors.green : Colors.red,
+                        size: 8,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    description,
+                    style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Meal Type: $mealType',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontStyle: FontStyle.italic,
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.star, size: 14, color: Colors.orange),
+                          const SizedBox(width: 2),
+                          Text(
+                            rating,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Spacer(),
+                      Text(
+                        '₹$price',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            if (quantity == 0)
+              ElevatedButton(
+                onPressed: onAdd,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kPrimaryColor,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  elevation: 0,
+                ),
+                child: const Text('Add'),
+              )
+            else
+              Row(
+                children: [
+                  _stepperButton(
+                    iconData: Icons.remove,
+                    onTap: onDecrement,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Text(
+                      quantity.toString(),
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  ),
+                  _stepperButton(
+                    iconData: Icons.add,
+                    onTap: onIncrement,
+                  ),
+                ],
+              )
+          ],
+        ),
+      ),
     );
   }
 
-  /// Each dish item row, showing name, desc, price, rating, and Add / + - stepper.
- /// Each dish item row, now with a leading photo
-Widget _buildDishTile({
-  required String dishName,
-  required String description,
-  required String rating,
-  required String price,
-  required bool isVeg,
-  required String mealType,
-  required int quantity,
-  required VoidCallback onAdd,
-  required VoidCallback onIncrement,
-  required VoidCallback onDecrement,
-  String? dishImageUrl, // Optional image field
-}) {
-  return Card(
-    margin: const EdgeInsets.symmetric(vertical: 6),
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(16),
-    ),
-    elevation: 3,
-    child: Padding(
-      padding: const EdgeInsets.all(12),
-      child: Row(
-        children: [
-          // ============ Left side: Dish Image ============
-          _buildDishImage(dishImageUrl, isVeg),
+  Widget _buildDishImage(String? dishImageUrl, bool isVeg) {
+    if (dishImageUrl == null || dishImageUrl.isEmpty) {
+      // Show placeholder
+      return Container(
+        width: 60,
+        height: 60,
+        decoration: BoxDecoration(
+          color: Colors.grey.shade200,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(
+          Icons.fastfood,
+          color: isVeg ? Colors.green : Colors.red,
+        ),
+      );
+    }
 
-          const SizedBox(width: 12),
-
-          // ============ Middle: Name, desc, rating, price ============
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Name + (veg dot)
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        dishName,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.circle,
-                      color: isVeg ? Colors.green : Colors.red,
-                      size: 8,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-
-                // Description
-                Text(
-                  description,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey.shade600,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 6),
-
-                // Rating + Price
-                Row(
-                  children: [
-                    // rating
-                    Row(
-                      children: [
-                        const Icon(Icons.star, size: 14, color: Colors.orange),
-                        const SizedBox(width: 2),
-                        Text(
-                          rating,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Spacer(),
-                    // Price
-                    Text(
-                      '₹$price',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+    // Check if it's base64
+    if (dishImageUrl.startsWith('data:image')) {
+      try {
+        final base64Str = dishImageUrl.split(',').last;
+        final imageBytes = base64Decode(base64Str);
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Image.memory(
+            imageBytes,
+            width: 60,
+            height: 60,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Container(
+              width: 60,
+              height: 60,
+              color: Colors.grey.shade300,
+              child: const Icon(Icons.broken_image, color: Colors.grey),
             ),
           ),
-
-          const SizedBox(width: 12),
-
-          // ============ Right side: "Add" or Stepper ============
-          if (quantity == 0)
-            ElevatedButton(
-              onPressed: onAdd,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: kPrimaryColor,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                elevation: 0,
-              ),
-              child: const Text('Add'),
-            )
-          else
-            Row(
-              children: [
-                _stepperButton(
-                  iconData: Icons.remove,
-                  onTap: onDecrement,
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Text(
-                    quantity.toString(),
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                ),
-                _stepperButton(
-                  iconData: Icons.add,
-                  onTap: onIncrement,
-                ),
-              ],
-            )
-        ],
-      ),
-    ),
-  );
-}
-
-/// Helper to build the dish image container
-Widget _buildDishImage(String? dishImageUrl, bool isVeg) {
-  // If you have base64, decode it with base64Decode and use Image.memory
-  // If you have a partial path, prepend your domain
-  // For now, assume a direct network URL
-  if (dishImageUrl == null || dishImageUrl.isEmpty) {
-    // Show a placeholder
-    return Container(
-      width: 60,
-      height: 60,
-      decoration: BoxDecoration(
-        color: Colors.grey.shade200,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Icon(
-        Icons.fastfood,
-        color: isVeg ? Colors.green : Colors.red,
-      ),
-    );
-  }
-
-  return ClipRRect(
-    borderRadius: BorderRadius.circular(12),
-    child: Image.network(
-      dishImageUrl,
-      width: 60,
-      height: 60,
-      fit: BoxFit.cover,
-      errorBuilder: (context, error, stackTrace) {
+        );
+      } catch (e) {
         return Container(
           width: 60,
           height: 60,
-          color: Colors.grey.shade300,
+          decoration: BoxDecoration(
+            color: Colors.grey.shade200,
+            borderRadius: BorderRadius.circular(12),
+          ),
           child: const Icon(Icons.broken_image, color: Colors.grey),
         );
-      },
-    ),
-  );
-}
+      }
+    } else {
+      // Otherwise assume a direct network URL
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.network(
+          dishImageUrl,
+          width: 60,
+          height: 60,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => Container(
+            width: 60,
+            height: 60,
+            color: Colors.grey.shade300,
+            child: const Icon(Icons.broken_image, color: Colors.grey),
+          ),
+        ),
+      );
+    }
+  }
 
-/// A small circular button for increment/decrement
-Widget _stepperButton({
-  required IconData iconData,
-  required VoidCallback onTap,
-}) {
-  return InkWell(
-    onTap: onTap,
-    borderRadius: BorderRadius.circular(20),
-    child: Container(
-      width: 28,
-      height: 28,
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(14),
+  Widget _stepperButton({
+    required IconData iconData,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        width: 28,
+        height: 28,
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          border: Border.all(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Icon(iconData, size: 16, color: kPrimaryColor),
       ),
-      child: Icon(iconData, size: 16, color: kPrimaryColor),
-    ),
-  );
-}
+    );
+  }
 }

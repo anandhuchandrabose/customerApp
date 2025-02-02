@@ -1,5 +1,4 @@
-// lib/app/controllers/restaurant_details_controller.dart
-
+import 'dart:developer';
 import 'package:get/get.dart';
 import '../data/repositories/restaurant_repository.dart';
 import '../data/repositories/cart_repository.dart';
@@ -8,56 +7,54 @@ class RestaurantDetailsController extends GetxController {
   final RestaurantRepository _restaurantRepo = Get.find<RestaurantRepository>();
   final CartRepository _cartRepo = Get.find<CartRepository>();
 
-  // Existing
+  // Basic fields
   var vendorId = ''.obs;
   var dishes = <Map<String, dynamic>>[].obs;
   var isLoading = false.obs;
   var errorMessage = ''.obs;
 
-  // -----------------
-  // Added fields to avoid errors in the view
-  // -----------------
-  var restaurantName = 'Restuarent'.obs;      // For top display
-  var restaurantImageUrl = ''.obs;                     // Could be a network or base64
-  var rating = 5.0.obs;                                // 5.0 star rating
-  var servingTime = '7 pm to 8 pm'.obs;                // “Serves Between 7 pm to 8 pm”
+  // Restaurant display
+  var restaurantName = 'Restaurant'.obs;
+  var restaurantImageUrl = ''.obs;
+  var rating = 5.0.obs;
+  var servingTime = '7 pm to 8 pm'.obs;
 
-  // Cart summary fields (for sticky bottom bar)
-  var cartItemCount = 0.obs;      // total items in cart
-  var cartTotalPrice = 0.0.obs;   // total price for those items
+  // Cart summary
+  var cartItemCount = 0.obs;
+  var cartTotalPrice = 0.0.obs;
+
+  /// Reactive map for dish quantities: vendorDishId -> quantity
+  final RxMap<String, int> cartQuantities = <String, int>{}.obs;
 
   @override
   void onInit() {
     super.onInit();
     final args = Get.arguments ?? {};
     vendorId.value = args['vendorId'] ?? '';
-    print('Vendor ID received: ${vendorId.value}');
-
-    // If you pass restaurant info via arguments, you could do:
-    // restaurantName.value = args['kitchenName'] ?? 'Unknown';
-    // rating.value = double.tryParse(args['rating']?.toString() ?? '0.0') ?? 0.0;
-    // restaurantImageUrl.value = args['imageUrl'] ?? ''; 
-    // servingTime.value = args['servingTime'] ?? '7 pm to 8 pm';
 
     if (vendorId.value.isEmpty) {
       errorMessage.value = 'No vendorId provided.';
       Get.snackbar('Error', 'Vendor ID not provided.');
     } else {
+      // 1) Fetch the restaurant's dishes
       fetchDishes();
+
+      // 2) Fetch the user's existing cart
+      fetchCart();
     }
   }
 
+  /// Fetches the restaurant's dishes
   Future<void> fetchDishes() async {
     try {
       isLoading.value = true;
       errorMessage.value = '';
 
       final data = await _restaurantRepo.fetchDishes(vendorId.value);
-      print('Fetch Dishes Response: $data');
+      log('Fetch Dishes Response: $data');
 
       if (data['success'] == true) {
         final dishesData = data['data']?['dishes'] ?? [];
-        print('Dishes Data: $dishesData');
         if (dishesData is List) {
           dishes.value = List<Map<String, dynamic>>.from(dishesData);
         }
@@ -70,64 +67,180 @@ class RestaurantDetailsController extends GetxController {
     } catch (e) {
       errorMessage.value = e.toString();
       Get.snackbar('Error', errorMessage.value);
-      print('Error fetching dishes: $e');
+      log('Error fetching dishes: $e');
     } finally {
       isLoading.value = false;
     }
   }
 
-  Future<void> addItemToCart({
+  /// Fetches the existing cart from /api/customer-cart/get-cart
+  /// and populates [cartQuantities] + summary counts.
+  Future<void> fetchCart() async {
+    try {
+      final cartData = await _cartRepo.fetchCartItems();
+      log('Fetch Cart Response: $cartData');
+
+      final items = cartData['items'] ?? [];
+      // Clear before re-populating
+      cartQuantities.clear();
+
+      double totalPrice = 0;
+      int itemCount = 0;
+
+      for (final item in items) {
+        // Suppose each 'item' has: vendorDishId, quantity, mealType, price, etc.
+        final dishId = item['vendorDishId'] ?? '';
+        if (dishId.isEmpty) continue;
+
+        // -------------- KEY FIX: Safely parse quantity as int --------------
+        final dynamic rawQty = item['quantity'] ?? 0;
+        final int qty = (rawQty is num) ? rawQty.toInt() : 0;
+
+        // Put in our reactive map
+        cartQuantities[dishId] = qty;
+
+        // Build up totals
+        itemCount += qty;
+
+        // Either read the dish price from the local 'dishes' array or from item['price']
+        double localDishPrice = _getDishPrice(dishId);
+        if (localDishPrice == 0 && item['price'] != null) {
+          localDishPrice =
+              double.tryParse(item['price'].toString()) ?? 0.0;
+        }
+        totalPrice += qty * localDishPrice;
+      }
+
+      // Update reactive summary
+      cartItemCount.value = itemCount;
+      cartTotalPrice.value = totalPrice;
+    } catch (e) {
+      log('Error fetching cart: $e');
+      // Optionally show a snackbar
+      Get.snackbar('Error', e.toString());
+    }
+  }
+
+  /// Returns local quantity from [cartQuantities]
+  int dishQuantity(String vendorDishId) {
+    return cartQuantities[vendorDishId] ?? 0;
+  }
+
+  /// First time => /api/customer-cart/add-item
+  Future<void> addNewItemToCart({
     required String vendorDishId,
-    required int quantity,
     required String mealType,
   }) async {
     try {
       isLoading.value = true;
-      print(
-          'Adding to cart: vendorDishId=$vendorDishId, quantity=$quantity, mealType=$mealType');
-
-      final data = await _cartRepo.addItemToCart(
+      final response = await _cartRepo.addItemToCart(
         vendorDishId: vendorDishId,
-        quantity: quantity,
+        quantity: 1,
         mealType: mealType,
       );
-      print('Add to Cart Response: $data');
+      log('Add item response: $response');
 
-      if (data['success'] == true ||
-          data['message'] == 'Item added to cart successfully.') {
-        // Optionally update your cart counters:
-        cartItemCount.value += quantity;
-        cartTotalPrice.value += double.tryParse(data['addedItemPrice']?.toString() ?? '0') ?? 0.0;
-        // Show success
-        Get.snackbar('Cart', data['message'] ?? 'Item added to cart');
+      if (response['message'] == 'Item added to cart successfully.' ||
+          response['success'] == true) {
+        cartQuantities[vendorDishId] = 1;
 
-        // Navigate to Cart screen if you want:
-        // Get.toNamed('/cart');
+        cartItemCount.value += 1;
+        cartTotalPrice.value += _getDishPrice(vendorDishId);
+
+        Get.snackbar('Cart', response['message'] ?? 'Item added to cart');
       } else {
-        // Show error from response
-        Get.snackbar('Error', data['message'] ?? 'Failed to add item');
+        Get.snackbar('Error', response['message'] ?? 'Failed to add item');
       }
     } catch (e) {
       Get.snackbar('Error', e.toString());
-      print('Error adding to cart: $e');
+      log('Error adding item to cart: $e');
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// Example helper to get quantity of a dish from local cart data
-  /// If you store a local cart or need more advanced logic, adapt here
-  int dishQuantity(String vendorDishId) {
-    // For demonstration, let's just return 0 to always show "Add" 
-    // If you have a real cart, check if the dish is present and return actual quantity
-    return 0;
+  /// Subsequent plus => /api/customer-cart/increase
+  Future<void> increaseItemQuantity({
+    required String vendorDishId,
+    required String mealType,
+  }) async {
+    try {
+      isLoading.value = true;
+
+      final response = await _cartRepo.increaseQuantity(
+        vendorDishId: vendorDishId,
+        mealType: mealType,
+      );
+      log('Increase item response: $response');
+
+      if (response['message'] == 'Item quantity increased.' ||
+          response['success'] == true) {
+        final newQty = dishQuantity(vendorDishId) + 1;
+        cartQuantities[vendorDishId] = newQty;
+
+        cartItemCount.value += 1;
+        cartTotalPrice.value += _getDishPrice(vendorDishId);
+      } else {
+        Get.snackbar('Error', response['message'] ?? 'Failed to increase item');
+      }
+    } catch (e) {
+      Get.snackbar('Error', e.toString());
+      log('Error increasing item: $e');
+    } finally {
+      isLoading.value = false;
+    }
   }
 
-  /// Example: remove an item from the cart
-  void removeItemFromCart(String vendorDishId) {
-    // This might call an API or adjust local cart
-    // For now, just a placeholder:
-    if (cartItemCount.value > 0) cartItemCount.value -= 1;
-    // You could also subtract from cartTotalPrice
+  /// Subsequent minus => /api/customer-cart/decrease
+  Future<void> decreaseItemQuantity({
+    required String vendorDishId,
+    required String mealType,
+  }) async {
+    final currentQty = dishQuantity(vendorDishId);
+    if (currentQty == 0) return;
+
+    try {
+      isLoading.value = true;
+
+      final response = await _cartRepo.decreaseQuantity(
+        vendorDishId: vendorDishId,
+        mealType: mealType,
+      );
+      log('Decrease item response: $response');
+
+      if (response['message'] == 'Item quantity decreased.' ||
+          response['success'] == true) {
+        final newQty = currentQty - 1;
+        cartQuantities[vendorDishId] = newQty;
+
+        cartItemCount.value -= 1;
+        cartTotalPrice.value -= _getDishPrice(vendorDishId);
+
+        if (newQty == 0) {
+          cartQuantities.remove(vendorDishId);
+        }
+      } else {
+        Get.snackbar('Error', response['message'] ?? 'Failed to decrease item');
+      }
+    } catch (e) {
+      Get.snackbar('Error', e.toString());
+      log('Error decreasing item: $e');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Looks up the dish price from the local [dishes] list 
+  double _getDishPrice(String vendorDishId) {
+    try {
+      final dish = dishes.firstWhere(
+        (d) => d['vendorDishId'] == vendorDishId,
+        orElse: () => {},
+      );
+      if (dish.isNotEmpty) {
+        return double.tryParse(dish['price']?.toString() ?? '0') ?? 0;
+      }
+    } catch (_) {}
+    return 0;
   }
 }

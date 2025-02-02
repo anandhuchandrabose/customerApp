@@ -13,11 +13,15 @@ class OtpController extends GetxController {
   var isNewUser = false.obs;
   var isLoading = false.obs;
 
+  // For development: store the OTP that comes from the backend
+  var devOtp = ''.obs;
+
   @override
   void onInit() {
     final args = Get.arguments ?? {};
     phoneNumber.value = args['phone'] ?? '';
     isNewUser.value = args['isNewUser'] ?? false;
+    devOtp.value = args['devOtp'] ?? ''; // <-- Retrieve the passed OTP
     super.onInit();
   }
 
@@ -56,5 +60,9 @@ class OtpController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  void resendOtp() {
+    // Implement your resend logic here
   }
 }
