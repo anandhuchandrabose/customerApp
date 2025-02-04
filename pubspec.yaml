@@ -31,4 +31,8 @@ flutter:
   uses-material-design: true
   assets:
     - assets/lottie/empty_cart.json
+    - assets/lottie/order_complete.json
+
+
+    
     

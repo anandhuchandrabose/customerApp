@@ -1,5 +1,3 @@
-// lib/app/views/cart_view.dart
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:slide_to_act/slide_to_act.dart';
@@ -15,7 +13,6 @@ class CartView extends GetView<CartController> {
     final cartCtrl = Get.find<CartController>();
 
     return Scaffold(
-      // AppBar with a more modern look
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 2,
@@ -86,7 +83,7 @@ class CartView extends GetView<CartController> {
 
           // ===== Display each mealType group =====
           ...groupedItems.entries.map((entry) {
-            final mealType = entry.key; // e.g. "lunch", "dinner", etc.
+            final mealType = entry.key; // e.g. "lunch", "dinner"
             final items    = entry.value;
 
             return Container(
@@ -95,13 +92,13 @@ class CartView extends GetView<CartController> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Meal Type Label (e.g. "Dinner" or "Lunch")
+                  // Meal Type Label
                   Padding(
                     padding: const EdgeInsets.only(
                       left: 16, right: 16, top: 10, bottom: 6,
                     ),
                     child: Text(
-                      mealType.capitalizeFirst ?? mealType, // "Dinner"/"Lunch"
+                      mealType.capitalizeFirst ?? mealType,
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
@@ -109,8 +106,7 @@ class CartView extends GetView<CartController> {
                       ),
                     ),
                   ),
-
-                  // The items list for this mealType
+                  // The items for this mealType
                   ListView.separated(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
@@ -126,7 +122,7 @@ class CartView extends GetView<CartController> {
             );
           }),
 
-          // ===== Address Section =====
+          // ===== Address Section (Optional) =====
           Container(
             color: Colors.white,
             margin: const EdgeInsets.only(top: 12),
@@ -169,8 +165,9 @@ class CartView extends GetView<CartController> {
               children: [
                 // Label
                 Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 16,
+                  ),
                   child: Row(
                     children: const [
                       Text(
@@ -214,7 +211,7 @@ class CartView extends GetView<CartController> {
                 fontWeight: FontWeight.w600,
               ),
               onSubmit: () {
-                Get.find<CartController>().initiatePayment();
+                cartCtrl.initiatePayment();
                 return null;
               },
             ),
@@ -230,21 +227,20 @@ class CartView extends GetView<CartController> {
     final quantity = item['quantity'] ?? 1;
 
     final vendorDish = item['vendorDish'] as Map<String, dynamic>?;
-    final dish = vendorDish?['dish'] as Map<String, dynamic>?;
-    final dishName = dish?['name'] ?? 'Unknown Dish';
+    final dish       = vendorDish?['dish'] as Map<String, dynamic>?; 
+    final dishName   = dish?['name'] ?? 'Unknown Dish';
+    final imageUrl   = dish?['imageUrl'] ?? '';
+    final mealType   = vendorDish?['mealType'] ?? ''; 
+    final vendorDishId = vendorDish?['id'] ?? '';
 
-    // Use the real image URL if available (otherwise show fallback)
-    final imageUrl = (dish?['imageUrl'] ?? '') as String;
-    
-    final price = vendorDish?['vendorSpecificPrice'] ?? '0.00';
-    final double priceDouble = double.tryParse(price.toString()) ?? 0.0;
+    // Price 
+    // Possibly the server returns `vendorDish.vendorSpecificPrice`, or item['price'].
+    final priceStr = vendorDish?['vendorSpecificPrice']?.toString() ?? '0.00';
+    final priceDouble = double.tryParse(priceStr) ?? 0.0;
     final lineTotal = priceDouble * quantity;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 14,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -283,8 +279,8 @@ class CartView extends GetView<CartController> {
                       icon: Icons.remove,
                       onTap: () {
                         cartCtrl.decreaseItemQuantity(
-                          vendorDish?['id'] ?? '',
-                          vendorDish?['mealType'] ?? '',
+                          vendorDishId: vendorDishId,
+                          mealType: mealType,
                         );
                       },
                     ),
@@ -299,8 +295,8 @@ class CartView extends GetView<CartController> {
                       icon: Icons.add,
                       onTap: () {
                         cartCtrl.increaseItemQuantity(
-                          vendorDish?['id'] ?? '',
-                          vendorDish?['mealType'] ?? '',
+                          vendorDishId: vendorDishId,
+                          mealType: mealType,
                         );
                       },
                     ),
@@ -341,7 +337,6 @@ class CartView extends GetView<CartController> {
               ),
             ),
             const SizedBox(height: 24),
-
             const Text(
               'Your Cart is Empty',
               style: TextStyle(
@@ -350,14 +345,12 @@ class CartView extends GetView<CartController> {
               ),
             ),
             const SizedBox(height: 8),
-
             const Text(
               'Looks like you haven’t added anything yet.',
               style: TextStyle(fontSize: 14, color: Colors.grey),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
-
             // Optional button...
           ],
         ),
@@ -369,14 +362,12 @@ class CartView extends GetView<CartController> {
   Map<String, List<Map<String, dynamic>>> _groupCartItemsByMealType(
       List<Map<String, dynamic>> items) {
     final Map<String, List<Map<String, dynamic>>> grouped = {};
-
     for (final item in items) {
       final vendorDish = item['vendorDish'] ?? {};
-      final mealType = vendorDish['mealType'] ?? 'unknown'; // e.g. "lunch"/"dinner"
+      final mealType   = vendorDish['mealType'] ?? 'Unknown';
       grouped.putIfAbsent(mealType, () => []);
       grouped[mealType]!.add(item);
     }
-
     return grouped;
   }
 
