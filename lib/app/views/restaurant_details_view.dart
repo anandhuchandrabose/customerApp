@@ -21,7 +21,7 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
 
   @override
   Widget build(BuildContext context) {
-    // We also get the CartController
+    // Retrieve controllers
     final cartCtrl = Get.find<CartController>();
     final detailsCtrl = Get.find<RestaurantDetailsController>();
 
@@ -119,11 +119,10 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
           return const Center(child: Text('No dishes available.'));
         }
 
-        // Filter the dishes
+        // Filter the dishes based on the selected chip label.
         final filteredDishes = allDishes.where((dish) {
           final filter = selectedFilter.value;
           if (filter.isEmpty || filter == 'All') return true;
-
           if (filter == 'Veg') return (dish['nonveg'] == 0);
           if (filter == 'NonVeg') return (dish['nonveg'] == 1);
           if (filter == 'Lunch') return (dish['mealType'] == 'lunch');
@@ -189,7 +188,7 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                   style: const TextStyle(fontSize: 13, color: Colors.grey),
                 ),
                 const SizedBox(height: 16),
-                // Example heading "Recommended (X)"
+                // Heading: "Recommended (X)"
                 Row(
                   children: [
                     Text(
@@ -202,7 +201,7 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                // List of items
+                // List of dish items
                 ListView.builder(
                   itemCount: filteredDishes.length,
                   shrinkWrap: true,
@@ -219,29 +218,24 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                     final dishImageUrl = dish['image'] ?? '';
                     final ratingValue = dish['rating'] ?? 3.9;
                     final ratingCount = dish['ratingCount'] ?? 0;
-
-                    // example “Bestseller” if ratingValue >= 4.0
                     final isBestseller = (ratingValue >= 4.0);
 
-                    // Retrieve quantity from CartController
-                    final quantity = cartCtrl.getDishQuantity(vendorDishId);
-
                     return _buildDishTile(
+                      vendorDishId: vendorDishId,
                       dishName: dishName,
                       description: dishDescription,
                       price: price.toString(),
                       isVeg: isVeg,
                       mealType: mealType,
-                      quantity: quantity,
                       dishImageUrl: dishImageUrl,
                       ratingValue: ratingValue,
                       ratingCount: ratingCount,
                       isBestseller: isBestseller,
                       onAdd: () {
+                        // Call addItemToCart without sending a quantity.
                         cartCtrl.addItemToCart(
                           vendorDishId: vendorDishId,
                           mealType: mealType,
-                          quantity: 1,
                         );
                       },
                       onIncrement: () {
@@ -296,22 +290,25 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
     });
   }
 
-  // UPDATED item card UI with quantity display in details area and ADD button below image
+  // Updated dish tile widget that rebuilds its quantity display reactively.
   Widget _buildDishTile({
+    required String vendorDishId,
     required String dishName,
     required String description,
     required String price,
     required bool isVeg,
     required String mealType,
-    required int quantity,
+    required String? dishImageUrl,
     required double ratingValue,
     required int ratingCount,
     required bool isBestseller,
-    String? dishImageUrl,
     required VoidCallback onAdd,
     required VoidCallback onIncrement,
     required VoidCallback onDecrement,
   }) {
+    // Retrieve the CartController instance
+    final cartCtrl = Get.find<CartController>();
+
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       padding: const EdgeInsets.all(12),
@@ -323,18 +320,15 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // LEFT side: dish details including text and optional quantity display
+          // LEFT side: Dish details and description.
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Bestseller tag
+                // Bestseller tag.
                 if (isBestseller)
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     margin: const EdgeInsets.only(bottom: 4),
                     decoration: BoxDecoration(
                       color: Colors.orange.shade100,
@@ -349,7 +343,7 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                       ),
                     ),
                   ),
-                // Dish name and price
+                // Dish name and price.
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -375,7 +369,7 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                   ],
                 ),
                 const SizedBox(height: 4),
-                // Rating row e.g. 3.7 (36)
+                // Rating row (e.g. 3.7 (36)).
                 Row(
                   children: [
                     Text(
@@ -398,79 +392,70 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                   ],
                 ),
                 const SizedBox(height: 6),
-                // Truncated description with "more"
+                // Truncated description with "more".
                 _buildTruncatedDescription(description),
-                // Display quantity here if it's greater than zero
-                // const SizedBox(width:38),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        '₹$price',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                // Display price below description.
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    '₹$price',
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
                     ),
-                // if (quantity > 0)
-                //   Padding(
-                //     padding: const EdgeInsets.only(top: 8),
-                //     child: Text(
-                //       'Quantity: $quantity',
-                //       style: const TextStyle(
-                //         fontSize: 14,
-                //         fontWeight: FontWeight.w600,
-                //       ),
-                //     ),
-                //   ),
+                  ),
+                ),
               ],
             ),
           ),
           const SizedBox(width: 10),
-          // RIGHT side: food image on top and add/stepper controls below
+          // RIGHT side: Dish image and the ADD / stepper controls.
           Column(
             children: [
-              // Food image
               _buildDishImage(dishImageUrl, isVeg),
               const SizedBox(height: 8),
-              // ADD button or stepper controls below the image
-              if (quantity == 0)
-                SizedBox(
-                  height: 36,
-                  child: ElevatedButton(
-                    onPressed: onAdd,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: kPrimaryColor,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
+              // Use Obx to rebuild the button area whenever the dish quantity changes.
+              Obx(() {
+                final int quantity = cartCtrl.getDishQuantity(vendorDishId);
+                if (quantity == 0) {
+                  return SizedBox(
+                    height: 36,
+                    child: ElevatedButton(
+                      onPressed: onAdd,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: kPrimaryColor,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        elevation: 0,
                       ),
-                      elevation: 0,
+                      child: const Text('ADD'),
                     ),
-                    child: const Text('ADD'),
-                  ),
-                )
-              else
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _stepperButton(
-                      iconData: Icons.remove,
-                      onTap: onDecrement,
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Text(
-                        quantity.toString(),
-                        style: const TextStyle(fontSize: 16),
+                  );
+                } else {
+                  return Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _stepperButton(
+                        iconData: Icons.remove,
+                        onTap: onDecrement,
                       ),
-                    ),
-                    _stepperButton(
-                      iconData: Icons.add,
-                      onTap: onIncrement,
-                    ),
-                  ],
-                ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Text(
+                          quantity.toString(),
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ),
+                      _stepperButton(
+                        iconData: Icons.add,
+                        onTap: onIncrement,
+                      ),
+                    ],
+                  );
+                }
+              }),
             ],
           ),
         ],
@@ -479,7 +464,6 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
   }
 
   Widget _buildTruncatedDescription(String description) {
-    // Show only first 50 characters + "... more"
     const maxChars = 50;
     if (description.length <= maxChars) {
       return Text(
@@ -500,7 +484,6 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                 color: Colors.blue,
                 decoration: TextDecoration.underline,
               ),
-              // Optionally, you can add a gesture recognizer here to expand the description.
             ),
           ],
         ),
@@ -510,8 +493,6 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
 
   Widget _buildDishImage(String? dishImageUrl, bool isVeg) {
     final borderRadius = BorderRadius.circular(12);
-
-    // If no image available, display a placeholder
     if (dishImageUrl == null || dishImageUrl.isEmpty) {
       return Container(
         width: 80,
@@ -527,8 +508,6 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
         ),
       );
     }
-
-    // Check if the image string is base64 encoded
     if (dishImageUrl.startsWith('data:image')) {
       try {
         final base64Str = dishImageUrl.split(',').last;
@@ -560,7 +539,6 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
         );
       }
     } else {
-      // Assume it's a direct network URL
       return ClipRRect(
         borderRadius: borderRadius,
         child: Image.network(

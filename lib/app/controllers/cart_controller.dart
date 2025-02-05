@@ -105,16 +105,23 @@ class CartController extends GetxController {
   // ============================
   // 4) Add Item to Cart
   // ============================
+  /// This method always adds the food item with a single quantity by calling
+  /// the API endpoint `/api/customer-cart/add-item` with a payload like:
+  /// {
+  ///   "vendorDishId": "your-dish-id",
+  ///   "quantity": 1,
+  ///   "mealType": "lunch"
+  /// }
   Future<void> addItemToCart({
     required String vendorDishId,
-    required int quantity,
     required String mealType,
   }) async {
     try {
       isLoading.value = true;
+      // Force a single quantity when adding a new item
       await _cartRepo.addItemToCart(
         vendorDishId: vendorDishId,
-        quantity: quantity,
+        quantity: 1,
         mealType: mealType,
       );
       await fetchCartItems();
@@ -258,60 +265,59 @@ class CartController extends GetxController {
 
   /// Verify payment on the server
   Future<void> verifyPayment({
-  required String razorpayOrderId,
-  required String razorpayPaymentId,
-  required String razorpaySignature,
-}) async {
-  isLoading.value = true;
-  errorMessage.value = '';
+    required String razorpayOrderId,
+    required String razorpayPaymentId,
+    required String razorpaySignature,
+  }) async {
+    isLoading.value = true;
+    errorMessage.value = '';
 
-  try {
-    final response = await _orderRepo.verifyPayment(
-      razorpayOrderId,
-      razorpayPaymentId,
-      razorpaySignature,
-    );
+    try {
+      final response = await _orderRepo.verifyPayment(
+        razorpayOrderId,
+        razorpayPaymentId,
+        razorpaySignature,
+      );
 
-    // Check if the response indicates a successful verification.
-    if (response.containsKey('success')) {
-      if (response['success'] == true) {
-        print("Payment verification successful: $response");
-        Get.snackbar(
-          'Payment Verified',
-          'Your payment has been successfully verified!',
-          snackPosition: SnackPosition.BOTTOM,
-        );
-        // Navigate to the success screen.
-        // If your backend returns a separate order id, you can pass it here.
-        Get.to(() => PaymentSuccessScreen(orderId: razorpayOrderId));
+      // Check if the response indicates a successful verification.
+      if (response.containsKey('success')) {
+        if (response['success'] == true) {
+          print("Payment verification successful: $response");
+          Get.snackbar(
+            'Payment Verified',
+            'Your payment has been successfully verified!',
+            snackPosition: SnackPosition.BOTTOM,
+          );
+          // Navigate to the success screen.
+          // If your backend returns a separate order id, you can pass it here.
+          Get.to(() => PaymentSuccessScreen(orderId: razorpayOrderId));
+        } else {
+          throw Exception('Payment verification failed: ${response['message']}');
+        }
       } else {
-        throw Exception('Payment verification failed: ${response['message']}');
+        // If there's no 'success' key, inspect the message.
+        final message = (response['message'] as String?) ?? '';
+        if (message.toLowerCase().contains('payment confirmed')) {
+          print("Payment verification successful: $response");
+          Get.snackbar(
+            'Payment Verified',
+            'Your payment has been successfully verified!',
+            snackPosition: SnackPosition.BOTTOM,
+          );
+          Get.to(() => PaymentSuccessScreen(orderId: razorpayOrderId));
+        } else {
+          throw Exception('Payment verification failed: ${response['message']}');
+        }
       }
-    } else {
-      // If there's no 'success' key, inspect the message.
-      final message = (response['message'] as String?) ?? '';
-      if (message.toLowerCase().contains('payment confirmed')) {
-        print("Payment verification successful: $response");
-        Get.snackbar(
-          'Payment Verified',
-          'Your payment has been successfully verified!',
-          snackPosition: SnackPosition.BOTTOM,
-        );
-        Get.to(() => PaymentSuccessScreen(orderId: razorpayOrderId));
-      } else {
-        throw Exception('Payment verification failed: ${response['message']}');
-      }
+    } catch (e) {
+      errorMessage.value = e.toString();
+      Get.snackbar(
+        'Verification Error',
+        errorMessage.value,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } finally {
+      isLoading.value = false;
     }
-  } catch (e) {
-    errorMessage.value = e.toString();
-    Get.snackbar(
-      'Verification Error',
-      errorMessage.value,
-      snackPosition: SnackPosition.BOTTOM,
-    );
-  } finally {
-    isLoading.value = false;
   }
-}
-
 }
