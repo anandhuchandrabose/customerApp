@@ -1,3 +1,5 @@
+// lib/app/controllers/cart_controller.dart
+
 import 'dart:developer';
 import 'package:customerapp/app/views/payment_success_screen.dart';
 import 'package:get/get.dart';
@@ -10,7 +12,7 @@ class CartController extends GetxController {
   final CartRepository _cartRepo = Get.find<CartRepository>();
   final OrderRepository _orderRepo = Get.find<OrderRepository>();
 
-  // The entire cart response from server
+  // The entire cart response from server.
   var cartItems = <Map<String, dynamic>>[].obs;
   var cartData = <String, dynamic>{}.obs;
 
@@ -69,7 +71,6 @@ class CartController extends GetxController {
       await fetchCartItems();
     } catch (e) {
       errorMessage.value = e.toString();
-      // If server returns an error like "item not found in cart", re-fetch
       if (errorMessage.value.toLowerCase().contains('not found')) {
         await fetchCartItems();
       }
@@ -103,22 +104,29 @@ class CartController extends GetxController {
   }
 
   // ============================
-  // 4) Add Item to Cart
+  // 4) Add Item to Cart with Vendor Restriction
   // ============================
-  /// This method always adds the food item with a single quantity by calling
-  /// the API endpoint `/api/customer-cart/add-item` with a payload like:
-  /// {
-  ///   "vendorDishId": "your-dish-id",
-  ///   "quantity": 1,
-  ///   "mealType": "lunch"
-  /// }
   Future<void> addItemToCart({
     required String vendorDishId,
     required String mealType,
+    required String vendorId, // New parameter for the vendor's id
   }) async {
+    // If the cart already has items, verify that they belong to the same vendor.
+    if (cartItems.isNotEmpty) {
+      // Retrieve the vendor id from the first cart item.
+      final existingVendorId = cartItems.first['vendorDish']?['vendorId'];
+      if (existingVendorId != vendorId) {
+        Get.snackbar(
+          "Error",
+          "You cannot add items from a different vendor. Please clear your cart first.",
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
+    }
     try {
       isLoading.value = true;
-      // Force a single quantity when adding a new item
+      // Force a single quantity when adding a new item.
       await _cartRepo.addItemToCart(
         vendorDishId: vendorDishId,
         quantity: 1,
@@ -180,32 +188,25 @@ class CartController extends GetxController {
     errorMessage.value = '';
 
     try {
-      // For debugging: see step-by-step
       print("1) Calling placeOrder...");
-
-      // 1) Place order on the backend
       final placeOrderResponse = await _orderRepo.placeOrder(
         {'exampleKey': 'exampleValue'},
         paymentMethod: 'card',
       );
-
       print("2) placeOrderResponse: $placeOrderResponse");
 
-      // 2) Check for 'razorpayOrder'
       final razorpayOrder = placeOrderResponse['razorpayOrder'];
       if (razorpayOrder == null) {
         throw 'No razorpayOrder found in the placeOrder response.';
       }
 
-      // 3) Initialize Razorpay
       _razorpay = Razorpay();
       _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, handlePaymentSuccess);
       _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, handlePaymentError);
       _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, handleExternalWallet);
 
-      // 4) Open the Razorpay checkout with the order_id from the backend
       var options = {
-        'key': 'rzp_test_fOAj9IBqaGPNY5',   // Your Razorpay test/public key
+        'key': 'rzp_test_fOAj9IBqaGPNY5', // Your Razorpay test/public key
         'order_id': razorpayOrder['id'],    // e.g. "order_PrImk42XFGwCAy"
         'name': 'My Awesome App',
         'description': 'Payment for your order',
@@ -233,7 +234,7 @@ class CartController extends GetxController {
     }
   }
 
-  /// Called when payment is successful in the Razorpay flow
+  /// Called when payment is successful in the Razorpay flow.
   void handlePaymentSuccess(PaymentSuccessResponse response) async {
     print("Payment Success: ${response.paymentId}");
     await verifyPayment(
@@ -243,7 +244,7 @@ class CartController extends GetxController {
     );
   }
 
-  /// Called when there is an error in the Razorpay flow
+  /// Called when there is an error in the Razorpay flow.
   void handlePaymentError(PaymentFailureResponse response) {
     print("Payment Error: ${response.code} - ${response.message}");
     Get.snackbar(
@@ -253,7 +254,7 @@ class CartController extends GetxController {
     );
   }
 
-  /// Called when an external wallet is selected, e.g. Paytm
+  /// Called when an external wallet is selected, e.g. Paytm.
   void handleExternalWallet(ExternalWalletResponse response) {
     print("External Wallet: ${response.walletName}");
     Get.snackbar(
@@ -263,7 +264,7 @@ class CartController extends GetxController {
     );
   }
 
-  /// Verify payment on the server
+  /// Verify payment on the server and refresh cart afterward.
   Future<void> verifyPayment({
     required String razorpayOrderId,
     required String razorpayPaymentId,
@@ -288,8 +289,9 @@ class CartController extends GetxController {
             'Your payment has been successfully verified!',
             snackPosition: SnackPosition.BOTTOM,
           );
+          // Refresh the cart after payment verification.
+          await fetchCartItems();
           // Navigate to the success screen.
-          // If your backend returns a separate order id, you can pass it here.
           Get.to(() => PaymentSuccessScreen(orderId: razorpayOrderId));
         } else {
           throw Exception('Payment verification failed: ${response['message']}');
@@ -304,6 +306,8 @@ class CartController extends GetxController {
             'Your payment has been successfully verified!',
             snackPosition: SnackPosition.BOTTOM,
           );
+          // Refresh the cart after payment verification.
+          await fetchCartItems();
           Get.to(() => PaymentSuccessScreen(orderId: razorpayOrderId));
         } else {
           throw Exception('Payment verification failed: ${response['message']}');

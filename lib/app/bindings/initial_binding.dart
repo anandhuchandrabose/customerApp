@@ -1,13 +1,11 @@
 // lib/app/bindings/initial_binding.dart
-
 import 'package:customerapp/app/controllers/cart_controller.dart';
+import 'package:customerapp/app/controllers/dashboard_controller.dart';
 import 'package:customerapp/app/controllers/profile_controller.dart';
+import 'package:customerapp/app/controllers/home_controller.dart';
+import 'package:customerapp/app/controllers/orders_controller.dart'; // Import the OrdersController
 import 'package:customerapp/app/data/repositories/order_repository.dart';
 import 'package:get/get.dart';
-// import 'package:vendorapp/app/controllers/cart_controller.dart';
-// import 'package:vendorapp/app/controllers/profile_controller.dart';
-// import 'package:vendorapp/app/data/repositories/order_repository.dart';
-// import '../controllers/cart_controller.dart';
 import '../data/services/api_service.dart';
 import '../data/repositories/auth_repository.dart';
 import '../data/repositories/restaurant_repository.dart';
@@ -41,23 +39,20 @@ class InitialBinding extends Bindings {
       () => HomeRepository(api: Get.find<ApiService>()),
       fenix: true,
     );
-    // Ensure CartRepository is available
-    Get.lazyPut<CartRepository>(
-        () => CartRepository(api: Get.find<ApiService>()),
-        fenix: true);
-    // Then register CartController
+
+    // Register CartController
     Get.lazyPut<CartController>(() => CartController(), fenix: true);
-    Get.put<OrderRepository>(OrderRepository(api: Get.find<ApiService>()),
-        permanent: true);
+    
+    // Register OrderRepository permanently
+    Get.put<OrderRepository>(
+      OrderRepository(api: Get.find<ApiService>()),
+      permanent: true,
+    );
 
     // 3) Register Controllers
     Get.lazyPut<ProfileController>(() => ProfileController());
-    // Get.lazyPut<CartController>(() => CartController());
-    // Register other controllers as needed
+    Get.lazyPut<HomeController>(() => HomeController(), fenix: true);
+    Get.lazyPut<DashboardController>(() => DashboardController(), fenix: true);
+    Get.lazyPut<OrdersController>(() => OrdersController(), fenix: true);
   }
 }
-
-
-
-
-//  'http://127.0.0.1:3000'),

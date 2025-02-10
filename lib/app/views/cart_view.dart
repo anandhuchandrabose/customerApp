@@ -1,112 +1,414 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:slide_to_act/slide_to_act.dart';
 import 'package:lottie/lottie.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../controllers/cart_controller.dart';
 
 class CartView extends GetView<CartController> {
   const CartView({Key? key}) : super(key: key);
 
+  // Primary color (matching the red tone in your screenshot).
+  static const Color kPrimaryColor = Color(0xFFFF3008);
+
   @override
   Widget build(BuildContext context) {
     final cartCtrl = Get.find<CartController>();
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        elevation: 2,
+        elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Get.back(),
         ),
-        title: const Text('Orders', style: TextStyle(color: Colors.black)),
+        title: Text(
+          'Checkout',
+          style: GoogleFonts.workSans(
+            color: Colors.black,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
         centerTitle: false,
       ),
-      backgroundColor: Colors.grey.shade100,
-
       body: Obx(() {
-        // 1) Loading or error
+        // 1) Loading state
         if (cartCtrl.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
         }
+        // 2) Error state
         if (cartCtrl.errorMessage.isNotEmpty) {
           return Center(
             child: Text(
               cartCtrl.errorMessage.value,
-              style: const TextStyle(color: Colors.red),
+              style: GoogleFonts.workSans(color: Colors.red, fontSize: 16),
             ),
           );
         }
-
-        // 2) Check if cart is empty => show Lottie-based empty state
+        // 3) Empty cart state
         if (cartCtrl.cartItems.isEmpty) {
           return _buildEmptyCart();
         }
 
-        // 3) Otherwise, show cart items
-        return _buildCartContent(context);
+        // 4) Normal state: show the checkout UI
+        return SingleChildScrollView(
+          child: Column(
+            children: [
+              // ===== STORE NAME =====
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  border: Border(bottom: BorderSide(color: Colors.black12)),
+                ),
+                child: Text(
+                  // For illustration, we’ll just hardcode "7-Eleven"
+                  // or you could do cartCtrl.vendorName if you have it.
+                  'Fresmo',
+                  style: GoogleFonts.workSans(
+                    color: Colors.black,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 18,
+                  ),
+                ),
+              ),
+
+              // ===== ADDRESS / DELIVERY / PHONE / GIFT =====
+              Container(
+                padding: const EdgeInsets.only(left: 16, right: 16, top: 12),
+                color: Colors.white,
+                child: Column(
+                  children: [
+                    // Address (if you have a real address in cartCtrl, use that)
+                    _menuItemRow(
+                      icon: Icons.location_on,
+                      title: cartCtrl.cartData['address'] ?? 
+                        '56 Miami Beach Promenade\nIluka WA 6028, Australia',
+                      onTap: () {
+                        // Implement "Change address" or detail screen
+                      },
+                    ),
+                    // const SizedBox(height: 8),
+                    // // Delivery instructions
+                    // _menuItemRow(
+                    //   icon: Icons.shopping_bag,
+                    //   title: 'Leave it at my door',
+                    //   subtitle: 'Add more details',
+                    //   onTap: () {
+                    //     // Possibly show a modal to edit instructions
+                    //   },
+                    // ),
+                    const SizedBox(height: 8),
+                    // Phone
+                    _menuItemRow(
+                      icon: Icons.phone,
+                      title: cartCtrl.cartData['phone'] ?? '(215) 268-8872',
+                      onTap: () {
+                        // Possibly let user edit phone number
+                      },
+                    ),
+                    // const SizedBox(height: 8),
+                    // // Send as a gift
+                    // _menuItemRow(
+                    //   icon: Icons.card_giftcard,
+                    //   title: 'Send as a gift',
+                    //   onTap: () {
+                    //     // Implement "Send as gift" flow
+                    //   },
+                    // ),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              ),
+
+              const Divider(height: 1, color: Colors.black12),
+
+              // ===== PROMOTION + REWARD PROGRESS =====
+              Container(
+                color: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Column(
+                  children: [
+                    // "Add a promotion" row
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Add a promotion',
+                          style: GoogleFonts.workSans(
+                            fontSize: 16,
+                            color: Colors.black,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const Icon(Icons.chevron_right, color: Colors.black38),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    // “$37 away from next $5 reward” progress
+                    // If you have real "remaining" data from cartCtrl,
+                    // you can reflect it here. Hardcoded for illustration:
+                    // Container(
+                    //   width: double.infinity,
+                    //   padding: const EdgeInsets.all(12),
+                    //   decoration: BoxDecoration(
+                    //     color: Colors.grey.shade100,
+                    //     borderRadius: BorderRadius.circular(8),
+                    //   ),
+                    //   child: Row(
+                    //     children: [
+                    //       Expanded(
+                    //         child: Text(
+                    //           '\$37 away from next \$5 reward\n7-Eleven',
+                    //           style: GoogleFonts.workSans(
+                    //             fontSize: 14,
+                    //             fontWeight: FontWeight.w400,
+                    //           ),
+                    //         ),
+                    //       ),
+                    //       // Example progress bar
+                    //       SizedBox(
+                    //         height: 8,
+                    //         width: 80,
+                    //         child: ClipRRect(
+                    //           borderRadius: BorderRadius.circular(4),
+                    //           child: LinearProgressIndicator(
+                    //             value: 0.25, // Hardcode or from cartCtrl
+                    //             backgroundColor: Colors.grey.shade300,
+                    //             color: kPrimaryColor,
+                    //           ),
+                    //         ),
+                    //       ),
+                    //     ],
+                    //   ),
+                    // ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // ===== SHOW CART ITEMS (grouped by mealType) =====
+              // If you want to hide item details at final checkout,
+              // you could remove or reduce this. But here’s your grouping logic:
+              _buildCartItemsSection(),
+
+              const SizedBox(height: 12),
+
+              // ===== FEES & ORDER SUMMARY =====
+              _buildOrderSummary(),
+
+              // // ===== PAYMENT ROW (Google Pay) =====
+              // Container(
+              //   color: Colors.white,
+              //   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              //   child: Row(
+              //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              //     children: [
+              //       Text(
+              //         'Payment',
+              //         style: GoogleFonts.workSans(
+              //           fontSize: 16,
+              //           fontWeight: FontWeight.w500,
+              //         ),
+              //       ),
+              //       Row(
+              //         children: [
+              //           // Hardcode "Google Pay" or fetch from cartCtrl if available
+              //           Text(
+              //             'Google Pay',
+              //             style: GoogleFonts.workSans(
+              //               fontSize: 16,
+              //               color: Colors.black54,
+              //             ),
+              //           ),
+              //           const SizedBox(width: 4),
+              //           const Icon(Icons.chevron_right, color: Colors.black38),
+              //         ],
+              //       ),
+              //     ],
+              //   ),
+              // ),
+
+              // // ===== DashPass Offer (optional) =====
+              // Container(
+              //   color: Colors.white,
+              //   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              //   child: Row(
+              //     children: [
+              //       Transform.scale(
+              //         scale: 1.2,
+              //         child: Checkbox(
+              //           value: false,
+              //           onChanged: (val) {},
+              //           shape: RoundedRectangleBorder(
+              //             borderRadius: BorderRadius.circular(4),
+              //           ),
+              //         ),
+              //       ),
+              //       const SizedBox(width: 8),
+              //       Expanded(
+              //         child: Column(
+              //           crossAxisAlignment: CrossAxisAlignment.start,
+              //           children: [
+              //             Text(
+              //               'Save \$3.68 on this order with DashPass',
+              //               style: GoogleFonts.workSans(
+              //                 fontSize: 15,
+              //                 fontWeight: FontWeight.w500,
+              //               ),
+              //             ),
+              //             Text(
+              //               '\$0 delivery fees on eligible orders',
+              //               style: GoogleFonts.workSans(
+              //                 fontSize: 14,
+              //                 color: Colors.black54,
+              //               ),
+              //             ),
+              //           ],
+              //         ),
+              //       ),
+              //     ],
+              //   ),
+              // ),
+
+              const SizedBox(height: 24),
+
+              // ===== SLIDE TO PAY (Place Order) =====
+              Container(
+                color: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                child: SlideAction(
+                  outerColor: kPrimaryColor,
+                  innerColor: Colors.white,
+                  text: "Slide to Pay",
+                  textStyle: GoogleFonts.workSans(
+                    fontSize: 16,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  onSubmit: () {
+                    // Trigger your actual payment flow:
+                    cartCtrl.initiatePayment();
+                    // For a quick demo, you might add a short delay & show a dialog:
+                    Future.delayed(const Duration(milliseconds: 300), () {
+                      Get.snackbar(
+                        'Success',
+                        'Your 7-Eleven order has been placed!',
+                        snackPosition: SnackPosition.BOTTOM,
+                      );
+                    });
+                  },
+                ),
+              ),
+
+              const SizedBox(height: 24),
+            ],
+          ),
+        );
       }),
+      // Remove the old bottomNavigationBar if you only want this final screen:
+      // bottomNavigationBar: ...
     );
   }
 
-  /// If the cart is not empty, build the list of grouped items + summary
-  Widget _buildCartContent(BuildContext context) {
+  // -----------------------------
+  // 1) Empty cart screen
+  // -----------------------------
+  Widget _buildEmptyCart() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: 200,
+              height: 200,
+              child: Lottie.asset(
+                'assets/lottie/empty_cart.json',
+                fit: BoxFit.contain,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Your Cart is Empty',
+              style: GoogleFonts.workSans(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Looks like you haven’t added anything yet.',
+              style: GoogleFonts.workSans(
+                fontSize: 14,
+                color: Colors.grey,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // -----------------------------
+  // 2) Builds the cart items section, grouped by mealType
+  // -----------------------------
+  Widget _buildCartItemsSection() {
     final cartCtrl = Get.find<CartController>();
     final cartItems = cartCtrl.cartItems;
 
     // Group items by mealType
     final groupedItems = _groupCartItemsByMealType(cartItems);
 
-    // If you have a breakdown in cartData
-    final subtotal       = cartCtrl.cartData['subtotal']       ?? 0;
-    final deliveryCharge = cartCtrl.cartData['deliveryCharge'] ?? 0;
-    final tax            = cartCtrl.cartData['tax']            ?? 0;
-    final platformFees   = cartCtrl.cartData['platformFees']   ?? 0;
-    final total          = cartCtrl.cartData['total']          ?? 0;
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.only(bottom: 16),
+    // If you want a title like "Items", you can do:
+    return Container(
+      color: Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ===== Title =====
-          Container(
-            color: Colors.white,
-            width: double.infinity,
+          // Title
+          Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            child: const Text(
+            child: Text(
               'Items',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              style: GoogleFonts.workSans(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
-
-          // ===== Display each mealType group =====
+          // Each mealType group
           ...groupedItems.entries.map((entry) {
             final mealType = entry.key; // e.g. "lunch", "dinner"
-            final items    = entry.value;
-
+            final items = entry.value;
             return Container(
-              color: Colors.white,
-              margin: const EdgeInsets.only(top: 8),
+              margin: const EdgeInsets.only(bottom: 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Meal Type Label
+                  // Meal Type label (e.g. "Dinner")
                   Padding(
-                    padding: const EdgeInsets.only(
-                      left: 16, right: 16, top: 10, bottom: 6,
-                    ),
+                    padding: const EdgeInsets.only(left: 16, right: 16, bottom: 6),
                     child: Text(
                       mealType.capitalizeFirst ?? mealType,
-                      style: const TextStyle(
+                      style: GoogleFonts.workSans(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                         color: Colors.orange,
                       ),
                     ),
                   ),
-                  // The items for this mealType
+                  // Items list
                   ListView.separated(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
@@ -120,284 +422,170 @@ class CartView extends GetView<CartController> {
                 ],
               ),
             );
-          }),
-
-          // ===== Address Section (Optional) =====
-          Container(
-            color: Colors.white,
-            margin: const EdgeInsets.only(top: 12),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Address',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  '91 Blvd, Colony Foberz, 75010 Paris',
-                  style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
-                ),
-                const SizedBox(height: 4),
-                GestureDetector(
-                  onTap: () {
-                    // "Add new address" logic
-                  },
-                  child: Text(
-                    '+ Add new address',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.orange.shade600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // ===== Order Summary =====
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            color: Colors.white,
-            child: Column(
-              children: [
-                // Label
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 16,
-                  ),
-                  child: Row(
-                    children: const [
-                      Text(
-                        'Order Summary',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      Spacer(),
-                    ],
-                  ),
-                ),
-                const Divider(height: 1),
-                _summaryRow('Subtotal',         subtotal.toStringAsFixed(2)),
-                const SizedBox(height: 4),
-                _summaryRow('Delivery Charge',  deliveryCharge.toString()),
-                const SizedBox(height: 4),
-                _summaryRow('Tax',              tax.toString()),
-                const SizedBox(height: 4),
-                _summaryRow('Platform Fees',    platformFees.toString()),
-                const Divider(height: 1),
-                _summaryRow('Total',            total.toStringAsFixed(2),
-                  isTotal: true,
-                ),
-              ],
-            ),
-          ),
-
-          // ===== Slide to Pay =====
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            child: SlideAction(
-              outerColor: Colors.orange,
-              innerColor: Colors.white,
-              text: "Slide to Pay",
-              textStyle: const TextStyle(
-                fontSize: 16,
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-              ),
-              onSubmit: () {
-                cartCtrl.initiatePayment();
-                return null;
-              },
-            ),
-          ),
+          }).toList(),
         ],
       ),
     );
   }
 
-  /// Build a single Cart Item row (with dish image, name, +/- buttons, total)
-  Widget _buildCartItemRow(Map<String, dynamic> item) {
-    final cartCtrl = Get.find<CartController>();
-    final quantity = item['quantity'] ?? 1;
-
-    final vendorDish = item['vendorDish'] as Map<String, dynamic>?;
-    final dish       = vendorDish?['dish'] as Map<String, dynamic>?; 
-    final dishName   = dish?['name'] ?? 'Unknown Dish';
-    final imageUrl   = dish?['imageUrl'] ?? '';
-    final mealType   = vendorDish?['mealType'] ?? ''; 
-    final vendorDishId = vendorDish?['id'] ?? '';
-
-    // Price 
-    // Possibly the server returns `vendorDish.vendorSpecificPrice`, or item['price'].
-    final priceStr = vendorDish?['vendorSpecificPrice']?.toString() ?? '0.00';
-    final priceDouble = double.tryParse(priceStr) ?? 0.0;
-    final lineTotal = priceDouble * quantity;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildDishImage(imageUrl),
-          const SizedBox(width: 12),
-
-          // Dish info + plus/minus
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Name
-                Text(
-                  dishName,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Price per: ₹${priceDouble.toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-                const SizedBox(height: 8),
-
-                // Stepper row
-                Row(
-                  children: [
-                    _circleButton(
-                      icon: Icons.remove,
-                      onTap: () {
-                        cartCtrl.decreaseItemQuantity(
-                          vendorDishId: vendorDishId,
-                          mealType: mealType,
-                        );
-                      },
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Text(
-                        '$quantity',
-                        style: const TextStyle(fontSize: 15),
-                      ),
-                    ),
-                    _circleButton(
-                      icon: Icons.add,
-                      onTap: () {
-                        cartCtrl.increaseItemQuantity(
-                          vendorDishId: vendorDishId,
-                          mealType: mealType,
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          // Line total
-          Text(
-            '₹${lineTotal.toStringAsFixed(2)}',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Lottie-based empty cart screen
-  Widget _buildEmptyCart() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Lottie Animation
-            SizedBox(
-              width: 200,
-              height: 200,
-              child: Lottie.asset(
-                'assets/lottie/empty_cart.json',
-                fit: BoxFit.contain,
-              ),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'Your Cart is Empty',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Looks like you haven’t added anything yet.',
-              style: TextStyle(fontSize: 14, color: Colors.grey),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            // Optional button...
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Group items by mealType
+  // Groups cart items by meal type. (Same as original logic)
   Map<String, List<Map<String, dynamic>>> _groupCartItemsByMealType(
-      List<Map<String, dynamic>> items) {
+    List<Map<String, dynamic>> items,
+  ) {
     final Map<String, List<Map<String, dynamic>>> grouped = {};
     for (final item in items) {
       final vendorDish = item['vendorDish'] ?? {};
-      final mealType   = vendorDish['mealType'] ?? 'Unknown';
+      final mealType = vendorDish['mealType'] ?? 'Unknown';
       grouped.putIfAbsent(mealType, () => []);
       grouped[mealType]!.add(item);
     }
     return grouped;
   }
 
-  /// Builds each summary row
-  Widget _summaryRow(String label, String value, {bool isTotal = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: Row(
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: isTotal ? 16 : 14,
-              fontWeight: isTotal ? FontWeight.w600 : FontWeight.w400,
-            ),
-          ),
-          const Spacer(),
-          Text(
-            '₹$value',
-            style: TextStyle(
-              fontSize: isTotal ? 16 : 14,
-              fontWeight: isTotal ? FontWeight.w600 : FontWeight.w400,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // Builds a single cart item row. (Same logic, new styling is minimal.)
+ Widget _buildCartItemRow(Map<String, dynamic> item) {
+  final cartCtrl = Get.find<CartController>();
+  final quantity = item['quantity'] ?? 1;
 
-  /// A small circular button for +/- quantity
+  final vendorDish = item['vendorDish'] ?? {};
+  final dish = vendorDish['dish'] ?? {};
+  final dishName = dish['name'] ?? 'Unknown Dish';
+  // Correctly retrieve the image from vendorDish
+  final imageUrl = vendorDish['image'] ?? '';
+  final mealType = vendorDish['mealType'] ?? '';
+  final vendorDishId = vendorDish['id'] ?? '';
+
+  final priceStr = vendorDish['vendorSpecificPrice']?.toString() ?? '0.00';
+  final priceDouble = double.tryParse(priceStr) ?? 0.0;
+  final lineTotal = priceDouble * quantity;
+
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildDishImage(imageUrl),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                dishName,
+                style: GoogleFonts.workSans(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Price per: ₹${priceDouble.toStringAsFixed(2)}',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  _circleButton(
+                    icon: Icons.remove,
+                    onTap: () {
+                      cartCtrl.decreaseItemQuantity(
+                        vendorDishId: vendorDishId,
+                        mealType: mealType,
+                      );
+                    },
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Text(
+                      '$quantity',
+                      style: GoogleFonts.workSans(fontSize: 15),
+                    ),
+                  ),
+                  _circleButton(
+                    icon: Icons.add,
+                    onTap: () {
+                      cartCtrl.increaseItemQuantity(
+                        vendorDishId: vendorDishId,
+                        mealType: mealType,
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        Text(
+          '₹${lineTotal.toStringAsFixed(2)}',
+          style: GoogleFonts.workSans(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+
+  // Show dish image or fallback icon if no URL.
+ Widget _buildDishImage(String imageUrl) {
+  if (imageUrl.isNotEmpty) {
+    // Check if the image string is a base64 encoded image
+    if (imageUrl.startsWith("data:image")) {
+      // Remove the data URI scheme prefix
+      final base64Str = imageUrl.split(",").last;
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.memory(
+          base64Decode(base64Str),
+          width: 60,
+          height: 60,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => Container(
+            width: 60,
+            height: 60,
+            color: Colors.grey.shade300,
+            child: const Icon(Icons.broken_image),
+          ),
+        ),
+      );
+    } else {
+      // If it's not a base64 string, assume it's a normal URL
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.network(
+          imageUrl,
+          width: 60,
+          height: 60,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => Container(
+            width: 60,
+            height: 60,
+            color: Colors.grey.shade300,
+            child: const Icon(Icons.broken_image),
+          ),
+        ),
+      );
+    }
+  }
+  // Fallback widget if no image is provided
+  return Container(
+    width: 60,
+    height: 60,
+    decoration: BoxDecoration(
+      color: Colors.orange.shade50,
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: const Icon(Icons.fastfood, color: Colors.orange, size: 30),
+  );
+}
+
   Widget _circleButton({
     required IconData icon,
     required VoidCallback onTap,
@@ -422,34 +610,106 @@ class CartView extends GetView<CartController> {
     );
   }
 
-  /// Dish image with a fallback if empty
-  Widget _buildDishImage(String imageUrl) {
-    if (imageUrl.isNotEmpty) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Image.network(
-          imageUrl,
-          width: 60,
-          height: 60,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => Container(
-            width: 60,
-            height: 60,
-            color: Colors.grey.shade300,
-            child: const Icon(Icons.broken_image),
-          ),
-        ),
-      );
-    }
-    // Fallback if no URL
+  // -----------------------------
+  // 3) Builds the fees + order summary
+  // -----------------------------
+  Widget _buildOrderSummary() {
+    final cartCtrl = Get.find<CartController>();
+
+    // Retrieve real data from your cartCtrl
+    final subtotal = cartCtrl.cartData['subtotal'] ?? 0.0;
+    final deliveryFee = cartCtrl.cartData['deliveryCharge'] ?? 0.0;
+    final serviceFee = cartCtrl.cartData['tax'] ?? 0.0; // or cartData['serviceFee']
+    final platformFees = cartCtrl.cartData['platformFees'] ?? 0.0;
+    final total = cartCtrl.cartData['total'] ?? 0.0;
+
     return Container(
-      width: 60,
-      height: 60,
-      decoration: BoxDecoration(
-        color: Colors.orange.shade50,
-        borderRadius: BorderRadius.circular(8),
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      child: Column(
+        children: [
+          _rowItem('Subtotal', '₹${subtotal.toStringAsFixed(2)}'),
+          _rowItem('Delivery fee', '₹${deliveryFee.toStringAsFixed(2)}'),
+          _rowItem('Service Fee', '₹${serviceFee.toStringAsFixed(2)}'),
+          // If you have a separate "Platform Fees"
+          if (platformFees != 0.0)
+            _rowItem('Platform Fees', '₹${platformFees.toStringAsFixed(2)}'),
+          const SizedBox(height: 8),
+          const Divider(color: Colors.black12),
+          const SizedBox(height: 8),
+          _rowItem(
+            'Total',
+            '₹${total.toStringAsFixed(2)}',
+            bold: true,
+          ),
+        ],
       ),
-      child: const Icon(Icons.fastfood, color: Colors.orange, size: 30),
+    );
+  }
+
+  // Helper for summary row
+  Widget _rowItem(String label, String amount, {bool bold = false}) {
+    final style = GoogleFonts.workSans(
+      fontSize: bold ? 16 : 15,
+      fontWeight: bold ? FontWeight.w600 : FontWeight.w400,
+    );
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Text(label, style: style),
+          const Spacer(),
+          Text(amount, style: style),
+        ],
+      ),
+    );
+  }
+
+  // -----------------------------
+  // 4) Reusable row for address & phone, etc.
+  // -----------------------------
+  Widget _menuItemRow({
+    required IconData icon,
+    required String title,
+    String? subtitle,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Row(
+        crossAxisAlignment:
+            subtitle != null ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+        children: [
+          Icon(icon, color: Colors.black54),
+          const SizedBox(width: 12),
+          Expanded(
+            child: subtitle == null
+                ? Text(
+                    title,
+                    style: GoogleFonts.workSans(fontSize: 15),
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: GoogleFonts.workSans(fontSize: 15),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: GoogleFonts.workSans(
+                          fontSize: 14,
+                          color: Colors.black45,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+          const SizedBox(width: 8),
+          const Icon(Icons.chevron_right, color: Colors.black38),
+        ],
+      ),
     );
   }
 }

@@ -6,4 +6,6 @@ abstract class AppRoutes {
   static const home = '/home';
   static const restaurantDetails = '/restaurant-details';
   static const notFound = '/not-found';
+  static const cart = '/cart';
+  static const profile = '/restaurants-by-category';
 }

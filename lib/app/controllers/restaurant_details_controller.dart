@@ -1,11 +1,13 @@
+// lib/app/controllers/restaurant_details_controller.dart
+
 import 'dart:developer';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import '../data/repositories/restaurant_repository.dart';
 import '../controllers/cart_controller.dart';
 
 class RestaurantDetailsController extends GetxController {
   final RestaurantRepository _restaurantRepo = Get.find<RestaurantRepository>();
-  // If you need to call CartController here:
   final CartController cartCtrl = Get.find<CartController>();
 
   // Basic fields
@@ -17,6 +19,7 @@ class RestaurantDetailsController extends GetxController {
 
   // Restaurant display
   var restaurantName = 'Restaurant'.obs;
+  // Modified: Check for "vendorImage" first then "image"
   var restaurantImageUrl = ''.obs;
   var rating = 0.0.obs;
   var servingTime = ''.obs;
@@ -25,7 +28,9 @@ class RestaurantDetailsController extends GetxController {
   void onInit() {
     super.onInit();
     final args = Get.arguments ?? {};
-    vendorId.value = args['vendorId'] ?? '';
+    final storage = GetStorage();
+    // Try to get vendorId from navigation arguments, otherwise from persistent storage.
+    vendorId.value = args['vendorId'] ?? storage.read('vendorId') ?? '';
 
     if (vendorId.value.isEmpty) {
       errorMessage.value = 'No vendorId provided.';
@@ -35,9 +40,6 @@ class RestaurantDetailsController extends GetxController {
     }
   }
 
-  /// Use the existing `fetchDishes` method from your RestaurantRepository.
-  /// (If your backend only returns dishes, you might not get restaurantName/image/etc.)
-  /// Adapt as needed based on your real API response.
   Future<void> fetchRestaurantAndDishes() async {
     try {
       isLoading.value = true;
@@ -47,30 +49,22 @@ class RestaurantDetailsController extends GetxController {
       log('fetchDishes Response: $data');
 
       if (data['success'] == true) {
-        // Suppose the response looks like:
-        // { 
-        //   "success": true,
-        //   "data": {
-        //       "restaurant": { "name": "...", "image": "...", "rating": 4.5, ... },
-        //       "dishes": [ ... ]
-        //   }
-        // }
+        // Assume the API returns restaurant details directly inside "data"
+        final restaurantData = data['data'] ?? {};
 
-        // If your real API does not return restaurant data, skip these lines:
-        final restaurantData = data['data']?['restaurant'] ?? {};
-        restaurantName.value = restaurantData['name'] ?? 'Unknown';
-        restaurantImageUrl.value = restaurantData['image'] ?? '';
-        rating.value = double.tryParse(
-          restaurantData['rating']?.toString() ?? '0'
-        ) ?? 0.0;
+        // Use "vendorName" for the restaurant (vendor) name.
+        restaurantName.value = restaurantData['vendorName'] ?? 'Unknown';
+        // Check for "vendorImage" first; if not provided, fallback to "image"
+        restaurantImageUrl.value = restaurantData['vendorImage'] ?? restaurantData['image'] ?? '';
+        rating.value = double.tryParse(restaurantData['rating']?.toString() ?? '0') ?? 0.0;
+        // Set servingTime; you can adjust this default as needed.
+        // servingTime.value = restaurantData['servingTime'] ?? 'Lunch serves between 12 PM to 2PM';
 
-        servingTime.value = restaurantData['servingTime'] ?? '12 PM - 2 PM';
-
-        final dishesData = data['data']?['dishes'] ?? [];
+        final dishesData = restaurantData['dishes'] ?? [];
         if (dishesData is List) {
           dishes.value = List<Map<String, dynamic>>.from(dishesData);
         }
-
+        // Optionally set an error message if no dishes are available.
         if (dishes.isEmpty && data['message'] != null) {
           errorMessage.value = data['message'];
         }

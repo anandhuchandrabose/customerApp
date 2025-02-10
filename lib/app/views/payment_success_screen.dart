@@ -48,8 +48,9 @@ class PaymentSuccessScreen extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  // Navigate to Home and restore Bottom Navigation Bar
-                  Get.offAllNamed('/home', arguments: {'showBottomNav': true});
+                  // Navigate to Home and pass an argument to restore the bottom nav.
+                  Get.offAllNamed('/dashboard',
+                      arguments: {'showBottomNav': true});
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color(0xFFFF3008), // Hex color #FF3008

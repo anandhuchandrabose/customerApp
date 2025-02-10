@@ -1,6 +1,6 @@
 name: customerapp
 description: "A new Flutter project."
-publish_to: 'none'
+publish_to: "none"
 version: 0.1.0
 
 environment:
@@ -20,7 +20,7 @@ dependencies:
   fluttertoast: ^8.2.10
   lottie: ^2.2.0
   pin_code_fields: ^8.0.1
-
+  google_fonts: ^6.2.1
 
 dev_dependencies:
   flutter_test:
@@ -32,7 +32,8 @@ flutter:
   assets:
     - assets/lottie/empty_cart.json
     - assets/lottie/order_complete.json
+    - assets/ads.png
+    - assets/icons/veg.png
+    - assets/icons/non-veg.png
 
 
-    
-    

@@ -5,24 +5,50 @@ import 'dart:math';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../controllers/dashboard_controller.dart';
 import '../controllers/home_controller.dart';
+import '../controllers/cart_controller.dart';
+// import 'package:get/get.dart';
+// import 'package:google_fonts/google_fonts.dart';
+// Ensure HomeView already imports controllers if needed
 
 class HomeView extends GetView<HomeController> {
   const HomeView({Key? key}) : super(key: key);
 
+  static const Color kPrimaryColor = Color(0xFFFF3008);
+
   @override
   Widget build(BuildContext context) {
     final homeCtrl = Get.find<HomeController>();
+    final cartCtrl = Get.find<CartController>();
 
     final placeholderOptions = [
       'Search for bakery...',
-      'Search for sweets...',
-      'Search for breakfast...',
-      'Search for lunch...',
-      'Search for dinner...',
+      'Discover sweets...',
+      'Find breakfast options...',
+      'Looking for lunch?',
+      'Dinner ideas...',
+      'Craving a snack...',
+      'Hungry? Search here!',
     ];
     final randomPlaceholder =
         placeholderOptions[Random().nextInt(placeholderOptions.length)];
+
+    // Dummy advertisement list.
+    final adList = [
+      {
+        'image': '/ads.png',
+        'title': 'Special Offer!',
+        'description':
+            'Get up to 50% off on your first order. Hurry up, limited time offer!',
+      },
+      {
+        'image': '',
+        'title': 'New Deals!',
+        'description': 'Check out our latest deals on your favorite items.',
+      },
+    ];
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -34,230 +60,391 @@ class HomeView extends GetView<HomeController> {
           return Center(
             child: Text(
               'Error: ${homeCtrl.errorMessage.value}',
-              style: const TextStyle(color: Colors.red, fontSize: 16),
+              style: GoogleFonts.workSans(
+                color: Colors.red,
+                fontSize: 16,
+              ),
             ),
           );
         }
 
-        final vendors = homeCtrl.vendors; // from controller
-        final categories = homeCtrl.categories; // from controller
+        final vendors = homeCtrl.vendors;
+        final categories = homeCtrl.categories;
 
-        return SingleChildScrollView(
-          child: Column(
-            children: [
-              // =======================================
-              // Banner & Search Section (unchanged)
-              // =======================================
-              Stack(
-                children: [
-                  // Banner with gradient
-                  Container(
-                    height: MediaQuery.of(context).size.height * 0.35,
+        return ScrollConfiguration(
+          behavior: NoScrollGlow(),
+          child: CustomScrollView(
+            slivers: [
+              // ===== SliverAppBar with location & search =====
+              SliverAppBar(
+                pinned: true,
+                expandedHeight: 150,
+                backgroundColor: kPrimaryColor,
+                flexibleSpace: FlexibleSpaceBar(
+                  collapseMode: CollapseMode.pin,
+                  background: Container(
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [Color(0xFF00BCD4), Color(0xFF00838F)],
+                        colors: [
+                          kPrimaryColor,
+                          Color.fromARGB(255, 240, 99, 71),
+                        ],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                       ),
                     ),
-                  ),
-                  // Location Selector
-                  Positioned(
-                    top: kToolbarHeight - 10,
-                    left: 16,
-                    right: 16,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.location_pin, color: Colors.white),
-                            const SizedBox(width: 8),
-                            GestureDetector(
-                              onTap: () {
-                                // Trigger location selection logic
-                              },
-                              child: const Text(
-                                'Select Location',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                    child: SafeArea(
+                      child: Padding(
+                        padding: const EdgeInsets.only(
+                          top: 36,
+                          left: 16,
+                          right: 16,
+                        ),
+                        child: Align(
+                          alignment: Alignment.topCenter,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.location_pin,
+                                    color: Colors.white,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  GestureDetector(
+                                    onTap: () {
+                                      // Trigger location selection logic
+                                    },
+                                    child: Text(
+                                      'Select Location',
+                                      style: GoogleFonts.workSans(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.account_circle,
-                              color: Colors.white),
-                          onPressed: () {},
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Search Bar
-                  Positioned(
-                    top: MediaQuery.of(context).size.height * 0.23,
-                    left: 16,
-                    right: 16,
-                    child: Material(
-                      elevation: 5,
-                      borderRadius: BorderRadius.circular(12),
-                      child: TextField(
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: Colors.white,
-                          hintText: randomPlaceholder,
-                          hintStyle: const TextStyle(color: Colors.grey),
-                          prefixIcon:
-                              const Icon(Icons.search, color: Colors.grey),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.account_circle,
+                                  color: Colors.white,
+                                ),
+                                onPressed: () {},
+                              ),
+                            ],
                           ),
                         ),
                       ),
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // =======================================
-              // Categories Section
-              // =======================================
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Explore Categories',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                ),
+                bottom: PreferredSize(
+                  preferredSize: const Size.fromHeight(60),
+                  child: Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Material(
+                      elevation: 5,
+                      borderRadius: BorderRadius.circular(50),
+                      child: TextField(
+                        decoration: InputDecoration(
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 16,
+                            horizontal: 20,
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
+                          hintText: randomPlaceholder,
+                          hintStyle: GoogleFonts.workSans(
+                            color: Colors.grey,
+                          ),
+                          prefixIcon:
+                              const Icon(Icons.search, color: Colors.grey),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(50),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                        // Trigger search on submission.
+                        onSubmitted: (value) {
+                          if (value.trim().isNotEmpty) {
+                            Get.toNamed('/search-results',
+                                arguments: {'searchKey': value.trim()});
+                          }
+                        },
                       ),
                     ),
-                    const SizedBox(height: 10),
-
-                    // If no categories, show a fallback
-                    if (categories.isEmpty)
-                      const Text('No categories found.')
-                    else
-                      SizedBox(
-                        height: 100,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: categories.length,
-                          itemBuilder: (context, index) {
-                            final cat = categories[index];
-                            final catName = cat['name'] ?? 'No Name';
-                            // We might have "data:image/png;base64,..."
-                            final catImage = cat['image'] ?? '';
-
-                            return _buildCategoryCard(catName, catImage);
-                          },
-                        ),
-                      ),
-                  ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 16),
 
-              // =======================================
-              // Vendor Section
-              // =======================================
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Nearby Kitchens',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+              // ===== Categories Section =====
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Categories',
+                        style: GoogleFonts.workSans(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
+                      const SizedBox(height: 10),
+                      if (categories.isEmpty)
+                        Text(
+                          'No categories found.',
+                          style: GoogleFonts.workSans(),
+                        )
+                      else
+                        SizedBox(
+                            height: 90,
+                            child: ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: categories.length,
+                              separatorBuilder: (context, index) =>
+                                  const SizedBox(width: 12),
+                              itemBuilder: (context, index) {
+                                final cat = categories[index];
+                                final catName = cat['name'] ?? 'No Name';
+                                final catImage = cat['image'] ?? '';
+
+                                return GestureDetector(
+                                  onTap: () {
+                                    // Navigate to the new screen that lists vendors for this category
+                                    Get.toNamed(
+                                      '/category-vendors',
+                                      arguments: catName,
+                                    );
+                                  },
+                                  child: _buildCategoryCard(catName, catImage),
+                                );
+                              },
+                            )),
+                    ],
+                  ),
+                ),
+              ),
+
+              // ===== Advertisement / Offers Cards =====
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: SizedBox(
+                    height: 180,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.only(right: 16),
+                      itemCount: adList.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(width: 16),
+                      itemBuilder: (context, index) {
+                        final ad = adList[index];
+                        return _buildAdCard(context, ad);
+                      },
                     ),
-                    const SizedBox(height: 10),
-                    if (vendors.isEmpty)
-                      const Center(child: Text('No vendors found.'))
-                    else
-                      Column(
-                        children: vendors.map((vendor) {
-                          final vendorId = vendor['id'] ?? '';
-                          final name = vendor['kitchenName'] ?? 'No Name';
-                          final imageUrl =
-                              vendor['profile']?['profileImage'] ?? '';
-                          final rating = vendor['rating']?.toString() ?? '4.5';
-                          final isVeg = vendor['isVeg'] ?? false;
+                  ),
+                ),
+              ),
 
-                          return _buildKitchenCard(
-                            name,
-                            imageUrl,
-                            rating,
-                            isVeg,
-                            vendorId,
-                          );
-                        }).toList(),
+              // ===== Vendors Section =====
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Nearby Kitchens',
+                        style: GoogleFonts.workSans(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                  ],
+                      const SizedBox(height: 10),
+                      if (vendors.isEmpty)
+                        Center(
+                          child: Text(
+                            'No vendors found.',
+                            style: GoogleFonts.workSans(),
+                          ),
+                        )
+                      else
+                        Column(
+                          children: vendors.map((vendor) {
+                            final vendorId = vendor['id'] ?? '';
+                            final name = vendor['kitchenName'] ?? 'No Name';
+                            final imageUrl =
+                                vendor['profile']?['profileImage'] ?? '';
+                            final rating =
+                                vendor['rating']?.toString() ?? '4.5';
+                            final isVeg = vendor['isVeg'] ?? false;
+
+                            return _buildKitchenCard(
+                              name,
+                              imageUrl,
+                              rating,
+                              isVeg,
+                              vendorId,
+                            );
+                          }).toList(),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ],
           ),
         );
       }),
+      // ===== Bottom Nav: View Cart popup if items in cart =====
+      bottomNavigationBar: Obx(() {
+        final int itemCount = cartCtrl.totalItemCount;
+        if (itemCount == 0) return const SizedBox.shrink();
+        return InkWell(
+          onTap: () {
+            final dashboardCtrl = Get.find<DashboardController>();
+            dashboardCtrl.changeTabIndex(1); // Switch to Cart tab.
+            // Optionally, pop the current RestaurantDetailsView if needed:
+            Get.back();
+          },
+          child: Container(
+            margin: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            decoration: BoxDecoration(
+              color: kPrimaryColor,
+              borderRadius: BorderRadius.circular(50),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Icon(Icons.shopping_cart, color: Colors.white, size: 24),
+                Text(
+                  'View Cart',
+                  style: GoogleFonts.workSans(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  '$itemCount',
+                  style: GoogleFonts.workSans(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }),
     );
   }
 
-  // Category Card
-  // Category Card
+  // ---------------------------
+  // Category Card Widget
+  // ---------------------------
   Widget _buildCategoryCard(String catName, String base64Image) {
-    // Decode base64 image
     Uint8List? catImageBytes;
     try {
       if (base64Image.contains(',')) {
         base64Image = base64Image.split(',').last;
       }
       catImageBytes = base64Decode(base64Image);
-    } catch (e) {
+    } catch (_) {
       catImageBytes = null;
     }
 
     return Padding(
-      padding: const EdgeInsets.only(right: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
+          // Circle image (or icon placeholder)
           ClipRRect(
             borderRadius: BorderRadius.circular(30),
             child: Container(
               width: 60,
               height: 60,
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-              ),
-              child: (catImageBytes != null)
-                  ? Image.memory(
-                      catImageBytes,
-                      fit: BoxFit.cover, // Ensure the image fills the container
-                    )
+              color: Colors.grey[200],
+              child: catImageBytes != null
+                  ? Image.memory(catImageBytes, fit: BoxFit.cover)
                   : const Icon(Icons.fastfood, size: 30, color: Colors.grey),
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            catName,
-            style: const TextStyle(fontSize: 14),
-            textAlign: TextAlign.center,
+          const SizedBox(height: 6),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 70),
+            child: Text(
+              catName,
+              style: GoogleFonts.workSans(fontSize: 13),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+            ),
           ),
         ],
       ),
     );
   }
 
-  // Kitchen Card
+  // ---------------------------
+  // Ad / Offers Card
+  // ---------------------------
+  Widget _buildAdCard(BuildContext context, Map<String, dynamic> ad) {
+    final String imageUrl = ad['image'] as String;
+    return SizedBox(
+      width: MediaQuery.of(context).size.width * 0.8,
+      height: 180,
+      child: Card(
+        elevation: 3,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        clipBehavior: Clip.antiAlias,
+        child: imageUrl.isNotEmpty
+            ? ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.asset(
+                  imageUrl,
+                  width: double.infinity,
+                  height: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: Colors.grey[300],
+                      child: const Icon(
+                        Icons.local_offer,
+                        color: Colors.grey,
+                        size: 40,
+                      ),
+                    );
+                  },
+                ),
+              )
+            : Container(
+                color: Colors.grey[300],
+                child: const Icon(
+                  Icons.local_offer,
+                  color: Colors.grey,
+                  size: 40,
+                ),
+              ),
+      ),
+    );
+  }
+
+  // ---------------------------
+  // Kitchen Card (Vendor)
+  // ---------------------------
   Widget _buildKitchenCard(
     String name,
     String base64Image,
@@ -265,20 +452,18 @@ class HomeView extends GetView<HomeController> {
     bool isVeg,
     String vendorId,
   ) {
-    // If you have base64 images for vendor as well, decode them
     Uint8List? vendorImageBytes;
     try {
       if (base64Image.contains(',')) {
         base64Image = base64Image.split(',').last;
       }
       vendorImageBytes = base64Decode(base64Image);
-    } catch (e) {
+    } catch (_) {
       vendorImageBytes = null;
     }
 
     return GestureDetector(
       onTap: () {
-        // Navigate to the kitchen details page with vendorId
         Get.toNamed(
           '/restaurant-details',
           arguments: {
@@ -304,67 +489,73 @@ class HomeView extends GetView<HomeController> {
           ],
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Image Section
+            // Top image
             ClipRRect(
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(12)),
               child: AspectRatio(
-                aspectRatio: 3 / 2, // Maintains image proportions
-                child: (vendorImageBytes != null)
+                aspectRatio: 4 / 3,
+                child: vendorImageBytes != null
                     ? Image.memory(
                         vendorImageBytes,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
+                        errorBuilder: (ctx, error, stack) => Container(
                           color: Colors.grey.shade300,
-                          child: const Icon(Icons.broken_image,
-                              size: 50, color: Colors.grey),
+                          child: const Icon(
+                            Icons.broken_image,
+                            size: 50,
+                            color: Colors.grey,
+                          ),
                         ),
                       )
                     : Container(
                         color: Colors.grey.shade300,
-                        child: const Icon(Icons.image,
-                            size: 50, color: Colors.grey),
+                        child: const Icon(
+                          Icons.image,
+                          size: 50,
+                          color: Colors.grey,
+                        ),
                       ),
               ),
             ),
-            // Info Section
+            // Bottom info row
             Padding(
               padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
                 children: [
-                  // Kitchen Name
-                  Text(
-                    name,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
+                  // Kitchen name
+                  Expanded(
+                    child: Text(
+                      name,
+                      style: GoogleFonts.workSans(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
-                  // Rating and Veg/Non-Veg Indicator
+                  // Rating + Veg/NonVeg
                   Row(
                     children: [
-                      const Icon(Icons.star, color: Colors.amber, size: 16),
+                      const Icon(Icons.star, color: Colors.amber, size: 14),
                       const SizedBox(width: 4),
                       Text(
                         rating,
-                        style: const TextStyle(fontSize: 14),
+                        style: GoogleFonts.workSans(fontSize: 14),
                       ),
-                      const Spacer(),
-                      Icon(
-                        Icons.circle,
-                        color: isVeg ? Colors.green : Colors.red,
-                        size: 12,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        isVeg ? 'Veg' : 'Non-Veg',
-                        style: const TextStyle(fontSize: 14),
+                      const SizedBox(width: 8),
+                      Image.asset(
+                        isVeg ? 'icons/veg.png' : 'icons/non-veg.png',
+                        height: 18,
+                        width: 18,
+                        errorBuilder: (_, __, ___) => Icon(
+                          isVeg ? Icons.eco : Icons.no_food,
+                          size: 18,
+                          color: isVeg ? Colors.green : Colors.red,
+                        ),
                       ),
                     ],
                   ),
@@ -375,5 +566,16 @@ class HomeView extends GetView<HomeController> {
         ),
       ),
     );
+  }
+}
+
+// Custom ScrollBehavior to remove overscroll glow
+class NoScrollGlow extends ScrollBehavior {
+  Widget buildViewportChrome(
+    BuildContext context,
+    Widget child,
+    AxisDirection axisDirection,
+  ) {
+    return child;
   }
 }
