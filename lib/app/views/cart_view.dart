@@ -41,12 +41,40 @@ class CartView extends GetView<CartController> {
         if (cartCtrl.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
         }
-        // 2) Error state
+        // 2) Error state: Show error message with a retry button.
         if (cartCtrl.errorMessage.isNotEmpty) {
           return Center(
-            child: Text(
-              cartCtrl.errorMessage.value,
-              style: GoogleFonts.workSans(color: Colors.red, fontSize: 16),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    cartCtrl.errorMessage.value,
+                    style: GoogleFonts.workSans(
+                      color: Colors.red,
+                      fontSize: 16,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  ElevatedButton(
+                    onPressed: () {
+                      cartCtrl.fetchCartItems();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: kPrimaryColor,
+                    ),
+                    child: Text(
+                      'Retry',
+                      style: GoogleFonts.workSans(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  )
+                ],
+              ),
             ),
           );
         }
@@ -68,8 +96,7 @@ class CartView extends GetView<CartController> {
                   border: Border(bottom: BorderSide(color: Colors.black12)),
                 ),
                 child: Text(
-                  // For illustration, we’ll just hardcode "7-Eleven"
-                  // or you could do cartCtrl.vendorName if you have it.
+                  // For illustration, we’ll just hardcode "Fresmo"
                   'Fresmo',
                   style: GoogleFonts.workSans(
                     color: Colors.black,
@@ -79,33 +106,21 @@ class CartView extends GetView<CartController> {
                 ),
               ),
 
-              // ===== ADDRESS / DELIVERY / PHONE / GIFT =====
+              // ===== ADDRESS / DELIVERY / PHONE =====
               Container(
                 padding: const EdgeInsets.only(left: 16, right: 16, top: 12),
                 color: Colors.white,
                 child: Column(
                   children: [
-                    // Address (if you have a real address in cartCtrl, use that)
                     _menuItemRow(
                       icon: Icons.location_on,
-                      title: cartCtrl.cartData['address'] ?? 
-                        '56 Miami Beach Promenade\nIluka WA 6028, Australia',
+                      title: cartCtrl.cartData['address'] ??
+                          '56 Miami Beach Promenade\nIluka WA 6028, Australia',
                       onTap: () {
                         // Implement "Change address" or detail screen
                       },
                     ),
-                    // const SizedBox(height: 8),
-                    // // Delivery instructions
-                    // _menuItemRow(
-                    //   icon: Icons.shopping_bag,
-                    //   title: 'Leave it at my door',
-                    //   subtitle: 'Add more details',
-                    //   onTap: () {
-                    //     // Possibly show a modal to edit instructions
-                    //   },
-                    // ),
                     const SizedBox(height: 8),
-                    // Phone
                     _menuItemRow(
                       icon: Icons.phone,
                       title: cartCtrl.cartData['phone'] ?? '(215) 268-8872',
@@ -113,15 +128,6 @@ class CartView extends GetView<CartController> {
                         // Possibly let user edit phone number
                       },
                     ),
-                    // const SizedBox(height: 8),
-                    // // Send as a gift
-                    // _menuItemRow(
-                    //   icon: Icons.card_giftcard,
-                    //   title: 'Send as a gift',
-                    //   onTap: () {
-                    //     // Implement "Send as gift" flow
-                    //   },
-                    // ),
                     const SizedBox(height: 16),
                   ],
                 ),
@@ -135,7 +141,6 @@ class CartView extends GetView<CartController> {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Column(
                   children: [
-                    // "Add a promotion" row
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -151,43 +156,7 @@ class CartView extends GetView<CartController> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    // “$37 away from next $5 reward” progress
-                    // If you have real "remaining" data from cartCtrl,
-                    // you can reflect it here. Hardcoded for illustration:
-                    // Container(
-                    //   width: double.infinity,
-                    //   padding: const EdgeInsets.all(12),
-                    //   decoration: BoxDecoration(
-                    //     color: Colors.grey.shade100,
-                    //     borderRadius: BorderRadius.circular(8),
-                    //   ),
-                    //   child: Row(
-                    //     children: [
-                    //       Expanded(
-                    //         child: Text(
-                    //           '\$37 away from next \$5 reward\n7-Eleven',
-                    //           style: GoogleFonts.workSans(
-                    //             fontSize: 14,
-                    //             fontWeight: FontWeight.w400,
-                    //           ),
-                    //         ),
-                    //       ),
-                    //       // Example progress bar
-                    //       SizedBox(
-                    //         height: 8,
-                    //         width: 80,
-                    //         child: ClipRRect(
-                    //           borderRadius: BorderRadius.circular(4),
-                    //           child: LinearProgressIndicator(
-                    //             value: 0.25, // Hardcode or from cartCtrl
-                    //             backgroundColor: Colors.grey.shade300,
-                    //             color: kPrimaryColor,
-                    //           ),
-                    //         ),
-                    //       ),
-                    //     ],
-                    //   ),
-                    // ),
+                    // You can add promotion/reward progress if available.
                   ],
                 ),
               ),
@@ -195,88 +164,12 @@ class CartView extends GetView<CartController> {
               const SizedBox(height: 12),
 
               // ===== SHOW CART ITEMS (grouped by mealType) =====
-              // If you want to hide item details at final checkout,
-              // you could remove or reduce this. But here’s your grouping logic:
               _buildCartItemsSection(),
 
               const SizedBox(height: 12),
 
               // ===== FEES & ORDER SUMMARY =====
               _buildOrderSummary(),
-
-              // // ===== PAYMENT ROW (Google Pay) =====
-              // Container(
-              //   color: Colors.white,
-              //   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              //   child: Row(
-              //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              //     children: [
-              //       Text(
-              //         'Payment',
-              //         style: GoogleFonts.workSans(
-              //           fontSize: 16,
-              //           fontWeight: FontWeight.w500,
-              //         ),
-              //       ),
-              //       Row(
-              //         children: [
-              //           // Hardcode "Google Pay" or fetch from cartCtrl if available
-              //           Text(
-              //             'Google Pay',
-              //             style: GoogleFonts.workSans(
-              //               fontSize: 16,
-              //               color: Colors.black54,
-              //             ),
-              //           ),
-              //           const SizedBox(width: 4),
-              //           const Icon(Icons.chevron_right, color: Colors.black38),
-              //         ],
-              //       ),
-              //     ],
-              //   ),
-              // ),
-
-              // // ===== DashPass Offer (optional) =====
-              // Container(
-              //   color: Colors.white,
-              //   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              //   child: Row(
-              //     children: [
-              //       Transform.scale(
-              //         scale: 1.2,
-              //         child: Checkbox(
-              //           value: false,
-              //           onChanged: (val) {},
-              //           shape: RoundedRectangleBorder(
-              //             borderRadius: BorderRadius.circular(4),
-              //           ),
-              //         ),
-              //       ),
-              //       const SizedBox(width: 8),
-              //       Expanded(
-              //         child: Column(
-              //           crossAxisAlignment: CrossAxisAlignment.start,
-              //           children: [
-              //             Text(
-              //               'Save \$3.68 on this order with DashPass',
-              //               style: GoogleFonts.workSans(
-              //                 fontSize: 15,
-              //                 fontWeight: FontWeight.w500,
-              //               ),
-              //             ),
-              //             Text(
-              //               '\$0 delivery fees on eligible orders',
-              //               style: GoogleFonts.workSans(
-              //                 fontSize: 14,
-              //                 color: Colors.black54,
-              //               ),
-              //             ),
-              //           ],
-              //         ),
-              //       ),
-              //     ],
-              //   ),
-              // ),
 
               const SizedBox(height: 24),
 
@@ -296,11 +189,10 @@ class CartView extends GetView<CartController> {
                   onSubmit: () {
                     // Trigger your actual payment flow:
                     cartCtrl.initiatePayment();
-                    // For a quick demo, you might add a short delay & show a dialog:
                     Future.delayed(const Duration(milliseconds: 300), () {
                       Get.snackbar(
                         'Success',
-                        'Your 7-Eleven order has been placed!',
+                        'Your order has been placed!',
                         snackPosition: SnackPosition.BOTTOM,
                       );
                     });
@@ -313,8 +205,6 @@ class CartView extends GetView<CartController> {
           ),
         );
       }),
-      // Remove the old bottomNavigationBar if you only want this final screen:
-      // bottomNavigationBar: ...
     );
   }
 
@@ -370,7 +260,6 @@ class CartView extends GetView<CartController> {
     // Group items by mealType
     final groupedItems = _groupCartItemsByMealType(cartItems);
 
-    // If you want a title like "Items", you can do:
     return Container(
       color: Colors.white,
       child: Column(
@@ -389,14 +278,14 @@ class CartView extends GetView<CartController> {
           ),
           // Each mealType group
           ...groupedItems.entries.map((entry) {
-            final mealType = entry.key; // e.g. "lunch", "dinner"
+            final mealType = entry.key;
             final items = entry.value;
             return Container(
               margin: const EdgeInsets.only(bottom: 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Meal Type label (e.g. "Dinner")
+                  // Meal Type label
                   Padding(
                     padding: const EdgeInsets.only(left: 16, right: 16, bottom: 6),
                     child: Text(
@@ -428,7 +317,7 @@ class CartView extends GetView<CartController> {
     );
   }
 
-  // Groups cart items by meal type. (Same as original logic)
+  // Groups cart items by meal type.
   Map<String, List<Map<String, dynamic>>> _groupCartItemsByMealType(
     List<Map<String, dynamic>> items,
   ) {
@@ -442,149 +331,144 @@ class CartView extends GetView<CartController> {
     return grouped;
   }
 
-  // Builds a single cart item row. (Same logic, new styling is minimal.)
- Widget _buildCartItemRow(Map<String, dynamic> item) {
-  final cartCtrl = Get.find<CartController>();
-  final quantity = item['quantity'] ?? 1;
+  // Builds a single cart item row.
+  Widget _buildCartItemRow(Map<String, dynamic> item) {
+    final cartCtrl = Get.find<CartController>();
+    final quantity = item['quantity'] ?? 1;
 
-  final vendorDish = item['vendorDish'] ?? {};
-  final dish = vendorDish['dish'] ?? {};
-  final dishName = dish['name'] ?? 'Unknown Dish';
-  // Correctly retrieve the image from vendorDish
-  final imageUrl = vendorDish['image'] ?? '';
-  final mealType = vendorDish['mealType'] ?? '';
-  final vendorDishId = vendorDish['id'] ?? '';
+    final vendorDish = item['vendorDish'] ?? {};
+    final dish = vendorDish['dish'] ?? {};
+    final dishName = dish['name'] ?? 'Unknown Dish';
+    // Retrieve the image from vendorDish.
+    final imageUrl = vendorDish['image'] ?? '';
+    final mealType = vendorDish['mealType'] ?? '';
+    final vendorDishId = vendorDish['id'] ?? '';
 
-  final priceStr = vendorDish['vendorSpecificPrice']?.toString() ?? '0.00';
-  final priceDouble = double.tryParse(priceStr) ?? 0.0;
-  final lineTotal = priceDouble * quantity;
+    final priceStr = vendorDish['vendorSpecificPrice']?.toString() ?? '0.00';
+    final priceDouble = double.tryParse(priceStr) ?? 0.0;
+    final lineTotal = priceDouble * quantity;
 
-  return Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildDishImage(imageUrl),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                dishName,
-                style: GoogleFonts.workSans(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 15,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Price per: ₹${priceDouble.toStringAsFixed(2)}',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey.shade600,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  _circleButton(
-                    icon: Icons.remove,
-                    onTap: () {
-                      cartCtrl.decreaseItemQuantity(
-                        vendorDishId: vendorDishId,
-                        mealType: mealType,
-                      );
-                    },
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildDishImage(imageUrl),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  dishName,
+                  style: GoogleFonts.workSans(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
                   ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Text(
-                      '$quantity',
-                      style: GoogleFonts.workSans(fontSize: 15),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Price per: ₹${priceDouble.toStringAsFixed(2)}',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    _circleButton(
+                      icon: Icons.remove,
+                      onTap: () {
+                        cartCtrl.decreaseItemQuantity(
+                          vendorDishId: vendorDishId,
+                          mealType: mealType,
+                        );
+                      },
                     ),
-                  ),
-                  _circleButton(
-                    icon: Icons.add,
-                    onTap: () {
-                      cartCtrl.increaseItemQuantity(
-                        vendorDishId: vendorDishId,
-                        mealType: mealType,
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ],
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Text(
+                        '$quantity',
+                        style: GoogleFonts.workSans(fontSize: 15),
+                      ),
+                    ),
+                    _circleButton(
+                      icon: Icons.add,
+                      onTap: () {
+                        cartCtrl.increaseItemQuantity(
+                          vendorDishId: vendorDishId,
+                          mealType: mealType,
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
-        Text(
-          '₹${lineTotal.toStringAsFixed(2)}',
-          style: GoogleFonts.workSans(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
+          Text(
+            '₹${lineTotal.toStringAsFixed(2)}',
+            style: GoogleFonts.workSans(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-        ),
-      ],
-    ),
-  );
-}
-
-
-  // Show dish image or fallback icon if no URL.
- Widget _buildDishImage(String imageUrl) {
-  if (imageUrl.isNotEmpty) {
-    // Check if the image string is a base64 encoded image
-    if (imageUrl.startsWith("data:image")) {
-      // Remove the data URI scheme prefix
-      final base64Str = imageUrl.split(",").last;
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Image.memory(
-          base64Decode(base64Str),
-          width: 60,
-          height: 60,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => Container(
-            width: 60,
-            height: 60,
-            color: Colors.grey.shade300,
-            child: const Icon(Icons.broken_image),
-          ),
-        ),
-      );
-    } else {
-      // If it's not a base64 string, assume it's a normal URL
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Image.network(
-          imageUrl,
-          width: 60,
-          height: 60,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => Container(
-            width: 60,
-            height: 60,
-            color: Colors.grey.shade300,
-            child: const Icon(Icons.broken_image),
-          ),
-        ),
-      );
-    }
+        ],
+      ),
+    );
   }
-  // Fallback widget if no image is provided
-  return Container(
-    width: 60,
-    height: 60,
-    decoration: BoxDecoration(
-      color: Colors.orange.shade50,
-      borderRadius: BorderRadius.circular(8),
-    ),
-    child: const Icon(Icons.fastfood, color: Colors.orange, size: 30),
-  );
-}
+
+  // Shows dish image or fallback icon if no URL.
+  Widget _buildDishImage(String imageUrl) {
+    if (imageUrl.isNotEmpty) {
+      if (imageUrl.startsWith("data:image")) {
+        final base64Str = imageUrl.split(",").last;
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.memory(
+            base64Decode(base64Str),
+            width: 60,
+            height: 60,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => Container(
+              width: 60,
+              height: 60,
+              color: Colors.grey.shade300,
+              child: const Icon(Icons.broken_image),
+            ),
+          ),
+        );
+      } else {
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.network(
+            imageUrl,
+            width: 60,
+            height: 60,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => Container(
+              width: 60,
+              height: 60,
+              color: Colors.grey.shade300,
+              child: const Icon(Icons.broken_image),
+            ),
+          ),
+        );
+      }
+    }
+    return Container(
+      width: 60,
+      height: 60,
+      decoration: BoxDecoration(
+        color: Colors.orange.shade50,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: const Icon(Icons.fastfood, color: Colors.orange, size: 30),
+    );
+  }
 
   Widget _circleButton({
     required IconData icon,
@@ -611,15 +495,14 @@ class CartView extends GetView<CartController> {
   }
 
   // -----------------------------
-  // 3) Builds the fees + order summary
+  // Builds the fees + order summary
   // -----------------------------
   Widget _buildOrderSummary() {
     final cartCtrl = Get.find<CartController>();
 
-    // Retrieve real data from your cartCtrl
     final subtotal = cartCtrl.cartData['subtotal'] ?? 0.0;
     final deliveryFee = cartCtrl.cartData['deliveryCharge'] ?? 0.0;
-    final serviceFee = cartCtrl.cartData['tax'] ?? 0.0; // or cartData['serviceFee']
+    final serviceFee = cartCtrl.cartData['tax'] ?? 0.0;
     final platformFees = cartCtrl.cartData['platformFees'] ?? 0.0;
     final total = cartCtrl.cartData['total'] ?? 0.0;
 
@@ -631,7 +514,6 @@ class CartView extends GetView<CartController> {
           _rowItem('Subtotal', '₹${subtotal.toStringAsFixed(2)}'),
           _rowItem('Delivery fee', '₹${deliveryFee.toStringAsFixed(2)}'),
           _rowItem('Service Fee', '₹${serviceFee.toStringAsFixed(2)}'),
-          // If you have a separate "Platform Fees"
           if (platformFees != 0.0)
             _rowItem('Platform Fees', '₹${platformFees.toStringAsFixed(2)}'),
           const SizedBox(height: 8),
@@ -647,7 +529,6 @@ class CartView extends GetView<CartController> {
     );
   }
 
-  // Helper for summary row
   Widget _rowItem(String label, String amount, {bool bold = false}) {
     final style = GoogleFonts.workSans(
       fontSize: bold ? 16 : 15,
@@ -665,9 +546,7 @@ class CartView extends GetView<CartController> {
     );
   }
 
-  // -----------------------------
-  // 4) Reusable row for address & phone, etc.
-  // -----------------------------
+  // Reusable row for address & phone, etc.
   Widget _menuItemRow({
     required IconData icon,
     required String title,

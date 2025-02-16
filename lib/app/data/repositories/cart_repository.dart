@@ -1,5 +1,3 @@
-// lib/app/data/repositories/cart_repository.dart
-
 import 'dart:convert';
 import '../services/api_service.dart';
 
@@ -8,10 +6,11 @@ class CartRepository {
 
   CartRepository({required this.api});
 
-  /// GET /api/customer-cart/get-cart
+  /// POST /api/customer-cart/get-cart
   /// Returns JSON like: { "items": [ ... ] }
   Future<Map<String, dynamic>> fetchCartItems() async {
-    final response = await api.get('/api/customer-cart/get-cart');
+    // Changed from api.get(...) to api.post(...) with an empty payload.
+    final response = await api.post('/api/customer-cart/get-cart', {});
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
@@ -90,4 +89,6 @@ class CartRepository {
       throw Exception(error['message'] ?? 'Failed to decrease item quantity');
     }
   }
+
+  
 }

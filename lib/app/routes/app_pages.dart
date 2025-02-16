@@ -11,24 +11,16 @@ import 'package:customerapp/app/views/dashboard_view.dart';
 import 'package:customerapp/app/views/profile_view.dart';
 import 'package:customerapp/app/views/razorpay_test_view.dart';
 import 'package:get/get.dart';
-// Uncomment or remove the vendorapp imports if not needed
-// import 'package:vendorapp/app/controllers/cart_controller.dart';
-// import 'package:vendorapp/app/controllers/complete_signup_controller.dart';
-// import 'package:vendorapp/app/controllers/dashboard_controller.dart';
-// import 'package:vendorapp/app/controllers/profile_controller.dart';
-// import 'package:vendorapp/app/controllers/restaurant_details_controller.dart';
-// import 'package:vendorapp/app/views/cart_view.dart';
-// import 'package:vendorapp/app/views/complete_signup_view.dart';
-// import 'package:vendorapp/app/views/dashboard_view.dart';
-// import 'package:vendorapp/app/views/profile_view.dart';
-// import 'package:vendorapp/app/views/razorpay_test_view.dart';
-
+import '../bindings/location_picker_binding.dart';
 import '../controllers/category_vendors_controller.dart';
+import '../controllers/location_controller.dart';
 import '../controllers/login_controller.dart';
 import '../controllers/otp_controller.dart';
 import '../controllers/home_controller.dart';
 import '../controllers/search_results_controller.dart';
 import '../views/category_vendors_view.dart';
+import '../views/location_picker_view.dart';
+import '../views/location_view.dart';
 import '../views/login_view.dart';
 import '../views/otp_view.dart';
 import '../views/home_view.dart';
@@ -55,12 +47,28 @@ class AppPages {
         Get.lazyPut<OtpController>(() => OtpController());
       }),
     ),
+
+    // GetPage(
+    //   name: '/location-picker',
+    //   page: () => const LocationView(),
+    //   binding: BindingsBuilder(() {
+    //     Get.put(LocationController());
+    //   }),
+    // ),
     // Home route (if needed standalone)
+
+    GetPage(
+      name: '/location-picker',
+      page: () => const LocationPickerView(),
+      binding: LocationPickerBinding(), // Now this class is defined.
+    ),
+
     GetPage(
       name: '/home',
       page: () => const HomeView(),
       binding: BindingsBuilder(() {
         Get.lazyPut<HomeController>(() => HomeController());
+        Get.lazyPut<LocationController>(() => LocationController());
       }),
     ),
     // Restaurant Details
@@ -77,8 +85,7 @@ class AppPages {
       name: '/complete-signup',
       page: () => const CompleteSignupView(),
       binding: BindingsBuilder(() {
-        Get.lazyPut<CompleteSignupController>(
-            () => CompleteSignupController());
+        Get.lazyPut<CompleteSignupController>(() => CompleteSignupController());
       }),
     ),
     // Dashboard: The main container that includes the persistent bottom navbar.
@@ -115,12 +122,12 @@ class AppPages {
     ),
 
     GetPage(
-  name: '/search-results',
-  page: () => const SearchResultsView(),
-  binding: BindingsBuilder(() {
-    Get.lazyPut<SearchResultsController>(() => SearchResultsController());
-  }),
-),
+      name: '/search-results',
+      page: () => const SearchResultsView(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<SearchResultsController>(() => SearchResultsController());
+      }),
+    ),
     GetPage(
       name: '/category-vendors',
       page: () => const CategoryVendorsView(),

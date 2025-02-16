@@ -39,45 +39,68 @@ class CartController extends GetxController {
   // ========================
   // 1) Fetch All Cart Items
   // ========================
-  Future<void> fetchCartItems() async {
-    try {
-      isLoading.value = true;
-      errorMessage.value = '';
-
-      final data = await _cartRepo.fetchCartItems();
-      _parseCartResponse(data);
-      log('Cart fetched successfully.');
-    } catch (e) {
-      errorMessage.value = e.toString();
-      log('Error fetching cart: $e');
-    } finally {
-      isLoading.value = false;
-    }
+ Future<void> fetchCartItems() async {
+  try {
+    isLoading.value = true;
+    errorMessage.value = '';
+    final data = await _cartRepo.fetchCartItems();
+    _parseCartResponse(data);
+    log('Cart fetched successfully.');
+  } catch (e) {
+    errorMessage.value = e.toString();
+    log('Error fetching cart: $e');
+    // Optionally clear the cart items if fetching fails.
+    cartItems.clear();
+  } finally {
+    isLoading.value = false;
   }
+}
 
   // ============================
   // 2) Increase Item Quantity
   // ============================
-  Future<void> increaseItemQuantity({
-    required String vendorDishId,
-    required String mealType,
-  }) async {
-    try {
-      isLoading.value = true;
-      await _cartRepo.increaseQuantity(
-        vendorDishId: vendorDishId,
-        mealType: mealType,
+ Future<void> increaseItemQuantity({
+  required String vendorDishId,
+  required String mealType,
+}) async {
+  try {
+    isLoading.value = true;
+    await _cartRepo.increaseQuantity(
+      vendorDishId: vendorDishId,
+      mealType: mealType,
+    );
+    await fetchCartItems();
+  } catch (e) {
+    final errMsg = e.toString().toLowerCase();
+    
+    if (errMsg.contains('cannot increase quantity beyond available capacity')) {
+      // Show a snackbar with the capacity error message
+      Get.snackbar(
+        "Error",
+        "Cannot increase quantity beyond available capacity.",
+        snackPosition: SnackPosition.BOTTOM,
       );
+      // Refresh the cart data to update UI
       await fetchCartItems();
-    } catch (e) {
-      errorMessage.value = e.toString();
-      if (errorMessage.value.toLowerCase().contains('not found')) {
-        await fetchCartItems();
-      }
-    } finally {
-      isLoading.value = false;
+      // Clear the error message so the CartView doesn't show the retry button
+      errorMessage.value = "";
+    } else if (errMsg.contains('not found')) {
+      // For not found errors, just refresh the cart data
+      await fetchCartItems();
+      errorMessage.value = "";
+    } else {
+      // For any other error, set the error message and show a snackbar
+      errorMessage.value = errMsg;
+      Get.snackbar(
+        "Error",
+        errMsg,
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
+  } finally {
+    isLoading.value = false;
   }
+}
 
   // ============================
   // 3) Decrease Item Quantity
@@ -109,13 +132,18 @@ class CartController extends GetxController {
   Future<void> addItemToCart({
     required String vendorDishId,
     required String mealType,
-    required String vendorId, // New parameter for the vendor's id
+    required String vendorId, // Vendor ID coming from the current restaurant
   }) async {
     // If the cart already has items, verify that they belong to the same vendor.
     if (cartItems.isNotEmpty) {
       // Retrieve the vendor id from the first cart item.
-      final existingVendorId = cartItems.first['vendorDish']?['vendorId'];
-      if (existingVendorId != vendorId) {
+      // Use .toString() to compare string representations,
+      // and treat an empty value as if no vendor is set.
+      final existingVendorId =
+          (cartItems.first['vendorDish']?['vendorId'] ?? '').toString();
+      final currentVendorId = vendorId.toString();
+      // Only enforce the check if an existing vendor id is set (non-empty)
+      if (existingVendorId.isNotEmpty && existingVendorId != currentVendorId) {
         Get.snackbar(
           "Error",
           "You cannot add items from a different vendor. Please clear your cart first.",
@@ -151,11 +179,11 @@ class CartController extends GetxController {
       cartItems.clear();
     }
 
-    cartData['subtotal']       = data['subtotal']       ?? 0;
+    cartData['subtotal'] = data['subtotal'] ?? 0;
     cartData['deliveryCharge'] = data['deliveryCharge'] ?? 0;
-    cartData['tax']            = data['tax']            ?? 0;
-    cartData['platformFees']   = data['platformFees']   ?? 0;
-    cartData['total']          = data['total']          ?? 0;
+    cartData['tax'] = data['tax'] ?? 0;
+    cartData['platformFees'] = data['platformFees'] ?? 0;
+    cartData['total'] = data['total'] ?? 0;
   }
 
   int get totalItemCount {
@@ -173,7 +201,10 @@ class CartController extends GetxController {
   int getDishQuantity(String vendorDishId) {
     for (final item in cartItems) {
       final vendorDish = item['vendorDish'] ?? {};
-      if (vendorDish['id'] == vendorDishId) {
+      // Check if the vendor dish has either the key 'id' or 'vendorDishId'
+      if ((vendorDish['id'] != null && vendorDish['id'] == vendorDishId) ||
+          (vendorDish['vendorDishId'] != null &&
+              vendorDish['vendorDishId'] == vendorDishId)) {
         return item['quantity'] ?? 0;
       }
     }
@@ -207,7 +238,7 @@ class CartController extends GetxController {
 
       var options = {
         'key': 'rzp_test_fOAj9IBqaGPNY5', // Your Razorpay test/public key
-        'order_id': razorpayOrder['id'],    // e.g. "order_PrImk42XFGwCAy"
+        'order_id': razorpayOrder['id'], // e.g. "order_PrImk42XFGwCAy"
         'name': 'My Awesome App',
         'description': 'Payment for your order',
         'prefill': {
@@ -294,7 +325,8 @@ class CartController extends GetxController {
           // Navigate to the success screen.
           Get.to(() => PaymentSuccessScreen(orderId: razorpayOrderId));
         } else {
-          throw Exception('Payment verification failed: ${response['message']}');
+          throw Exception(
+              'Payment verification failed: ${response['message']}');
         }
       } else {
         // If there's no 'success' key, inspect the message.
@@ -310,7 +342,8 @@ class CartController extends GetxController {
           await fetchCartItems();
           Get.to(() => PaymentSuccessScreen(orderId: razorpayOrderId));
         } else {
-          throw Exception('Payment verification failed: ${response['message']}');
+          throw Exception(
+              'Payment verification failed: ${response['message']}');
         }
       }
     } catch (e) {

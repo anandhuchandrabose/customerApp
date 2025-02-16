@@ -1,9 +1,7 @@
-// lib/app/views/restaurant_details_view.dart
-
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+// import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../controllers/dashboard_controller.dart';
@@ -481,6 +479,7 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
     }
 
     final String mealType = dish['mealType'] ?? 'lunch';
+    // Ensure that each dish has a unique vendorDishId.
     final String vendorDishId = dish['vendorDishId'] ?? '';
     final String dishImageUrl = dish['image'] ?? '';
     final double ratingValue =
@@ -573,7 +572,7 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                     const SizedBox(width: 4),
                     // Load the asset icon for veg/non-veg.
                     Image.asset(
-                      isVeg ? 'icons/veg.png' : 'icons/non-veg.png',
+                      isVeg ? 'assets/icons/veg.png' : 'assets/icons/non-veg.png',
                       width: 16,
                       height: 16,
                       errorBuilder: (_, __, ___) => Icon(

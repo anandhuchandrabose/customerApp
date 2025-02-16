@@ -1,5 +1,4 @@
 // lib/app/views/home_view.dart
-
 import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
@@ -9,9 +8,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../controllers/dashboard_controller.dart';
 import '../controllers/home_controller.dart';
 import '../controllers/cart_controller.dart';
-// import 'package:get/get.dart';
-// import 'package:google_fonts/google_fonts.dart';
-// Ensure HomeView already imports controllers if needed
+// Import the location controller
+import '../controllers/location_controller.dart';
 
 class HomeView extends GetView<HomeController> {
   const HomeView({Key? key}) : super(key: key);
@@ -22,6 +20,8 @@ class HomeView extends GetView<HomeController> {
   Widget build(BuildContext context) {
     final homeCtrl = Get.find<HomeController>();
     final cartCtrl = Get.find<CartController>();
+    // Get the LocationController instance.
+    final locationCtrl = Get.find<LocationController>();
 
     final placeholderOptions = [
       'Search for bakery...',
@@ -114,16 +114,24 @@ class HomeView extends GetView<HomeController> {
                                   const SizedBox(width: 8),
                                   GestureDetector(
                                     onTap: () {
-                                      // Trigger location selection logic
+                                      // Navigate to the Location Picker screen.
+                                      Get.toNamed('/location-picker');
                                     },
-                                    child: Text(
-                                      'Select Location',
-                                      style: GoogleFonts.workSans(
-                                        color: Colors.white,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
+                                    child: Obx(() {
+                                      // Display the updated address or default text.
+                                      final address =
+                                          locationCtrl.selectedAddress.value;
+                                      return Text(
+                                        address.isEmpty
+                                            ? 'Select Location'
+                                            : address,
+                                        style: GoogleFonts.workSans(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      );
+                                    }),
                                   ),
                                 ],
                               ),
@@ -204,29 +212,30 @@ class HomeView extends GetView<HomeController> {
                         )
                       else
                         SizedBox(
-                            height: 90,
-                            child: ListView.separated(
-                              scrollDirection: Axis.horizontal,
-                              itemCount: categories.length,
-                              separatorBuilder: (context, index) =>
-                                  const SizedBox(width: 12),
-                              itemBuilder: (context, index) {
-                                final cat = categories[index];
-                                final catName = cat['name'] ?? 'No Name';
-                                final catImage = cat['image'] ?? '';
+                          height: 90,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: categories.length,
+                            separatorBuilder: (context, index) =>
+                                const SizedBox(width: 12),
+                            itemBuilder: (context, index) {
+                              final cat = categories[index];
+                              final catName = cat['name'] ?? 'No Name';
+                              final catImage = cat['image'] ?? '';
 
-                                return GestureDetector(
-                                  onTap: () {
-                                    // Navigate to the new screen that lists vendors for this category
-                                    Get.toNamed(
-                                      '/category-vendors',
-                                      arguments: catName,
-                                    );
-                                  },
-                                  child: _buildCategoryCard(catName, catImage),
-                                );
-                              },
-                            )),
+                              return GestureDetector(
+                                onTap: () {
+                                  // Navigate to the new screen that lists vendors for this category.
+                                  Get.toNamed(
+                                    '/category-vendors',
+                                    arguments: catName,
+                                  );
+                                },
+                                child: _buildCategoryCard(catName, catImage),
+                              );
+                            },
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -313,7 +322,6 @@ class HomeView extends GetView<HomeController> {
           onTap: () {
             final dashboardCtrl = Get.find<DashboardController>();
             dashboardCtrl.changeTabIndex(1); // Switch to Cart tab.
-            // Optionally, pop the current RestaurantDetailsView if needed:
             Get.back();
           },
           child: Container(
@@ -548,7 +556,9 @@ class HomeView extends GetView<HomeController> {
                       ),
                       const SizedBox(width: 8),
                       Image.asset(
-                        isVeg ? 'icons/veg.png' : 'icons/non-veg.png',
+                        isVeg
+                            ? 'assets/icons/veg.png'
+                            : 'assets/icons/non-veg.png',
                         height: 18,
                         width: 18,
                         errorBuilder: (_, __, ___) => Icon(
@@ -556,7 +566,7 @@ class HomeView extends GetView<HomeController> {
                           size: 18,
                           color: isVeg ? Colors.green : Colors.red,
                         ),
-                      ),
+                      )
                     ],
                   ),
                 ],
@@ -572,10 +582,7 @@ class HomeView extends GetView<HomeController> {
 // Custom ScrollBehavior to remove overscroll glow
 class NoScrollGlow extends ScrollBehavior {
   Widget buildViewportChrome(
-    BuildContext context,
-    Widget child,
-    AxisDirection axisDirection,
-  ) {
+      BuildContext context, Widget child, AxisDirection axisDirection) {
     return child;
   }
 }
