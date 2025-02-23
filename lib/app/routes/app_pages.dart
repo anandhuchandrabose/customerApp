@@ -20,7 +20,6 @@ import '../controllers/home_controller.dart';
 import '../controllers/search_results_controller.dart';
 import '../views/category_vendors_view.dart';
 import '../views/location_picker_view.dart';
-import '../views/location_view.dart';
 import '../views/login_view.dart';
 import '../views/otp_view.dart';
 import '../views/home_view.dart';

@@ -1,15 +1,14 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-// import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../controllers/dashboard_controller.dart';
 import '../controllers/restaurant_details_controller.dart';
 import '../controllers/cart_controller.dart';
+import 'cart_view.dart';
 
 /// Helper function to obtain an ImageProvider from a vendor image string.
-/// If the string is not a URL, we assume it is a base64–encoded image.
+/// If the string is not a URL, we assume it is base64–encoded.
 ImageProvider getVendorImage(String imageString) {
   if (imageString.isEmpty) {
     return const AssetImage('assets/placeholder.png');
@@ -17,7 +16,6 @@ ImageProvider getVendorImage(String imageString) {
     return NetworkImage(imageString);
   } else {
     try {
-      // If the string does not contain the "data:image/..." header, we assume it is base64.
       return MemoryImage(
         base64Decode(
           imageString.contains(',') ? imageString.split(',').last : imageString,
@@ -52,13 +50,28 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      // Bottom navigation bar: "View Cart" popup with fade up transition and bounce.
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Get.back(),
+        ),
+        title: Text(
+          'Restaurant Details',
+          style: GoogleFonts.workSans(
+            color: Colors.black,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: false,
+      ),
       bottomNavigationBar: Obx(() {
         final int itemCount = cartCtrl.totalItemCount;
         return AnimatedSwitcher(
           duration: const Duration(milliseconds: 500),
           transitionBuilder: (child, animation) {
-            // Use an elastic curve for a bounce effect.
             final curvedAnimation =
                 CurvedAnimation(parent: animation, curve: Curves.elasticOut);
             return SlideTransition(
@@ -76,10 +89,7 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
               : InkWell(
                   key: const ValueKey('cartPopup'),
                   onTap: () {
-                    final dashboardCtrl = Get.find<DashboardController>();
-                    dashboardCtrl.changeTabIndex(1); // Switch to Cart tab.
-                    // Optionally, pop the current RestaurantDetailsView if needed:
-                    Get.back();
+                    Get.to(() => CartView());
                   },
                   child: Container(
                     margin: const EdgeInsets.all(16),
@@ -116,7 +126,6 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                 ),
         );
       }),
-      // Wrap the main content in a bounce animation.
       body: BouncyPage(
         child: Obx(() {
           if (detailsCtrl.isLoading.value) {
@@ -131,13 +140,9 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
             );
           }
 
-          // Get restaurant details from the controller.
           final vendorImage = detailsCtrl.restaurantImageUrl.value;
-          print("Vendor image string: $vendorImage"); // Debug print
-
           final vendorName = detailsCtrl.restaurantName.value;
           final servingTime = detailsCtrl.servingTime.value;
-          // For now, using a fixed rating.
           const ratingFixed = 4.3;
           final allDishes = detailsCtrl.dishes;
           if (allDishes.isEmpty) {
@@ -149,20 +154,20 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
             );
           }
 
-          // Filter dishes based on selected chip.
           final filteredDishes = allDishes.where((dish) {
             final filter = selectedFilter.value;
             if (filter.isEmpty || filter == 'All') return true;
             if (filter == 'Veg') return (dish['nonveg'] == 0);
             if (filter == 'NonVeg') return (dish['nonveg'] == 1);
-            if (filter == 'Lunch')
+            if (filter == 'Lunch') {
               return (dish['mealType']?.toLowerCase() == 'lunch');
-            if (filter == 'Dinner')
+            }
+            if (filter == 'Dinner') {
               return (dish['mealType']?.toLowerCase() == 'dinner');
+            }
             return true;
           }).toList();
 
-          // Group dishes by meal type if no specific filter is selected.
           bool showGrouped =
               (selectedFilter.value.isEmpty || selectedFilter.value == 'All');
           List<dynamic> lunchDishes = [];
@@ -178,9 +183,6 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
 
           return CustomScrollView(
             slivers: [
-              // ----------------------------
-              // Custom Header Section.
-              // ----------------------------
               SliverToBoxAdapter(
                 child: _buildHeader(
                   vendorImage: vendorImage,
@@ -189,9 +191,6 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                   rating: ratingFixed,
                 ),
               ),
-              // ----------------------------
-              // Filter Chips Section.
-              // ----------------------------
               SliverToBoxAdapter(
                 child: Container(
                   height: 60,
@@ -241,9 +240,6 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                   ),
                 ),
               ),
-              // ----------------------------
-              // Serving Times Section.
-              // ----------------------------
               SliverToBoxAdapter(
                 child: Padding(
                   padding:
@@ -270,9 +266,6 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                   ),
                 ),
               ),
-              // ----------------------------
-              // Dish List Section.
-              // ----------------------------
               if (showGrouped) ...[
                 if (lunchDishes.isNotEmpty)
                   SliverToBoxAdapter(
@@ -386,16 +379,12 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
     required String description,
     required double rating,
   }) {
-    print("Building header with vendorImage: $vendorImage"); // Debug print
-
-    return Container(
+    return SizedBox(
       height: 300,
       child: Stack(
         children: [
-          // Background split into two halves.
           Column(
             children: [
-              // Top half with vendor image as background.
               Container(
                 height: 150,
                 width: double.infinity,
@@ -409,7 +398,6 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                   color: vendorImage.isEmpty ? Colors.grey.shade300 : null,
                 ),
               ),
-              // Bottom half with white background.
               Container(
                 height: 150,
                 width: double.infinity,
@@ -417,7 +405,6 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
               ),
             ],
           ),
-          // Centered circular avatar overlapping both halves.
           Positioned(
             top: 100,
             left: 0,
@@ -434,7 +421,6 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
               ),
             ),
           ),
-          // Vendor details below the avatar.
           Positioned(
             top: 200,
             left: 0,
@@ -468,7 +454,6 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
     final String dishDescription = dish['description'] ?? '';
     final String price = dish['price'] ?? '0.00';
 
-    // Correct handling of veg/nonveg:
     bool isVeg;
     if (dish['nonveg'] is bool) {
       isVeg = dish['nonveg'] == false;
@@ -479,7 +464,6 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
     }
 
     final String mealType = dish['mealType'] ?? 'lunch';
-    // Ensure that each dish has a unique vendorDishId.
     final String vendorDishId = dish['vendorDishId'] ?? '';
     final String dishImageUrl = dish['image'] ?? '';
     final double ratingValue =
@@ -487,7 +471,6 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
     final int ratingCount =
         dish['ratingCount'] is int ? dish['ratingCount'] : 0;
     final bool isBestseller = (ratingValue >= 4.0);
-    final cartCtrl = Get.find<CartController>();
 
     return _buildDishTile(
       vendorDishId: vendorDishId,
@@ -500,30 +483,11 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
       ratingValue: ratingValue,
       ratingCount: ratingCount,
       isBestseller: isBestseller,
-      onAdd: () {
-        // Pass current vendor id from RestaurantDetailsController to addItemToCart.
-        final detailsCtrl = Get.find<RestaurantDetailsController>();
-        cartCtrl.addItemToCart(
-          vendorDishId: vendorDishId,
-          mealType: mealType,
-          vendorId: detailsCtrl.vendorId.value,
-        );
-      },
-      onIncrement: () {
-        cartCtrl.increaseItemQuantity(
-          vendorDishId: vendorDishId,
-          mealType: mealType,
-        );
-      },
-      onDecrement: () {
-        cartCtrl.decreaseItemQuantity(
-          vendorDishId: vendorDishId,
-          mealType: mealType,
-        );
-      },
     );
   }
 
+  /// The actual UI for each dish tile.
+  /// Instead of directly adding the dish, we now call _onAddDish.
   Widget _buildDishTile({
     required String vendorDishId,
     required String dishName,
@@ -535,11 +499,9 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
     required double ratingValue,
     required int ratingCount,
     required bool isBestseller,
-    required VoidCallback onAdd,
-    required VoidCallback onIncrement,
-    required VoidCallback onDecrement,
   }) {
     final cartCtrl = Get.find<CartController>();
+    final detailsCtrl = Get.find<RestaurantDetailsController>();
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
@@ -570,9 +532,10 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                       ),
                     ),
                     const SizedBox(width: 4),
-                    // Load the asset icon for veg/non-veg.
                     Image.asset(
-                      isVeg ? 'assets/icons/veg.png' : 'assets/icons/non-veg.png',
+                      isVeg
+                          ? 'assets/icons/veg.png'
+                          : 'assets/icons/non-veg.png',
                       width: 16,
                       height: 16,
                       errorBuilder: (_, __, ___) => Icon(
@@ -584,14 +547,12 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                   ],
                 ),
                 const SizedBox(height: 4),
-                // Rating stars.
                 Row(
                   children: _buildRatingStars(ratingValue),
                 ),
                 const SizedBox(height: 6),
                 _buildTruncatedDescription(description),
                 const SizedBox(height: 6),
-                // Price and ADD/Stepper controls.
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -616,7 +577,14 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                               key: const ValueKey(0),
                               height: 36,
                               child: ElevatedButton(
-                                onPressed: onAdd,
+                                onPressed: () {
+                                  _onAddDish(
+                                    cartCtrl,
+                                    vendorDishId,
+                                    mealType,
+                                    detailsCtrl.vendorId.value,
+                                  );
+                                },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: kPrimaryColor,
                                   foregroundColor: Colors.white,
@@ -641,11 +609,17 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                               children: [
                                 _stepperButton(
                                   iconData: Icons.remove,
-                                  onTap: onDecrement,
+                                  onTap: () {
+                                    cartCtrl.decreaseItemQuantity(
+                                      vendorDishId: vendorDishId,
+                                      mealType: mealType,
+                                    );
+                                  },
                                 ),
                                 Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(horizontal: 8),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                  ),
                                   child: Text(
                                     quantity.toString(),
                                     style: GoogleFonts.workSans(fontSize: 16),
@@ -653,7 +627,12 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                                 ),
                                 _stepperButton(
                                   iconData: Icons.add,
-                                  onTap: onIncrement,
+                                  onTap: () {
+                                    cartCtrl.increaseItemQuantity(
+                                      vendorDishId: vendorDishId,
+                                      mealType: mealType,
+                                    );
+                                  },
                                 ),
                               ],
                             );
@@ -669,6 +648,55 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
         ],
       ),
     );
+  }
+
+  /// New helper function:
+  /// Attempts to add the dish. If a 400 error is detected, shows a styled popup dialog.
+  void _onAddDish(
+    CartController cartCtrl,
+    String vendorDishId,
+    String mealType,
+    String vendorId,
+  ) async {
+    final result = await cartCtrl.addItemToCart(
+      vendorDishId: vendorDishId,
+      mealType: mealType,
+      vendorId: vendorId,
+    );
+
+    if (result.containsKey('vendorMismatch') &&
+        result['vendorMismatch'] == true) {
+      // Show popup to clear cart.
+      Get.defaultDialog(
+        title: "Clear Cart?",
+        titleStyle: GoogleFonts.workSans(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
+        middleText:
+            "All items in the cart must be from the same vendor. Would you like to clear the cart and add this dish?",
+        middleTextStyle: GoogleFonts.workSans(fontSize: 16),
+        textCancel: "No",
+        textConfirm: "Yes",
+        confirmTextColor: Colors.white,
+        buttonColor: RestaurantDetailsView.kPrimaryColor,
+        onConfirm: () async {
+          Get.back(); // Close the dialog.
+          try {
+            await cartCtrl.clearEntireCart();
+            await cartCtrl.fetchCartItems();
+            await cartCtrl.addItemToCart(
+              vendorDishId: vendorDishId,
+              mealType: mealType,
+              vendorId: vendorId,
+            );
+          } catch (e) {
+            Get.snackbar("Error", e.toString());
+          }
+        },
+        onCancel: () => Get.back(),
+      );
+    }
   }
 
   Widget _buildDishImage(String? dishImageUrl, bool isVeg) {
@@ -874,10 +902,10 @@ class _AnimatedDishTileState extends State<AnimatedDishTile>
       CurvedAnimation(parent: _controller, curve: Curves.easeIn),
     );
     _offsetAnimation = Tween<Offset>(
-            begin: const Offset(0, 0.2), end: Offset.zero)
-        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+      begin: const Offset(0, 0.2),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
-    // Start the animation after a delay.
     Future.delayed(Duration(milliseconds: widget.delay), () {
       if (mounted) {
         _controller.forward();

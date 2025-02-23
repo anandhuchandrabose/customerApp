@@ -5,11 +5,12 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../controllers/dashboard_controller.dart';
+// import '../controllers/dashboard_controller.dart';
 import '../controllers/home_controller.dart';
 import '../controllers/cart_controller.dart';
 // Import the location controller
 import '../controllers/location_controller.dart';
+import 'cart_view.dart';
 
 class HomeView extends GetView<HomeController> {
   const HomeView({Key? key}) : super(key: key);
@@ -320,9 +321,10 @@ class HomeView extends GetView<HomeController> {
         if (itemCount == 0) return const SizedBox.shrink();
         return InkWell(
           onTap: () {
-            final dashboardCtrl = Get.find<DashboardController>();
-            dashboardCtrl.changeTabIndex(1); // Switch to Cart tab.
-            Get.back();
+            // final dashboardCtrl = Get.find<DashboardController>();
+            // dashboardCtrl.changeTabIndex(1); // Switch to Cart tab.
+            // Get.back();
+            Get.to(() => CartView());
           },
           child: Container(
             margin: const EdgeInsets.all(16),

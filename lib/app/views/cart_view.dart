@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:slide_to_act/slide_to_act.dart';
@@ -21,11 +20,16 @@ class CartView extends GetView<CartController> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+        // Makes the app bar white
         backgroundColor: Colors.white,
         elevation: 0,
+        // The back button is here:
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Get.back(),
+          onPressed: () {
+            // This will pop the current route and go back to the previous screen
+            Get.back();
+          },
         ),
         title: Text(
           'Checkout',

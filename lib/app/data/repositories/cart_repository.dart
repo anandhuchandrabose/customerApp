@@ -7,9 +7,7 @@ class CartRepository {
   CartRepository({required this.api});
 
   /// POST /api/customer-cart/get-cart
-  /// Returns JSON like: { "items": [ ... ] }
   Future<Map<String, dynamic>> fetchCartItems() async {
-    // Changed from api.get(...) to api.post(...) with an empty payload.
     final response = await api.post('/api/customer-cart/get-cart', {});
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -20,8 +18,8 @@ class CartRepository {
   }
 
   /// POST /api/customer-cart/add-item
-  /// Body: { "vendorDishId": "...", "quantity": 1, "mealType": "..." }
-  /// On success: e.g. { "message": "Item added to cart successfully." }
+  /// If the API returns a 400 error (vendor mismatch), this method returns a map with a
+  /// vendorMismatch flag instead of throwing an exception.
   Future<Map<String, dynamic>> addItemToCart({
     required String vendorDishId,
     required int quantity,
@@ -38,6 +36,13 @@ class CartRepository {
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
+    } else if (response.statusCode == 400) {
+      // If status is 400, return a map with vendorMismatch flag.
+      final error = jsonDecode(response.body);
+      return {
+        'vendorMismatch': true,
+        'message': error['message'] ?? 'Vendor mismatch error',
+      };
     } else {
       final error = jsonDecode(response.body);
       throw Exception(error['message'] ?? 'Failed to add item to cart');
@@ -45,8 +50,6 @@ class CartRepository {
   }
 
   /// POST /api/customer-cart/increase
-  /// Body: { "vendorDishId": "...", "mealType": "..." }
-  /// On success: { "message": "Item quantity increased.", "cartItem": { "quantity": x, ... } }
   Future<Map<String, dynamic>> increaseQuantity({
     required String vendorDishId,
     required String mealType,
@@ -68,8 +71,6 @@ class CartRepository {
   }
 
   /// POST /api/customer-cart/decrease
-  /// Body: { "vendorDishId": "...", "mealType": "..." }
-  /// On success: { "message": "Item quantity decreased.", "cartItem": { "quantity": x, ... } }
   Future<Map<String, dynamic>> decreaseQuantity({
     required String vendorDishId,
     required String mealType,
@@ -90,5 +91,18 @@ class CartRepository {
     }
   }
 
-  
+  /// POST /api/customer-cart/clear-cart
+  Future<Map<String, dynamic>> clearCart() async {
+    final response = await api.post(
+      '/api/customer-cart/clear-cart',
+      {},
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['message'] ?? 'Failed to clear cart');
+    }
+  }
 }

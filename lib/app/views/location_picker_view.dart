@@ -1,4 +1,5 @@
 // lib/app/views/location_picker_view.dart
+
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -6,6 +7,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:http/http.dart' as http;
+import 'package:geolocator/geolocator.dart';
+
 import '../data/repositories/location_repository.dart';
 
 class LocationPickerView extends StatefulWidget {
@@ -35,7 +38,7 @@ class _LocationPickerViewState extends State<LocationPickerView> {
   );
 
   // Replace with your actual Google Places API key.
-  final String _googleApiKey = 'YOUR_GOOGLE_PLACES_API_KEY';
+  final String _googleApiKey = 'AIzaSyDZZHgBbs6qxbJdG_709xnXw97wbOJefoQ';
 
   // Assume you have a LocationRepository instance available via GetX.
   late LocationRepository locationRepository;
@@ -54,38 +57,83 @@ class _LocationPickerViewState extends State<LocationPickerView> {
     super.dispose();
   }
 
-  /// Request location permission from the user.
+  /// Request location permission from the user (using permission_handler).
   Future<void> _requestLocationPermission() async {
     final status = await Permission.location.request();
     if (!status.isGranted) {
       debugPrint('Location permission not granted.');
+      // You might want to show a dialog or snackbar here, prompting the user.
+    }
+  }
+
+  /// If permitted, fetch the device’s current location using geolocator.
+  /// Then animate the map camera to that position and update _currentCenter.
+  Future<void> _goToMyLocation() async {
+    // 1) Check permission again in case user changed settings
+    final status = await Permission.locationWhenInUse.request();
+    if (!status.isGranted) {
+      Get.snackbar('Permission Denied', 'Location permission not granted.');
+      return;
+    }
+
+    // 2) Check if location services are enabled
+    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      Get.snackbar('Error', 'Location services are disabled on this device.');
+      return;
+    }
+
+    // 3) Retrieve current position
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      final LatLng newLatLng = LatLng(position.latitude, position.longitude);
+
+      // 4) Animate camera
+      _mapController?.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(target: newLatLng, zoom: 16),
+        ),
+      );
+
+      // 5) Update _currentCenter
+      setState(() {
+        _currentCenter = newLatLng;
+      });
+    } catch (e) {
+      debugPrint('Error getting current location: $e');
+      Get.snackbar('Error', 'Unable to get current location.');
     }
   }
 
   /// Fetch place suggestions from the Google Places Autocomplete API.
   Future<void> _getPlaceSuggestions(String input) async {
-    if (input.isEmpty) {
-      setState(() {
-        _placeSuggestions = [];
-      });
-      return;
-    }
-    final String url =
-        'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$input&types=geocode&key=$_googleApiKey';
-    try {
-      final response = await http.get(Uri.parse(url));
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        setState(() {
-          _placeSuggestions = data['predictions'];
-        });
-      } else {
-        debugPrint('Error fetching suggestions: ${response.body}');
-      }
-    } catch (e) {
-      debugPrint('Exception fetching suggestions: $e');
-    }
+  if (input.isEmpty) {
+    setState(() {
+      _placeSuggestions = [];
+    });
+    return;
   }
+  final String encodedInput = Uri.encodeComponent(input);
+  final String url =
+      'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$encodedInput&types=geocode&key=$_googleApiKey';
+  debugPrint('Place suggestions URL: $url');
+  try {
+    final response = await http.get(Uri.parse(url));
+    debugPrint('API response: ${response.body}');
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      setState(() {
+        _placeSuggestions = data['predictions'] ?? [];
+      });
+    } else {
+      debugPrint('Error fetching suggestions: ${response.body}');
+    }
+  } catch (e) {
+    debugPrint('Exception fetching suggestions: $e');
+  }
+}
 
   /// When a suggestion is tapped, fetch its details and update the map.
   Future<void> _selectPlaceSuggestion(Map<String, dynamic> suggestion) async {
@@ -125,11 +173,11 @@ class _LocationPickerViewState extends State<LocationPickerView> {
   Future<void> _showAddressFormDialog() async {
     // Create text controllers with default values.
     final addressNameController = TextEditingController(text: "Home");
-    final receiverNameController = TextEditingController(text: "Manjula");
-    final receiverContactController = TextEditingController(text: "98480000");
-    final secondaryContactController = TextEditingController(text: "9424242");
+    final receiverNameController = TextEditingController(text: "Name");
+    final receiverContactController = TextEditingController(text: "0000000000");
+    final secondaryContactController = TextEditingController(text: "121212");
     final categoryController = TextEditingController(text: "home");
-    final flatHouseNoController = TextEditingController(text: "Devi Vihar");
+    final flatHouseNoController = TextEditingController(text: "flat/house");
     final nearbyLocationController = TextEditingController(text: "");
     final addressController = TextEditingController(text: "");
 
@@ -151,7 +199,8 @@ class _LocationPickerViewState extends State<LocationPickerView> {
                 ),
                 TextField(
                   controller: receiverContactController,
-                  decoration: const InputDecoration(labelText: "Receiver Contact"),
+                  decoration:
+                      const InputDecoration(labelText: "Receiver Contact"),
                 ),
                 TextField(
                   controller: secondaryContactController,
@@ -261,6 +310,23 @@ class _LocationPickerViewState extends State<LocationPickerView> {
     );
   }
 
+  /// Pin the current location (save the current map center coordinates).
+  void _pinCurrentLocation() {
+    if (_currentCenter != null) {
+      // Optionally, you can show a snackbar or dialog to confirm pinning.
+      Get.snackbar('Location Pinned',
+          'Current location pinned: ${_currentCenter!.latitude}, ${_currentCenter!.longitude}');
+      setState(() {
+        debugPrint(
+            'Pinned location: ${_currentCenter!.latitude}, ${_currentCenter!.longitude}');
+      });
+      _showAddressFormDialog();
+    } else {
+      Get.snackbar(
+          'Error', 'No location available to pin. Move the map or search first.');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -276,6 +342,8 @@ class _LocationPickerViewState extends State<LocationPickerView> {
           // Google Map widget.
           GoogleMap(
             initialCameraPosition: _initialCameraPosition,
+            myLocationEnabled: false, // If you want the little blue dot
+            myLocationButtonEnabled: false, // We'll handle our own button
             onMapCreated: (controller) {
               _mapController = controller;
               _currentCenter = _initialCameraPosition.target;
@@ -347,23 +415,50 @@ class _LocationPickerViewState extends State<LocationPickerView> {
             bottom: 80,
             left: 16,
             right: 16,
-            child: ElevatedButton(
-              onPressed: _showAddressFormDialog,
-              child: Text(
-                'Confirm & Save Address',
-                style: GoogleFonts.workSans(fontSize: 16),
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(
+                  onPressed: _pinCurrentLocation,
+                  child: Text(
+                    'Pin Location',
+                    style: GoogleFonts.workSans(fontSize: 16),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: _showAddressFormDialog,
+                  child: Text(
+                    'Confirm & Save Address',
+                    style: GoogleFonts.workSans(fontSize: 16),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
-      // Floating action button to show saved addresses.
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          await _getSavedAddresses();
-          _showSavedAddresses();
-        },
-        child: const Icon(Icons.list),
+      // 1) This is your "Saved Addresses" button to open a list.
+      floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          // 2) "My Location" button to recenter the map on the user’s current position.
+          FloatingActionButton(
+            heroTag: 'my_location_btn',
+            onPressed: _goToMyLocation,
+            child: const Icon(Icons.my_location),
+          ),
+          const SizedBox(height: 12),
+          // 3) "Show Saved" button to show the bottom sheet of saved addresses.
+          FloatingActionButton(
+            heroTag: 'saved_addresses_btn',
+            onPressed: () async {
+              await _getSavedAddresses();
+              _showSavedAddresses();
+            },
+            child: const Icon(Icons.list),
+          ),
+        ],
       ),
     );
   }

@@ -1,25 +1,22 @@
 // lib/app/controllers/cart_controller.dart
 
 import 'dart:developer';
-import 'package:customerapp/app/views/payment_success_screen.dart';
 import 'package:get/get.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
-
 import '../data/repositories/cart_repository.dart';
 import '../data/repositories/order_repository.dart';
+import 'package:customerapp/app/views/payment_success_screen.dart';
 
 class CartController extends GetxController {
   final CartRepository _cartRepo = Get.find<CartRepository>();
   final OrderRepository _orderRepo = Get.find<OrderRepository>();
 
-  // The entire cart response from server.
   var cartItems = <Map<String, dynamic>>[].obs;
   var cartData = <String, dynamic>{}.obs;
 
   var isLoading = false.obs;
   var errorMessage = ''.obs;
 
-  // Payment
   late Razorpay _razorpay;
 
   @override
@@ -39,72 +36,85 @@ class CartController extends GetxController {
   // ========================
   // 1) Fetch All Cart Items
   // ========================
- Future<void> fetchCartItems() async {
-  try {
-    isLoading.value = true;
-    errorMessage.value = '';
-    final data = await _cartRepo.fetchCartItems();
-    _parseCartResponse(data);
-    log('Cart fetched successfully.');
-  } catch (e) {
-    errorMessage.value = e.toString();
-    log('Error fetching cart: $e');
-    // Optionally clear the cart items if fetching fails.
-    cartItems.clear();
-  } finally {
-    isLoading.value = false;
+  Future<void> fetchCartItems() async {
+    try {
+      isLoading.value = true;
+      errorMessage.value = '';
+      final data = await _cartRepo.fetchCartItems();
+      _parseCartResponse(data);
+      log('Cart fetched successfully.');
+    } catch (e) {
+      errorMessage.value = e.toString();
+      log('Error fetching cart: $e');
+      cartItems.clear();
+    } finally {
+      isLoading.value = false;
+    }
   }
-}
 
   // ============================
-  // 2) Increase Item Quantity
+  // 2) Add Item to Cart
   // ============================
- Future<void> increaseItemQuantity({
+ // lib/app/controllers/cart_controller.dart
+
+Future<Map<String, dynamic>> addItemToCart({
   required String vendorDishId,
   required String mealType,
+  required String vendorId,
 }) async {
   try {
     isLoading.value = true;
-    await _cartRepo.increaseQuantity(
+    // Call the repository method and capture its result.
+    final result = await _cartRepo.addItemToCart(
       vendorDishId: vendorDishId,
+      quantity: 1,
       mealType: mealType,
     );
+    // Refresh cart items after adding.
     await fetchCartItems();
+    return result;
   } catch (e) {
-    final errMsg = e.toString().toLowerCase();
-    
-    if (errMsg.contains('cannot increase quantity beyond available capacity')) {
-      // Show a snackbar with the capacity error message
-      Get.snackbar(
-        "Error",
-        "Cannot increase quantity beyond available capacity.",
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      // Refresh the cart data to update UI
-      await fetchCartItems();
-      // Clear the error message so the CartView doesn't show the retry button
-      errorMessage.value = "";
-    } else if (errMsg.contains('not found')) {
-      // For not found errors, just refresh the cart data
-      await fetchCartItems();
-      errorMessage.value = "";
-    } else {
-      // For any other error, set the error message and show a snackbar
-      errorMessage.value = errMsg;
-      Get.snackbar(
-        "Error",
-        errMsg,
-        snackPosition: SnackPosition.BOTTOM,
-      );
-    }
+    errorMessage.value = e.toString();
+    Get.snackbar("Error", errorMessage.value);
+    // Return an error map so the caller can inspect it.
+    return {'error': errorMessage.value};
   } finally {
     isLoading.value = false;
   }
 }
 
   // ============================
-  // 3) Decrease Item Quantity
+  // 3) Increase/Decrease Quantity
   // ============================
+  Future<void> increaseItemQuantity({
+    required String vendorDishId,
+    required String mealType,
+  }) async {
+    try {
+      isLoading.value = true;
+      await _cartRepo.increaseQuantity(
+        vendorDishId: vendorDishId,
+        mealType: mealType,
+      );
+      await fetchCartItems();
+    } catch (e) {
+      final errMsg = e.toString().toLowerCase();
+      if (errMsg.contains('cannot increase quantity beyond available capacity')) {
+        Get.snackbar("Error", "Cannot increase quantity beyond capacity.");
+        await fetchCartItems();
+        errorMessage.value = "";
+      } else if (errMsg.contains('not found')) {
+        await fetchCartItems();
+        errorMessage.value = "";
+      } else {
+        errorMessage.value = errMsg;
+        Get.snackbar("Error", errMsg);
+      }
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   Future<void> decreaseItemQuantity({
     required String vendorDishId,
     required String mealType,
@@ -127,49 +137,23 @@ class CartController extends GetxController {
   }
 
   // ============================
-  // 4) Add Item to Cart with Vendor Restriction
+  // 4) Clear Entire Cart
   // ============================
-  Future<void> addItemToCart({
-    required String vendorDishId,
-    required String mealType,
-    required String vendorId, // Vendor ID coming from the current restaurant
-  }) async {
-    // If the cart already has items, verify that they belong to the same vendor.
-    if (cartItems.isNotEmpty) {
-      // Retrieve the vendor id from the first cart item.
-      // Use .toString() to compare string representations,
-      // and treat an empty value as if no vendor is set.
-      final existingVendorId =
-          (cartItems.first['vendorDish']?['vendorId'] ?? '').toString();
-      final currentVendorId = vendorId.toString();
-      // Only enforce the check if an existing vendor id is set (non-empty)
-      if (existingVendorId.isNotEmpty && existingVendorId != currentVendorId) {
-        Get.snackbar(
-          "Error",
-          "You cannot add items from a different vendor. Please clear your cart first.",
-          snackPosition: SnackPosition.BOTTOM,
-        );
-        return;
-      }
-    }
+  Future<void> clearEntireCart() async {
+    isLoading.value = true;
+    errorMessage.value = "";
     try {
-      isLoading.value = true;
-      // Force a single quantity when adding a new item.
-      await _cartRepo.addItemToCart(
-        vendorDishId: vendorDishId,
-        quantity: 1,
-        mealType: mealType,
-      );
-      await fetchCartItems();
+      await _cartRepo.clearCart();
     } catch (e) {
       errorMessage.value = e.toString();
+      rethrow;
     } finally {
       isLoading.value = false;
     }
   }
 
   // ============================
-  // 5) Helpers for cart data
+  // 5) Helpers
   // ============================
   void _parseCartResponse(Map<String, dynamic> data) {
     final items = data['items'] ?? [];
@@ -201,10 +185,9 @@ class CartController extends GetxController {
   int getDishQuantity(String vendorDishId) {
     for (final item in cartItems) {
       final vendorDish = item['vendorDish'] ?? {};
-      // Check if the vendor dish has either the key 'id' or 'vendorDishId'
-      if ((vendorDish['id'] != null && vendorDish['id'] == vendorDishId) ||
-          (vendorDish['vendorDishId'] != null &&
-              vendorDish['vendorDishId'] == vendorDishId)) {
+      final String? itemId = vendorDish['id']?.toString();
+      final String? itemDishId = vendorDish['vendorDishId']?.toString();
+      if (itemId == vendorDishId || itemDishId == vendorDishId) {
         return item['quantity'] ?? 0;
       }
     }
