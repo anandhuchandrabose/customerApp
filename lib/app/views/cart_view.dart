@@ -1,3 +1,4 @@
+// lib/app/views/cart_view.dart
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -5,30 +6,31 @@ import 'package:slide_to_act/slide_to_act.dart';
 import 'package:lottie/lottie.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+// Import your controllers.
 import '../controllers/cart_controller.dart';
+import '../controllers/location_controller.dart';
+import 'package:customerapp/app/views/payment_success_screen.dart';
 
 class CartView extends GetView<CartController> {
   const CartView({Key? key}) : super(key: key);
 
-  // Primary color (matching the red tone in your screenshot).
+  // Primary color.
   static const Color kPrimaryColor = Color(0xFFFF3008);
 
   @override
   Widget build(BuildContext context) {
     final cartCtrl = Get.find<CartController>();
+    final locationCtrl = Get.find<LocationController>(); // Get the location controller
 
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        // Makes the app bar white
         backgroundColor: Colors.white,
         elevation: 0,
-        // The back button is here:
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () {
-            // This will pop the current route and go back to the previous screen
-            Get.back();
+            Get.back(); // Pop CartView
           },
         ),
         title: Text(
@@ -41,11 +43,11 @@ class CartView extends GetView<CartController> {
         centerTitle: false,
       ),
       body: Obx(() {
-        // 1) Loading state
+        // Show loading spinner if needed.
         if (cartCtrl.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
         }
-        // 2) Error state: Show error message with a retry button.
+        // Show error if exists.
         if (cartCtrl.errorMessage.isNotEmpty) {
           return Center(
             child: Padding(
@@ -63,9 +65,7 @@ class CartView extends GetView<CartController> {
                   ),
                   const SizedBox(height: 12),
                   ElevatedButton(
-                    onPressed: () {
-                      cartCtrl.fetchCartItems();
-                    },
+                    onPressed: () => cartCtrl.fetchCartItems(),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: kPrimaryColor,
                     ),
@@ -82,64 +82,100 @@ class CartView extends GetView<CartController> {
             ),
           );
         }
-        // 3) Empty cart state
+        // If cart is empty, show empty cart view.
         if (cartCtrl.cartItems.isEmpty) {
           return _buildEmptyCart();
         }
 
-        // 4) Normal state: show the checkout UI
         return SingleChildScrollView(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ===== STORE NAME =====
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: const BoxDecoration(
+              // --- Delivery Address Section ---
+              Obx(() {
+                final address = locationCtrl.selectedAddress.value;
+                return Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   color: Colors.white,
-                  border: Border(bottom: BorderSide(color: Colors.black12)),
-                ),
-                child: Text(
-                  // For illustration, we’ll just hardcode "Fresmo"
-                  'Fresmo',
-                  style: GoogleFonts.workSans(
-                    color: Colors.black,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 18,
+                  child: Row(
+                    children: [
+                      const Icon(Icons.location_on, color: Colors.black54),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          // If an address is selected, show it. Otherwise, prompt to select one.
+                          address.isNotEmpty ? address : 'Select Delivery Address',
+                          style: GoogleFonts.workSans(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: address.isNotEmpty ? Colors.black87 : Colors.grey,
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          // Navigate to the Location Picker screen.
+                          Get.toNamed('/location-picker');
+                        },
+                        child: Text(
+                          address.isNotEmpty ? 'Change' : 'Select',
+                          style: GoogleFonts.workSans(
+                            fontSize: 14,
+                            color: kPrimaryColor,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ),
-
-              // ===== ADDRESS / DELIVERY / PHONE =====
-              Container(
-                padding: const EdgeInsets.only(left: 16, right: 16, top: 12),
-                color: Colors.white,
-                child: Column(
-                  children: [
-                    _menuItemRow(
-                      icon: Icons.location_on,
-                      title: cartCtrl.cartData['address'] ??
-                          '56 Miami Beach Promenade\nIluka WA 6028, Australia',
-                      onTap: () {
-                        // Implement "Change address" or detail screen
-                      },
-                    ),
-                    const SizedBox(height: 8),
-                    _menuItemRow(
-                      icon: Icons.phone,
-                      title: cartCtrl.cartData['phone'] ?? '(215) 268-8872',
-                      onTap: () {
-                        // Possibly let user edit phone number
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                ),
-              ),
-
+                );
+              }),
+              // --- Store Name Section ---
+              // Container(
+              //   width: double.infinity,
+              //   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              //   decoration: const BoxDecoration(
+              //     color: Colors.white,
+              //     border: Border(bottom: BorderSide(color: Colors.black12)),
+              //   ),
+              //   child: Text(
+              //     'Fresmo',
+              //     style: GoogleFonts.workSans(
+              //       color: Colors.black,
+              //       fontWeight: FontWeight.w600,
+              //       fontSize: 18,
+              //     ),
+              //   ),
+              // ),
+              // // --- Address/Delivery/Phone (from cartData) ---
+              // Container(
+              //   padding: const EdgeInsets.only(left: 16, right: 16, top: 12),
+              //   color: Colors.white,
+              //   child: Column(
+              //     children: [
+              //       _menuItemRow(
+              //         icon: Icons.location_on,
+              //         // You can decide whether to use cartData or the selected address.
+              //         // Here we keep the cartData value as additional info.
+              //         title: cartCtrl.cartData['address'] ?? '',
+              //         onTap: () {
+              //           // Optionally implement "Change address"
+              //         },
+              //       ),
+              //       const SizedBox(height: 8),
+              //       _menuItemRow(
+              //         icon: Icons.phone,
+              //         title: cartCtrl.cartData['phone'] ?? '(215) 268-8872',
+              //         onTap: () {
+              //           // Optionally let user edit phone number.
+              //         },
+              //       ),
+              //       const SizedBox(height: 16),
+              //     ],
+              //   ),
+              // ),
               const Divider(height: 1, color: Colors.black12),
-
-              // ===== PROMOTION + REWARD PROGRESS =====
+              // --- Promotion Section ---
               Container(
                 color: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -160,50 +196,43 @@ class CartView extends GetView<CartController> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    // You can add promotion/reward progress if available.
                   ],
                 ),
               ),
-
               const SizedBox(height: 12),
-
-              // ===== SHOW CART ITEMS (grouped by mealType) =====
+              // --- Cart Items Section ---
               _buildCartItemsSection(),
-
               const SizedBox(height: 12),
-
-              // ===== FEES & ORDER SUMMARY =====
+              // --- Order Summary Section ---
               _buildOrderSummary(),
-
               const SizedBox(height: 24),
-
-              // ===== SLIDE TO PAY (Place Order) =====
+              // --- Slide to Pay Section ---
               Container(
                 color: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 child: SlideAction(
-                  outerColor: kPrimaryColor,
-                  innerColor: Colors.white,
-                  text: "Slide to Pay",
-                  textStyle: GoogleFonts.workSans(
-                    fontSize: 16,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  onSubmit: () {
-                    // Trigger your actual payment flow:
-                    cartCtrl.initiatePayment();
-                    Future.delayed(const Duration(milliseconds: 300), () {
-                      Get.snackbar(
-                        'Success',
-                        'Your order has been placed!',
-                        snackPosition: SnackPosition.BOTTOM,
-                      );
-                    });
-                  },
-                ),
+  // Remove 'key: someGlobalKey' or ensure each SlideAction has a unique key
+  outerColor: kPrimaryColor,
+  innerColor: Colors.white,
+  text: "Slide to Pay",
+  textStyle: GoogleFonts.workSans(
+    fontSize: 16,
+    color: Colors.white,
+    fontWeight: FontWeight.w600,
+  ),
+  onSubmit: () {
+    cartCtrl.initiatePayment();
+    Future.delayed(const Duration(milliseconds: 300), () {
+      Get.snackbar(
+        'Success',
+        'Your order has been placed!',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    });
+    return null;
+  },
+),
               ),
-
               const SizedBox(height: 24),
             ],
           ),
@@ -212,9 +241,7 @@ class CartView extends GetView<CartController> {
     );
   }
 
-  // -----------------------------
-  // 1) Empty cart screen
-  // -----------------------------
+  // --- Empty Cart Widget ---
   Widget _buildEmptyCart() {
     return Center(
       child: Padding(
@@ -254,14 +281,11 @@ class CartView extends GetView<CartController> {
     );
   }
 
-  // -----------------------------
-  // 2) Builds the cart items section, grouped by mealType
-  // -----------------------------
+  // --- Cart Items Section ---
   Widget _buildCartItemsSection() {
     final cartCtrl = Get.find<CartController>();
     final cartItems = cartCtrl.cartItems;
 
-    // Group items by mealType
     final groupedItems = _groupCartItemsByMealType(cartItems);
 
     return Container(
@@ -269,7 +293,6 @@ class CartView extends GetView<CartController> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Title
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: Text(
@@ -280,7 +303,6 @@ class CartView extends GetView<CartController> {
               ),
             ),
           ),
-          // Each mealType group
           ...groupedItems.entries.map((entry) {
             final mealType = entry.key;
             final items = entry.value;
@@ -289,9 +311,9 @@ class CartView extends GetView<CartController> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Meal Type label
                   Padding(
-                    padding: const EdgeInsets.only(left: 16, right: 16, bottom: 6),
+                    padding:
+                        const EdgeInsets.only(left: 16, right: 16, bottom: 6),
                     child: Text(
                       mealType.capitalizeFirst ?? mealType,
                       style: GoogleFonts.workSans(
@@ -301,7 +323,6 @@ class CartView extends GetView<CartController> {
                       ),
                     ),
                   ),
-                  // Items list
                   ListView.separated(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
@@ -321,10 +342,9 @@ class CartView extends GetView<CartController> {
     );
   }
 
-  // Groups cart items by meal type.
+  // --- Group Cart Items by Meal Type ---
   Map<String, List<Map<String, dynamic>>> _groupCartItemsByMealType(
-    List<Map<String, dynamic>> items,
-  ) {
+      List<Map<String, dynamic>> items) {
     final Map<String, List<Map<String, dynamic>>> grouped = {};
     for (final item in items) {
       final vendorDish = item['vendorDish'] ?? {};
@@ -335,20 +355,19 @@ class CartView extends GetView<CartController> {
     return grouped;
   }
 
-  // Builds a single cart item row.
+  // --- Single Cart Item Row ---
   Widget _buildCartItemRow(Map<String, dynamic> item) {
     final cartCtrl = Get.find<CartController>();
     final quantity = item['quantity'] ?? 1;
-
     final vendorDish = item['vendorDish'] ?? {};
     final dish = vendorDish['dish'] ?? {};
     final dishName = dish['name'] ?? 'Unknown Dish';
-    // Retrieve the image from vendorDish.
     final imageUrl = vendorDish['image'] ?? '';
     final mealType = vendorDish['mealType'] ?? '';
     final vendorDishId = vendorDish['id'] ?? '';
 
-    final priceStr = vendorDish['vendorSpecificPrice']?.toString() ?? '0.00';
+    final priceStr =
+        vendorDish['vendorSpecificPrice']?.toString() ?? '0.00';
     final priceDouble = double.tryParse(priceStr) ?? 0.0;
     final lineTotal = priceDouble * quantity;
 
@@ -425,7 +444,7 @@ class CartView extends GetView<CartController> {
     );
   }
 
-  // Shows dish image or fallback icon if no URL.
+  // --- Build Dish Image ---
   Widget _buildDishImage(String imageUrl) {
     if (imageUrl.isNotEmpty) {
       if (imageUrl.startsWith("data:image")) {
@@ -474,10 +493,8 @@ class CartView extends GetView<CartController> {
     );
   }
 
-  Widget _circleButton({
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
+  // --- Circle Button for Stepper ---
+  Widget _circleButton({required IconData icon, required VoidCallback onTap}) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(50),
@@ -498,9 +515,7 @@ class CartView extends GetView<CartController> {
     );
   }
 
-  // -----------------------------
-  // Builds the fees + order summary
-  // -----------------------------
+  // --- Order Summary Section ---
   Widget _buildOrderSummary() {
     final cartCtrl = Get.find<CartController>();
 
@@ -550,7 +565,7 @@ class CartView extends GetView<CartController> {
     );
   }
 
-  // Reusable row for address & phone, etc.
+  // --- Reusable Row for Address & Phone ---
   Widget _menuItemRow({
     required IconData icon,
     required String title,
@@ -560,31 +575,21 @@ class CartView extends GetView<CartController> {
     return InkWell(
       onTap: onTap,
       child: Row(
-        crossAxisAlignment:
-            subtitle != null ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+        crossAxisAlignment: subtitle != null ? CrossAxisAlignment.start : CrossAxisAlignment.center,
         children: [
           Icon(icon, color: Colors.black54),
           const SizedBox(width: 12),
           Expanded(
             child: subtitle == null
-                ? Text(
-                    title,
-                    style: GoogleFonts.workSans(fontSize: 15),
-                  )
+                ? Text(title, style: GoogleFonts.workSans(fontSize: 15))
                 : Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        title,
-                        style: GoogleFonts.workSans(fontSize: 15),
-                      ),
+                      Text(title, style: GoogleFonts.workSans(fontSize: 15)),
                       const SizedBox(height: 4),
                       Text(
                         subtitle,
-                        style: GoogleFonts.workSans(
-                          fontSize: 14,
-                          color: Colors.black45,
-                        ),
+                        style: GoogleFonts.workSans(fontSize: 14, color: Colors.black45),
                       ),
                     ],
                   ),
@@ -592,6 +597,87 @@ class CartView extends GetView<CartController> {
           const SizedBox(width: 8),
           const Icon(Icons.chevron_right, color: Colors.black38),
         ],
+      ),
+    );
+  }
+}
+
+/// A wrapper widget that applies a bounce/elastic scale animation when its child appears.
+class BouncyPage extends StatefulWidget {
+  final Widget child;
+  const BouncyPage({Key? key, required this.child}) : super(key: key);
+
+  @override
+  _BouncyPageState createState() => _BouncyPageState();
+}
+
+class _BouncyPageState extends State<BouncyPage> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(duration: const Duration(milliseconds: 800), vsync: this);
+    _animation = CurvedAnimation(parent: _controller, curve: Curves.elasticOut);
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ScaleTransition(
+      scale: _animation,
+      child: widget.child,
+    );
+  }
+}
+
+/// A widget that animates its child by fading and sliding it in with a delay.
+class AnimatedDishTile extends StatefulWidget {
+  final Widget child;
+  final int delay; // Delay in milliseconds
+  const AnimatedDishTile({Key? key, required this.child, this.delay = 0}) : super(key: key);
+
+  @override
+  _AnimatedDishTileState createState() => _AnimatedDishTileState();
+}
+
+class _AnimatedDishTileState extends State<AnimatedDishTile> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _opacityAnimation;
+  late Animation<Offset> _offsetAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 500));
+    _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
+    _offsetAnimation = Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero)
+        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+    Future.delayed(Duration(milliseconds: widget.delay), () {
+      if (mounted) _controller.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _opacityAnimation,
+      child: SlideTransition(
+        position: _offsetAnimation,
+        child: widget.child,
       ),
     );
   }

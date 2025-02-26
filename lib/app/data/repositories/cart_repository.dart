@@ -36,7 +36,7 @@ class CartRepository {
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
-    } else if (response.statusCode == 400) {
+    } else if (response.statusCode == 406) {
       // If status is 400, return a map with vendorMismatch flag.
       final error = jsonDecode(response.body);
       return {

@@ -1,11 +1,9 @@
-// lib/app/views/home_view.dart
 import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-// import '../controllers/dashboard_controller.dart';
 import '../controllers/home_controller.dart';
 import '../controllers/cart_controller.dart';
 // Import the location controller
@@ -36,7 +34,7 @@ class HomeView extends GetView<HomeController> {
     final randomPlaceholder =
         placeholderOptions[Random().nextInt(placeholderOptions.length)];
 
-    // Dummy advertisement list.
+    // Dummy advertisement list for demonstration.
     final adList = [
       {
         'image': '/ads.png',
@@ -103,48 +101,52 @@ class HomeView extends GetView<HomeController> {
                         ),
                         child: Align(
                           alignment: Alignment.topCenter,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.location_pin,
-                                    color: Colors.white,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  GestureDetector(
-                                    onTap: () {
-                                      // Navigate to the Location Picker screen.
-                                      Get.toNamed('/location-picker');
-                                    },
-                                    child: Obx(() {
-                                      // Display the updated address or default text.
-                                      final address =
-                                          locationCtrl.selectedAddress.value;
-                                      return Text(
-                                        address.isEmpty
-                                            ? 'Select Location'
-                                            : address,
-                                        style: GoogleFonts.workSans(
-                                          color: Colors.white,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      );
-                                    }),
-                                  ),
-                                ],
-                              ),
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.account_circle,
-                                  color: Colors.white,
-                                ),
-                                onPressed: () {},
-                              ),
-                            ],
-                          ),
+                         child: Row(
+  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  children: [
+    Row(
+      children: [
+        const Icon(
+          Icons.location_pin,
+          color: Colors.white,
+        ),
+        const SizedBox(width: 8),
+        GestureDetector(
+          onTap: () {
+            // Navigate to the Location Picker screen (if you have one).
+            Get.toNamed('/location-picker');
+          },
+          child: Obx(() {
+            final address = locationCtrl.selectedAddress.value;
+            // If the address is more than 10 characters, truncate it.
+            final displayAddress = address.length > 10 ? address.substring(0, 25) + '...' : address;
+            return Expanded(
+              child: Text(
+                displayAddress.isEmpty ? 'Select Location' : displayAddress,
+                style: GoogleFonts.workSans(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            );
+          }),
+        ),
+      ],
+    ),
+    IconButton(
+      icon: const Icon(
+        Icons.account_circle,
+        color: Colors.white,
+      ),
+      onPressed: () {
+        // Implement user profile or similar action
+      },
+    ),
+  ],
+),
                         ),
                       ),
                     ),
@@ -177,7 +179,6 @@ class HomeView extends GetView<HomeController> {
                             borderSide: BorderSide.none,
                           ),
                         ),
-                        // Trigger search on submission.
                         onSubmitted: (value) {
                           if (value.trim().isNotEmpty) {
                             Get.toNamed('/search-results',
@@ -321,10 +322,8 @@ class HomeView extends GetView<HomeController> {
         if (itemCount == 0) return const SizedBox.shrink();
         return InkWell(
           onTap: () {
-            // final dashboardCtrl = Get.find<DashboardController>();
-            // dashboardCtrl.changeTabIndex(1); // Switch to Cart tab.
-            // Get.back();
-            Get.to(() => CartView());
+            // Navigates to the CartView
+            Get.to(() => const CartView());
           },
           child: Container(
             margin: const EdgeInsets.all(16),
@@ -474,6 +473,7 @@ class HomeView extends GetView<HomeController> {
 
     return GestureDetector(
       onTap: () {
+        // Navigate to vendor/restaurant details page
         Get.toNamed(
           '/restaurant-details',
           arguments: {

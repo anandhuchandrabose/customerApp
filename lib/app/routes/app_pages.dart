@@ -8,6 +8,7 @@ import 'package:customerapp/app/controllers/restaurant_details_controller.dart';
 import 'package:customerapp/app/views/cart_view.dart';
 import 'package:customerapp/app/views/complete_signup_view.dart';
 import 'package:customerapp/app/views/dashboard_view.dart';
+import 'package:customerapp/app/views/location_view.dart' show LocationView;
 import 'package:customerapp/app/views/profile_view.dart';
 import 'package:customerapp/app/views/razorpay_test_view.dart';
 import 'package:get/get.dart';
@@ -47,20 +48,20 @@ class AppPages {
       }),
     ),
 
-    // GetPage(
-    //   name: '/location-picker',
-    //   page: () => const LocationView(),
-    //   binding: BindingsBuilder(() {
-    //     Get.put(LocationController());
-    //   }),
-    // ),
-    // Home route (if needed standalone)
-
     GetPage(
       name: '/location-picker',
-      page: () => const LocationPickerView(),
-      binding: LocationPickerBinding(), // Now this class is defined.
+      page: () => const LocationView(),
+      binding: BindingsBuilder(() {
+        Get.put(LocationController());
+      }),
     ),
+    // Home route (if needed standalone)
+
+    // GetPage(
+    //   name: '/location-picker',
+    //   page: () => const LocationPickerView(),
+    //   binding: LocationPickerBinding(), // Now this class is defined.
+    // ),
 
     GetPage(
       name: '/home',
