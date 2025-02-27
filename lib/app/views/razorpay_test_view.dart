@@ -28,7 +28,7 @@ class _RazorpayTestViewState extends State<RazorpayTestView> {
 
   @override
   void dispose() {
-    _razorpay.clear(); // Removes all listeners
+    _razorpay.clear();
     super.dispose();
   }
 

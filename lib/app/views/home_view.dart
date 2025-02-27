@@ -6,11 +6,12 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../controllers/home_controller.dart';
 import '../controllers/cart_controller.dart';
-// Import the location controller
 import '../controllers/location_controller.dart';
 import 'cart_view.dart';
+import 'dart:ui';
 
 class HomeView extends GetView<HomeController> {
+  // ignore: use_super_parameters
   const HomeView({Key? key}) : super(key: key);
 
   static const Color kPrimaryColor = Color(0xFFFF3008);
@@ -19,49 +20,47 @@ class HomeView extends GetView<HomeController> {
   Widget build(BuildContext context) {
     final homeCtrl = Get.find<HomeController>();
     final cartCtrl = Get.find<CartController>();
-    // Get the LocationController instance.
     final locationCtrl = Get.find<LocationController>();
 
     final placeholderOptions = [
       'Search for bakery...',
       'Discover sweets...',
-      'Find breakfast options...',
-      'Looking for lunch?',
+      'Find breakfast...',
+      'Craving lunch?',
       'Dinner ideas...',
-      'Craving a snack...',
-      'Hungry? Search here!',
+      'Snack time?',
+      'Explore now!',
     ];
     final randomPlaceholder =
         placeholderOptions[Random().nextInt(placeholderOptions.length)];
 
-    // Dummy advertisement list for demonstration.
     final adList = [
       {
-        'image': '/ads.png',
+        'image': '',
         'title': 'Special Offer!',
-        'description':
-            'Get up to 50% off on your first order. Hurry up, limited time offer!',
+        'description': 'Up to 50% off your first order – limited time!',
       },
       {
         'image': '',
         'title': 'New Deals!',
-        'description': 'Check out our latest deals on your favorite items.',
+        'description': 'Fresh deals on your favorites await.',
       },
     ];
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[100],
       body: Obx(() {
         if (homeCtrl.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator(color: kPrimaryColor));
         }
         if (homeCtrl.errorMessage.isNotEmpty) {
           return Center(
             child: Text(
               'Error: ${homeCtrl.errorMessage.value}',
               style: GoogleFonts.workSans(
-                color: Colors.red,
+                color: Colors.redAccent,
                 fontSize: 16,
+                fontWeight: FontWeight.w500,
               ),
             ),
           );
@@ -74,240 +73,162 @@ class HomeView extends GetView<HomeController> {
           behavior: NoScrollGlow(),
           child: CustomScrollView(
             slivers: [
-              // ===== SliverAppBar with location & search =====
+              // ===== Updated SliverAppBar =====
               SliverAppBar(
                 pinned: true,
-                expandedHeight: 150,
+                floating: false, // Keeps it pinned, no floating
+                expandedHeight: 140,
                 backgroundColor: kPrimaryColor,
                 flexibleSpace: FlexibleSpaceBar(
                   collapseMode: CollapseMode.pin,
                   background: Container(
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [
-                          kPrimaryColor,
-                          Color.fromARGB(255, 240, 99, 71),
-                        ],
+                        colors: [kPrimaryColor, kPrimaryColor.withOpacity(0.9)],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                       ),
                     ),
                     child: SafeArea(
                       child: Padding(
-                        padding: const EdgeInsets.only(
-                          top: 36,
-                          left: 16,
-                          right: 16,
-                        ),
-                        child: Align(
-                          alignment: Alignment.topCenter,
-                         child: Row(
-  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  children: [
-    Row(
-      children: [
-        const Icon(
-          Icons.location_pin,
-          color: Colors.white,
-        ),
-        const SizedBox(width: 8),
-        GestureDetector(
-          onTap: () {
-            // Navigate to the Location Picker screen (if you have one).
-            Get.toNamed('/location-picker');
-          },
-          child: Obx(() {
-            final address = locationCtrl.selectedAddress.value;
-            // If the address is more than 10 characters, truncate it.
-            final displayAddress = address.length > 10 ? address.substring(0, 25) + '...' : address;
-            return Expanded(
-              child: Text(
-                displayAddress.isEmpty ? 'Select Location' : displayAddress,
-                style: GoogleFonts.workSans(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            );
-          }),
-        ),
-      ],
-    ),
-    IconButton(
-      icon: const Icon(
-        Icons.account_circle,
-        color: Colors.white,
-      ),
-      onPressed: () {
-        // Implement user profile or similar action
-      },
-    ),
-  ],
-),
+                        padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                GestureDetector(
+                                  onTap: () => Get.toNamed('/location-picker'),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.location_pin, color: Colors.white, size: 20),
+                                      const SizedBox(width: 8),
+                                      Obx(() {
+                                        final address = locationCtrl.selectedAddress.value;
+                                        final displayAddress = address.length > 25
+                                            ? '${address.substring(0, 25)}...'
+                                            : address;
+                                        return Text(
+                                          displayAddress.isEmpty ? 'Choose Location' : displayAddress,
+                                          style: GoogleFonts.workSans(
+                                            color: Colors.white,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        );
+                                      }),
+                                    ],
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.account_circle_outlined, color: Colors.white, size: 28),
+                                  onPressed: () {},
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            _buildSearchBar(randomPlaceholder),
+                          ],
                         ),
                       ),
                     ),
                   ),
-                ),
-                bottom: PreferredSize(
-                  preferredSize: const Size.fromHeight(60),
-                  child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Material(
-                      elevation: 5,
-                      borderRadius: BorderRadius.circular(50),
-                      child: TextField(
-                        decoration: InputDecoration(
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 16,
-                            horizontal: 20,
-                          ),
-                          filled: true,
-                          fillColor: Colors.white,
-                          hintText: randomPlaceholder,
-                          hintStyle: GoogleFonts.workSans(
-                            color: Colors.grey,
-                          ),
-                          prefixIcon:
-                              const Icon(Icons.search, color: Colors.grey),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(50),
-                            borderSide: BorderSide.none,
-                          ),
-                        ),
-                        onSubmitted: (value) {
-                          if (value.trim().isNotEmpty) {
-                            Get.toNamed('/search-results',
-                                arguments: {'searchKey': value.trim()});
-                          }
-                        },
+                  title: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      'Fresmo',
+                      style: GoogleFonts.workSans(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
+                  centerTitle: true,
                 ),
               ),
-
-              // ===== Categories Section =====
               SliverToBoxAdapter(
                 child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'Categories',
                         style: GoogleFonts.workSans(
-                          fontSize: 18,
+                          fontSize: 20,
                           fontWeight: FontWeight.bold,
+                          color: Colors.black87,
                         ),
                       ),
-                      const SizedBox(height: 10),
-                      if (categories.isEmpty)
-                        Text(
-                          'No categories found.',
-                          style: GoogleFonts.workSans(),
-                        )
-                      else
-                        SizedBox(
-                          height: 90,
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: categories.length,
-                            separatorBuilder: (context, index) =>
-                                const SizedBox(width: 12),
-                            itemBuilder: (context, index) {
-                              final cat = categories[index];
-                              final catName = cat['name'] ?? 'No Name';
-                              final catImage = cat['image'] ?? '';
-
-                              return GestureDetector(
-                                onTap: () {
-                                  // Navigate to the new screen that lists vendors for this category.
-                                  Get.toNamed(
-                                    '/category-vendors',
-                                    arguments: catName,
+                      const SizedBox(height: 12),
+                      categories.isEmpty
+                          ? _buildEmptyState('No categories available.')
+                          : SizedBox(
+                              height: 100,
+                              child: ListView.separated(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: categories.length,
+                                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                                itemBuilder: (_, index) {
+                                  final cat = categories[index];
+                                  final catName = cat['name'] ?? 'Unnamed';
+                                  final catImage = cat['image'] ?? '';
+                                  return GestureDetector(
+                                    onTap: () => Get.toNamed('/category-vendors', arguments: catName),
+                                    child: _buildCategoryCard(catName, catImage),
                                   );
                                 },
-                                child: _buildCategoryCard(catName, catImage),
-                              );
-                            },
-                          ),
-                        ),
+                              ),
+                            ),
                     ],
                   ),
                 ),
               ),
-
-              // ===== Advertisement / Offers Cards =====
               SliverToBoxAdapter(
                 child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: SizedBox(
-                    height: 180,
+                    height: 160,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.only(right: 16),
                       itemCount: adList.length,
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(width: 16),
-                      itemBuilder: (context, index) {
-                        final ad = adList[index];
-                        return _buildAdCard(context, ad);
-                      },
+                      separatorBuilder: (_, __) => const SizedBox(width: 12),
+                      itemBuilder: (_, index) => _buildAdCard(context, adList[index]),
                     ),
                   ),
                 ),
               ),
-
-              // ===== Vendors Section =====
               SliverToBoxAdapter(
                 child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'Nearby Kitchens',
                         style: GoogleFonts.workSans(
-                          fontSize: 18,
+                          fontSize: 20,
                           fontWeight: FontWeight.bold,
+                          color: Colors.black87,
                         ),
                       ),
-                      const SizedBox(height: 10),
-                      if (vendors.isEmpty)
-                        Center(
-                          child: Text(
-                            'No vendors found.',
-                            style: GoogleFonts.workSans(),
-                          ),
-                        )
-                      else
-                        Column(
-                          children: vendors.map((vendor) {
-                            final vendorId = vendor['id'] ?? '';
-                            final name = vendor['kitchenName'] ?? 'No Name';
-                            final imageUrl =
-                                vendor['profile']?['profileImage'] ?? '';
-                            final rating =
-                                vendor['rating']?.toString() ?? '4.5';
-                            final isVeg = vendor['isVeg'] ?? false;
-
-                            return _buildKitchenCard(
-                              name,
-                              imageUrl,
-                              rating,
-                              isVeg,
-                              vendorId,
-                            );
-                          }).toList(),
-                        ),
+                      const SizedBox(height: 12),
+                      vendors.isEmpty
+                          ? _buildEmptyState('No kitchens nearby.')
+                          : Column(
+                              children: vendors.map((vendor) {
+                                final vendorId = vendor['id'] ?? '';
+                                final name = vendor['kitchenName'] ?? 'Unnamed';
+                                final imageUrl = vendor['profile']?['profileImage'] ?? '';
+                                final rating = vendor['rating']?.toString() ?? '4.5';
+                                final isVeg = vendor['isVeg'] ?? false;
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: _buildKitchenCard(name, imageUrl, rating, isVeg, vendorId),
+                                );
+                              }).toList(),
+                            ),
                     ],
                   ),
                 ),
@@ -316,21 +237,18 @@ class HomeView extends GetView<HomeController> {
           ),
         );
       }),
-      // ===== Bottom Nav: View Cart popup if items in cart =====
       bottomNavigationBar: Obx(() {
         final int itemCount = cartCtrl.totalItemCount;
         if (itemCount == 0) return const SizedBox.shrink();
-        return InkWell(
-          onTap: () {
-            // Navigates to the CartView
-            Get.to(() => const CartView());
-          },
-          child: Container(
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            decoration: BoxDecoration(
-              color: kPrimaryColor,
-              borderRadius: BorderRadius.circular(50),
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: ElevatedButton(
+            onPressed: () => Get.to(() => const CartView()),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: kPrimaryColor,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
+              elevation: 5,
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -341,15 +259,22 @@ class HomeView extends GetView<HomeController> {
                   style: GoogleFonts.workSans(
                     color: Colors.white,
                     fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                Text(
-                  '$itemCount',
-                  style: GoogleFonts.workSans(
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: const BoxDecoration(
                     color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    '$itemCount',
+                    style: GoogleFonts.workSans(
+                      color: kPrimaryColor,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
@@ -360,218 +285,274 @@ class HomeView extends GetView<HomeController> {
     );
   }
 
-  // ---------------------------
-  // Category Card Widget
-  // ---------------------------
+  Widget _buildSearchBar(String placeholder) {
+    return Material(
+      elevation: 4,
+      borderRadius: BorderRadius.circular(12),
+      child: TextField(
+        decoration: InputDecoration(
+          hintText: placeholder,
+          hintStyle: GoogleFonts.workSans(color: Colors.grey[600], fontSize: 16),
+          prefixIcon: const Icon(Icons.search, color: Colors.grey),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(vertical: 0),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+        ),
+        onSubmitted: (value) {
+          if (value.trim().isNotEmpty) {
+            Get.toNamed('/search-results', arguments: {'searchKey': value.trim()});
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(String message) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        message,
+        style: GoogleFonts.workSans(color: Colors.grey[600], fontSize: 14),
+      ),
+    );
+  }
+
   Widget _buildCategoryCard(String catName, String base64Image) {
     Uint8List? catImageBytes;
     try {
-      if (base64Image.contains(',')) {
-        base64Image = base64Image.split(',').last;
-      }
+      if (base64Image.contains(',')) base64Image = base64Image.split(',').last;
       catImageBytes = base64Decode(base64Image);
     } catch (_) {
       catImageBytes = null;
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Circle image (or icon placeholder)
-          ClipRRect(
-            borderRadius: BorderRadius.circular(30),
-            child: Container(
-              width: 60,
-              height: 60,
-              color: Colors.grey[200],
-              child: catImageBytes != null
-                  ? Image.memory(catImageBytes, fit: BoxFit.cover)
-                  : const Icon(Icons.fastfood, size: 30, color: Colors.grey),
-            ),
+    return Column(
+      children: [
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: 70,
+          height: 70,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white,
+            boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.2), blurRadius: 8)],
           ),
-          const SizedBox(height: 6),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 70),
-            child: Text(
-              catName,
-              style: GoogleFonts.workSans(fontSize: 13),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-            ),
+          child: ClipOval(
+            child: catImageBytes != null
+                ? Image.memory(catImageBytes, fit: BoxFit.cover)
+                : Icon(Icons.fastfood, color: Colors.grey[400], size: 30),
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: 70,
+          child: Text(
+            catName,
+            style: GoogleFonts.workSans(fontSize: 13, color: Colors.black87),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
     );
   }
 
-  // ---------------------------
-  // Ad / Offers Card
-  // ---------------------------
   Widget _buildAdCard(BuildContext context, Map<String, dynamic> ad) {
     final String imageUrl = ad['image'] as String;
-    return SizedBox(
-      width: MediaQuery.of(context).size.width * 0.8,
-      height: 180,
-      child: Card(
-        elevation: 3,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        clipBehavior: Clip.antiAlias,
-        child: imageUrl.isNotEmpty
-            ? ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.asset(
-                  imageUrl,
-                  width: double.infinity,
-                  height: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: Colors.grey[300],
-                      child: const Icon(
-                        Icons.local_offer,
-                        color: Colors.grey,
-                        size: 40,
-                      ),
-                    );
-                  },
+    return Container(
+      width: MediaQuery.of(context).size.width * 0.75,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.2), blurRadius: 10)],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Stack(
+          children: [
+            imageUrl.isNotEmpty
+                ? Image.asset(imageUrl, fit: BoxFit.cover, width: double.infinity, height: 160)
+                : Container(color: Colors.grey[200], height: 160),
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.black.withOpacity(0.7), Colors.transparent],
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                  ),
                 ),
-              )
-            : Container(
-                color: Colors.grey[300],
-                child: const Icon(
-                  Icons.local_offer,
-                  color: Colors.grey,
-                  size: 40,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      ad['title'] ?? '',
+                      style: GoogleFonts.workSans(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      ad['description'] ?? '',
+                      style: GoogleFonts.workSans(color: Colors.white70, fontSize: 12),
+                    ),
+                  ],
                 ),
               ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  // ---------------------------
-  // Kitchen Card (Vendor)
-  // ---------------------------
-  Widget _buildKitchenCard(
-    String name,
-    String base64Image,
-    String rating,
-    bool isVeg,
-    String vendorId,
-  ) {
+  Widget _buildKitchenCard(String name, String base64Image, String rating, bool isVeg, String vendorId) {
     Uint8List? vendorImageBytes;
     try {
-      if (base64Image.contains(',')) {
-        base64Image = base64Image.split(',').last;
-      }
+      if (base64Image.contains(',')) base64Image = base64Image.split(',').last;
       vendorImageBytes = base64Decode(base64Image);
     } catch (_) {
       vendorImageBytes = null;
     }
 
     return GestureDetector(
-      onTap: () {
-        // Navigate to vendor/restaurant details page
-        Get.toNamed(
-          '/restaurant-details',
-          arguments: {
-            'vendorId': vendorId,
-            'kitchenName': name,
-            'imageUrl': base64Image,
-            'rating': rating,
-            'isVeg': isVeg,
-          },
-        );
-      },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
+      onTap: () => Get.toNamed('/restaurant-details', arguments: {
+        'vendorId': vendorId,
+        'kitchenName': name,
+        'imageUrl': base64Image,
+        'rating': rating,
+        'isVeg': isVeg,
+      }),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
           color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.2),
-              blurRadius: 10,
+              color: Colors.grey.withOpacity(0.15),
+              blurRadius: 12,
               offset: const Offset(0, 4),
             ),
           ],
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+        child: Stack(
           children: [
-            // Top image
             ClipRRect(
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(12)),
-              child: AspectRatio(
-                aspectRatio: 4 / 3,
+              borderRadius: BorderRadius.circular(20),
+              child: SizedBox(
+                height: 180,
+                width: double.infinity,
                 child: vendorImageBytes != null
                     ? Image.memory(
                         vendorImageBytes,
                         fit: BoxFit.cover,
-                        errorBuilder: (ctx, error, stack) => Container(
-                          color: Colors.grey.shade300,
-                          child: const Icon(
-                            Icons.broken_image,
-                            size: 50,
-                            color: Colors.grey,
-                          ),
+                        errorBuilder: (_, __, ___) => Container(
+                          color: Colors.grey[200],
+                          child: Icon(Icons.store, color: Colors.grey[400], size: 50),
                         ),
                       )
                     : Container(
-                        color: Colors.grey.shade300,
-                        child: const Icon(
-                          Icons.image,
-                          size: 50,
-                          color: Colors.grey,
-                        ),
+                        color: Colors.grey[200],
+                        child: Icon(Icons.store, color: Colors.grey[400], size: 50),
                       ),
               ),
             ),
-            // Bottom info row
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  // Kitchen name
-                  Expanded(
-                    child: Text(
-                      name,
-                      style: GoogleFonts.workSans(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.black.withOpacity(0.6), Colors.transparent],
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
                   ),
-                  // Rating + Veg/NonVeg
-                  Row(
-                    children: [
-                      const Icon(Icons.star, color: Colors.amber, size: 14),
-                      const SizedBox(width: 4),
-                      Text(
-                        rating,
-                        style: GoogleFonts.workSans(fontSize: 14),
-                      ),
-                      const SizedBox(width: 8),
-                      Image.asset(
-                        isVeg
-                            ? 'assets/icons/veg.png'
-                            : 'assets/icons/non-veg.png',
-                        height: 18,
-                        width: 18,
-                        errorBuilder: (_, __, ___) => Icon(
-                          isVeg ? Icons.eco : Icons.no_food,
-                          size: 18,
-                          color: isVeg ? Colors.green : Colors.red,
+                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            name,
+                            style: GoogleFonts.workSans(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      )
-                    ],
-                  ),
-                ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.withOpacity(0.9),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.star, color: Colors.white, size: 14),
+                              const SizedBox(width: 4),
+                              Text(
+                                rating,
+                                style: GoogleFonts.workSans(
+                                  fontSize: 12,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.9),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            isVeg ? Icons.eco : Icons.local_dining,
+                            color: isVeg ? Colors.green : Colors.red,
+                            size: 18,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -581,10 +562,8 @@ class HomeView extends GetView<HomeController> {
   }
 }
 
-// Custom ScrollBehavior to remove overscroll glow
 class NoScrollGlow extends ScrollBehavior {
-  Widget buildViewportChrome(
-      BuildContext context, Widget child, AxisDirection axisDirection) {
+  Widget buildViewportChrome(BuildContext context, Widget child, AxisDirection axisDirection) {
     return child;
   }
 }

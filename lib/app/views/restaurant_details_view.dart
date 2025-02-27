@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-
 import '../controllers/restaurant_details_controller.dart';
 import '../controllers/cart_controller.dart';
 import 'cart_view.dart';
@@ -69,61 +68,47 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
       ),
       bottomNavigationBar: Obx(() {
         final int itemCount = cartCtrl.totalItemCount;
-        return AnimatedSwitcher(
-          duration: const Duration(milliseconds: 500),
-          transitionBuilder: (child, animation) {
-            final curvedAnimation =
-                CurvedAnimation(parent: animation, curve: Curves.elasticOut);
-            return SlideTransition(
-              position:
-                  Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero)
-                      .animate(curvedAnimation),
-              child: FadeTransition(
-                opacity: animation,
-                child: child,
-              ),
-            );
-          },
-          child: itemCount == 0
-              ? const SizedBox.shrink(key: ValueKey('empty'))
-              : InkWell(
-                  key: const ValueKey('cartPopup'),
-                  onTap: () {
-                    Get.to(() => CartView());
-                  },
-                  child: Container(
-                    margin: const EdgeInsets.all(16),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 12),
-                    decoration: BoxDecoration(
+        if (itemCount == 0) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: ElevatedButton(
+            onPressed: () => Get.to(() => const CartView()),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: kPrimaryColor,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
+              elevation: 5,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Icon(Icons.shopping_cart, color: Colors.white, size: 24),
+                Text(
+                  'View Cart',
+                  style: GoogleFonts.workSans(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    '$itemCount',
+                    style: GoogleFonts.workSans(
                       color: kPrimaryColor,
-                      borderRadius: BorderRadius.circular(50),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Icon(Icons.shopping_cart,
-                            color: Colors.white, size: 24),
-                        Text(
-                          'View Cart',
-                          style: GoogleFonts.workSans(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          '$itemCount',
-                          style: GoogleFonts.workSans(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
+              ],
+            ),
+          ),
         );
       }),
       body: BouncyPage(
@@ -168,8 +153,7 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
             return true;
           }).toList();
 
-          bool showGrouped =
-              (selectedFilter.value.isEmpty || selectedFilter.value == 'All');
+          bool showGrouped = (selectedFilter.value.isEmpty || selectedFilter.value == 'All');
           List<dynamic> lunchDishes = [];
           List<dynamic> dinnerDishes = [];
           if (showGrouped) {
@@ -232,8 +216,7 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                             selectedFilter.value = selected ? label : '';
                           },
                           showCheckmark: false,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         ),
                       );
                     },
@@ -242,8 +225,7 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
               ),
               SliverToBoxAdapter(
                 child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -846,8 +828,7 @@ class BouncyPage extends StatefulWidget {
   _BouncyPageState createState() => _BouncyPageState();
 }
 
-class _BouncyPageState extends State<BouncyPage>
-    with SingleTickerProviderStateMixin {
+class _BouncyPageState extends State<BouncyPage> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
 
@@ -886,8 +867,7 @@ class AnimatedDishTile extends StatefulWidget {
   _AnimatedDishTileState createState() => _AnimatedDishTileState();
 }
 
-class _AnimatedDishTileState extends State<AnimatedDishTile>
-    with SingleTickerProviderStateMixin {
+class _AnimatedDishTileState extends State<AnimatedDishTile> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _opacityAnimation;
   late Animation<Offset> _offsetAnimation;

@@ -16,6 +16,8 @@ class OtpController extends GetxController {
   // For development: store the OTP that comes from the backend
   var devOtp = ''.obs;
 
+  get otp => null;
+
   @override
   void onInit() {
     final args = Get.arguments ?? {};

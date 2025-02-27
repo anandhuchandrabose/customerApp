@@ -9,9 +9,10 @@ import 'package:google_fonts/google_fonts.dart';
 // Import your controllers.
 import '../controllers/cart_controller.dart';
 import '../controllers/location_controller.dart';
-import 'package:customerapp/app/views/payment_success_screen.dart';
+// import 'package:customerapp/app/views/payment_success_screen.dart';
 
 class CartView extends GetView<CartController> {
+  // ignore: use_super_parameters
   const CartView({Key? key}) : super(key: key);
 
   // Primary color.
@@ -336,7 +337,7 @@ class CartView extends GetView<CartController> {
                 ],
               ),
             );
-          }).toList(),
+          }),
         ],
       ),
     );
@@ -605,9 +606,10 @@ class CartView extends GetView<CartController> {
 /// A wrapper widget that applies a bounce/elastic scale animation when its child appears.
 class BouncyPage extends StatefulWidget {
   final Widget child;
-  const BouncyPage({Key? key, required this.child}) : super(key: key);
+  const BouncyPage({super.key, required this.child});
 
   @override
+  // ignore: library_private_types_in_public_api
   _BouncyPageState createState() => _BouncyPageState();
 }
 
@@ -642,9 +644,10 @@ class _BouncyPageState extends State<BouncyPage> with SingleTickerProviderStateM
 class AnimatedDishTile extends StatefulWidget {
   final Widget child;
   final int delay; // Delay in milliseconds
-  const AnimatedDishTile({Key? key, required this.child, this.delay = 0}) : super(key: key);
+  const AnimatedDishTile({super.key, required this.child, this.delay = 0});
 
   @override
+  // ignore: library_private_types_in_public_api
   _AnimatedDishTileState createState() => _AnimatedDishTileState();
 }
 
