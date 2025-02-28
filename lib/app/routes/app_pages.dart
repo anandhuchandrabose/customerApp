@@ -1,5 +1,4 @@
 // lib/app/routes/app_pages.dart
-
 import 'package:customerapp/app/controllers/cart_controller.dart';
 import 'package:customerapp/app/controllers/complete_signup_controller.dart';
 import 'package:customerapp/app/controllers/dashboard_controller.dart';
@@ -8,11 +7,11 @@ import 'package:customerapp/app/controllers/restaurant_details_controller.dart';
 import 'package:customerapp/app/views/cart_view.dart';
 import 'package:customerapp/app/views/complete_signup_view.dart';
 import 'package:customerapp/app/views/dashboard_view.dart';
-import 'package:customerapp/app/views/location_view.dart' show LocationView;
+import 'package:customerapp/app/views/address_input_view.dart'; // New import
+import 'package:customerapp/app/views/location_view.dart'; // Updated import
 import 'package:customerapp/app/views/profile_view.dart';
 import 'package:customerapp/app/views/razorpay_test_view.dart';
 import 'package:get/get.dart';
-// import '../bindings/location_picker_binding.dart';
 import '../controllers/category_vendors_controller.dart';
 import '../controllers/location_controller.dart';
 import '../controllers/login_controller.dart';
@@ -20,7 +19,6 @@ import '../controllers/otp_controller.dart';
 import '../controllers/home_controller.dart';
 import '../controllers/search_results_controller.dart';
 import '../views/category_vendors_view.dart';
-// import '../views/location_picker_view.dart';
 import '../views/login_view.dart';
 import '../views/otp_view.dart';
 import '../views/home_view.dart';
@@ -47,24 +45,25 @@ class AppPages {
         Get.lazyPut<OtpController>(() => OtpController());
       }),
     ),
-
+    // Address Input Page
     GetPage(
-      name: '/location-picker',
-      page: () => const LocationView(),
+      name: AppRoutes.addressInput,
+      page: () => const AddressInputView(),
       binding: BindingsBuilder(() {
-        Get.put(LocationController());
+        Get.put(LocationController()); // Ensure LocationController is available
       }),
     ),
-    // Home route (if needed standalone)
-
-    // GetPage(
-    //   name: '/location-picker',
-    //   page: () => const LocationPickerView(),
-    //   binding: LocationPickerBinding(), // Now this class is defined.
-    // ),
-
+    // Location Picker Page (Map-based selection)
     GetPage(
-      name: '/home',
+      name: AppRoutes.locationPicker,
+      page: () =>  LocationView(),
+      binding: BindingsBuilder(() {
+        Get.put(LocationController()); // Reuse the same controller instance
+      }),
+    ),
+    // Home route
+    GetPage(
+      name: AppRoutes.home,
       page: () => const HomeView(),
       binding: BindingsBuilder(() {
         Get.lazyPut<HomeController>(() => HomeController());
@@ -73,7 +72,7 @@ class AppPages {
     ),
     // Restaurant Details
     GetPage(
-      name: '/restaurant-details',
+      name: AppRoutes.restaurantDetails,
       page: () => RestaurantDetailsView(),
       binding: BindingsBuilder(() {
         Get.lazyPut<RestaurantDetailsController>(
@@ -88,48 +87,46 @@ class AppPages {
         Get.lazyPut<CompleteSignupController>(() => CompleteSignupController());
       }),
     ),
-    // Dashboard: The main container that includes the persistent bottom navbar.
+    // Dashboard
     GetPage(
       name: '/dashboard',
       page: () => const DashboardView(),
       binding: BindingsBuilder(() {
         Get.lazyPut<DashboardController>(() => DashboardController());
-        // Bind controllers for the individual tabs used within the Dashboard.
         Get.lazyPut<HomeController>(() => HomeController());
         Get.lazyPut<CartController>(() => CartController());
         Get.lazyPut<ProfileController>(() => ProfileController());
       }),
     ),
-    // Cart route (if you ever need to navigate to it separately; note that it won't have the dashboard's bottom nav)
+    // Cart route
     GetPage(
-      name: '/cart',
+      name: AppRoutes.cart,
       page: () => CartView(),
       binding: BindingsBuilder(() {
         Get.lazyPut<CartController>(() => CartController());
       }),
     ),
-    // Profile route (if needed standalone)
+    // Profile route
     GetPage(
-      name: '/profile',
+      name: AppRoutes.profile,
       page: () => const ProfileView(),
       binding: BindingsBuilder(() {
         Get.lazyPut<ProfileController>(() => ProfileController());
       }),
     ),
     GetPage(
-      name: '/razorpay-test',
+      name: AppRoutes.razorpayTest,
       page: () => const RazorpayTestView(),
     ),
-
     GetPage(
-      name: '/search-results',
+      name: AppRoutes.searchResults,
       page: () => const SearchResultsView(),
       binding: BindingsBuilder(() {
         Get.lazyPut<SearchResultsController>(() => SearchResultsController());
       }),
     ),
     GetPage(
-      name: '/category-vendors',
+      name: AppRoutes.categoryVendors,
       page: () => const CategoryVendorsView(),
       binding: BindingsBuilder(() {
         Get.lazyPut<CategoryVendorsController>(

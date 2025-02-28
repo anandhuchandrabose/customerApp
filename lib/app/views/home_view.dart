@@ -73,12 +73,13 @@ class HomeView extends GetView<HomeController> {
           behavior: NoScrollGlow(),
           child: CustomScrollView(
             slivers: [
-              // ===== Updated SliverAppBar =====
+              // ===== Updated SliverAppBar to show Kazhakootam with truncated address =====
               SliverAppBar(
                 pinned: true,
-                floating: false, // Keeps it pinned, no floating
+                floating: false,
                 expandedHeight: 140,
                 backgroundColor: kPrimaryColor,
+                automaticallyImplyLeading: false, // Removes the back arrow
                 flexibleSpace: FlexibleSpaceBar(
                   collapseMode: CollapseMode.pin,
                   background: Container(
@@ -98,25 +99,45 @@ class HomeView extends GetView<HomeController> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 GestureDetector(
-                                  onTap: () => Get.toNamed('/location-picker'),
+                                  onTap: () {
+                                    // Navigate to AddressInputView
+                                    Get.toNamed('/address-input');
+                                  },
                                   child: Row(
                                     children: [
                                       const Icon(Icons.location_pin, color: Colors.white, size: 20),
                                       const SizedBox(width: 8),
-                                      Obx(() {
-                                        final address = locationCtrl.selectedAddress.value;
-                                        final displayAddress = address.length > 25
-                                            ? '${address.substring(0, 25)}...'
-                                            : address;
-                                        return Text(
-                                          displayAddress.isEmpty ? 'Choose Location' : displayAddress,
-                                          style: GoogleFonts.workSans(
-                                            color: Colors.white,
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
+                                      Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Kazhakootam', // Always show Kazhakootam
+                                            style: GoogleFonts.workSans(
+                                              color: Colors.white,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                            ),
                                           ),
-                                        );
-                                      }),
+                                          Obx(() {
+                                            final address = locationCtrl.selectedAddress.value;
+                                            final truncatedAddress = address.isNotEmpty
+                                                ? (address.length > 25
+                                                    ? '${address.substring(0, 25)}...'
+                                                    : address)
+                                                : 'Select a location';
+                                            return Text(
+                                              truncatedAddress,
+                                              style: GoogleFonts.workSans(
+                                                color: Colors.white70,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w400,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            );
+                                          }),
+                                        ],
+                                      ),
                                     ],
                                   ),
                                 ),

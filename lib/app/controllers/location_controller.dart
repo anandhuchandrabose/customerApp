@@ -1,4 +1,3 @@
-// lib/app/controllers/location_controller.dart
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:geolocator/geolocator.dart';
@@ -23,82 +22,72 @@ class LocationController extends GetxController {
   // Observable for the combined selected address string.
   var selectedAddress = ''.obs;
 
+  // Observable for the list of addresses
+  var addresses = <Map<String, dynamic>>[].obs;
+
   // Local storage instance.
   final storage = GetStorage();
 
   @override
   void onInit() {
     super.onInit();
-    // Try fetching a selected address from your API.
-    fetchSelectedAddress();
+    // Fetch all addresses from the API
+    fetchAddresses();
   }
 
-  /// Fetch addresses from the API, find one with isSelected==true,
-  /// combine the server's addressName with reverse-geocoded details,
-  /// then save that string to local storage.
-  Future<void> fetchSelectedAddress() async {
+  /// Fetch all addresses from the API
+  Future<void> fetchAddresses() async {
     try {
       isLoading.value = true;
       final apiService = ApiService(baseUrl: "https://www.fresmo.in");
-      final http.Response response =
-          await apiService.get('/api/customer/addresses');
+      final http.Response response = await apiService.get('/api/customer/addresses');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data != null && data['addresses'] != null) {
-          final addresses = data['addresses'] as List;
-
-          // Find address with isSelected == true.
+          addresses.value = List<Map<String, dynamic>>.from(data['addresses']);
+          // Set the selected address if it exists
           final selected = addresses.firstWhere(
             (addr) => addr['isSelected'] == true,
-            orElse: () => null,
+            orElse: () => <String, dynamic>{},
           );
-
           if (selected != null) {
-            // Get the server's addressName and coordinates.
-            final serverAddressName = selected['addressName'] ?? '';
             final lat = (selected['latitude'] ?? 0).toDouble();
             final lng = (selected['longitude'] ?? 0).toDouble();
-
             currentLatitude.value = lat;
             currentLongitude.value = lng;
             selectedLatitude.value = lat;
             selectedLongitude.value = lng;
-
-            // Reverse geocode and combine with the serverAddressName.
             String geocodedString = await _reverseGeocodeWithReturn(lat, lng);
-            String finalAddress = '';
-            if (serverAddressName.isNotEmpty && geocodedString.isNotEmpty) {
-              finalAddress = '$serverAddressName, $geocodedString';
-            } else if (serverAddressName.isNotEmpty) {
-              finalAddress = serverAddressName;
-            } else {
-              finalAddress = geocodedString;
+            String finalAddress = selected['addressName'] ?? '';
+            if (geocodedString.isNotEmpty) {
+              finalAddress += ', $geocodedString';
             }
-
-            // Save the combined address to our observable and local storage.
             selectedAddress.value = finalAddress;
             storage.write('userLocation', finalAddress);
-            return;
           }
         }
+      } else {
+        throw Exception('Failed to load addresses');
       }
-      // If no selected address found, fallback to getting device location.
-      await _getCurrentLocation();
     } catch (e) {
-      print("Error fetching selected address: $e");
-      await _getCurrentLocation();
+      print("Error fetching addresses: $e");
+      addresses.value = [];
     } finally {
       isLoading.value = false;
     }
+  }
+
+  /// Public method to get the device's current location and reverse-geocode it.
+  Future<void> getCurrentLocation() async {
+    await _getCurrentLocation();
   }
 
   /// Get the device's current location and reverse-geocode it.
   Future<void> _getCurrentLocation() async {
     try {
       LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
+      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
         permission = await Geolocator.requestPermission();
       }
       Position position = await Geolocator.getCurrentPosition(
@@ -109,8 +98,7 @@ class LocationController extends GetxController {
       selectedLatitude.value = position.latitude;
       selectedLongitude.value = position.longitude;
 
-      String geocodedString =
-          await _reverseGeocodeWithReturn(position.latitude, position.longitude);
+      String geocodedString = await _reverseGeocodeWithReturn(position.latitude, position.longitude);
       selectedAddress.value = geocodedString;
       storage.write('userLocation', geocodedString);
     } catch (e) {
@@ -132,13 +120,7 @@ class LocationController extends GetxController {
       final adminArea = place.administrativeArea ?? '';
       final country = place.country ?? '';
 
-      final full = [
-        placeName,
-        subLocality,
-        locality,
-        adminArea,
-        country
-      ]
+      final full = [placeName, subLocality, locality, adminArea, country]
           .where((segment) => segment.trim().isNotEmpty)
           .join(', ');
       return full.isEmpty ? "($lat, $lng)" : full;
