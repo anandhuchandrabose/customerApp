@@ -27,7 +27,6 @@ dependencies:
   permission_handler: ^11.3.1
   pinput: ^5.0.0
   flutter_google_maps_webservices: ^1.1.1
-  google_maps_webservice: ^0.0.20-nullsafety.6
   flutter_launcher_icons: ^0.13.0
 
 dev_dependencies:
