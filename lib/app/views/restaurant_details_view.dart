@@ -1,3 +1,5 @@
+
+// restaurant_details_view.dart
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -7,7 +9,6 @@ import '../controllers/cart_controller.dart';
 import 'cart_view.dart';
 
 /// Helper function to obtain an ImageProvider from a vendor image string.
-/// If the string is not a URL, we assume it is base64–encoded.
 ImageProvider getVendorImage(String imageString) {
   if (imageString.isEmpty) {
     return const AssetImage('assets/placeholder.png');
@@ -30,7 +31,6 @@ ImageProvider getVendorImage(String imageString) {
 class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
   static const Color kPrimaryColor = Color(0xFFFF3008);
 
-  // For filtering dishes.
   final RxString selectedFilter = ''.obs;
   final List<String> chipLabels = const [
     'All',
@@ -127,6 +127,7 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
 
           final vendorImage = detailsCtrl.restaurantImageUrl.value;
           final vendorName = detailsCtrl.restaurantName.value;
+          final description = detailsCtrl.restaurantDescription.value;
           final servingTime = detailsCtrl.servingTime.value;
           const ratingFixed = 4.3;
           final allDishes = detailsCtrl.dishes;
@@ -171,7 +172,7 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                 child: _buildHeader(
                   vendorImage: vendorImage,
                   vendorName: vendorName,
-                  description: servingTime,
+                  description: description.isNotEmpty ? description : servingTime,
                   rating: ratingFixed,
                 ),
               ),
@@ -188,35 +189,57 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                       final isSelected = (selectedFilter.value == label);
                       return Padding(
                         padding: const EdgeInsets.only(left: 16, right: 8),
-                        child: RawChip(
-                          label: Text(
-                            label,
-                            style: GoogleFonts.workSans(
-                              color: isSelected ? Colors.white : Colors.black87,
-                              fontWeight: FontWeight.bold,
+                        child: GestureDetector(
+                          onTap: () {
+                            selectedFilter.value = isSelected ? '' : label;
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isSelected ? kPrimaryColor : Colors.grey.shade200,
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: isSelected
+                                  ? [
+                                      BoxShadow(
+                                        color: kPrimaryColor.withOpacity(0.3),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ]
+                                  : null,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  label == 'Lunch'
+                                      ? Icons.lunch_dining
+                                      : label == 'Dinner'
+                                          ? Icons.dinner_dining
+                                          : label == 'Veg'
+                                              ? Icons.eco
+                                              : label == 'NonVeg'
+                                                  ? Icons.no_food
+                                                  : Icons.all_inclusive,
+                                  color: isSelected ? Colors.white : Colors.black54,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  label,
+                                  style: GoogleFonts.workSans(
+                                    color: isSelected ? Colors.white : Colors.black87,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          avatar: Icon(
-                            label == 'Lunch'
-                                ? Icons.lunch_dining
-                                : label == 'Dinner'
-                                    ? Icons.dinner_dining
-                                    : label == 'Veg'
-                                        ? Icons.eco
-                                        : label == 'NonVeg'
-                                            ? Icons.no_food
-                                            : Icons.all_inclusive,
-                            color: isSelected ? Colors.white : Colors.black54,
-                            size: 20,
-                          ),
-                          selected: isSelected,
-                          selectedColor: kPrimaryColor,
-                          backgroundColor: Colors.grey.shade200,
-                          onSelected: (bool selected) {
-                            selectedFilter.value = selected ? label : '';
-                          },
-                          showCheckmark: false,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         ),
                       );
                     },
@@ -354,7 +377,6 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
     );
   }
 
-  /// Custom header with a split background and centered circular avatar.
   Widget _buildHeader({
     required String vendorImage,
     required String vendorName,
@@ -362,7 +384,7 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
     required double rating,
   }) {
     return SizedBox(
-      height: 300,
+      height: 320,
       child: Stack(
         children: [
           Column(
@@ -381,7 +403,7 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                 ),
               ),
               Container(
-                height: 150,
+                height: 170,
                 width: double.infinity,
                 color: Colors.white,
               ),
@@ -395,8 +417,7 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
               child: CircleAvatar(
                 radius: 50,
                 backgroundColor: Colors.grey.shade200,
-                backgroundImage:
-                    vendorImage.isNotEmpty ? getVendorImage(vendorImage) : null,
+                backgroundImage: vendorImage.isNotEmpty ? getVendorImage(vendorImage) : null,
                 child: vendorImage.isEmpty
                     ? const Icon(Icons.restaurant, size: 50)
                     : null,
@@ -420,6 +441,19 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: _buildRatingStars(rating),
                 ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Text(
+                    description,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.workSans(
+                      fontSize: 14,
+                      color: Colors.grey.shade700,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ],
             ),
           ),
@@ -428,9 +462,6 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
     );
   }
 
-  // ---------------------------
-  // Dish Tile Builder
-  // ---------------------------
   Widget _buildDishTileFromMap(Map dish) {
     final String dishName = dish['name'] ?? '';
     final String dishDescription = dish['description'] ?? '';
@@ -448,10 +479,8 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
     final String mealType = dish['mealType'] ?? 'lunch';
     final String vendorDishId = dish['vendorDishId'] ?? '';
     final String dishImageUrl = dish['image'] ?? '';
-    final double ratingValue =
-        dish['rating'] is num ? (dish['rating'] as num).toDouble() : 3.9;
-    final int ratingCount =
-        dish['ratingCount'] is int ? dish['ratingCount'] : 0;
+    final double ratingValue = dish['rating'] is num ? (dish['rating'] as num).toDouble() : 3.9;
+    final int ratingCount = dish['ratingCount'] is int ? dish['ratingCount'] : 0;
     final bool isBestseller = (ratingValue >= 4.0);
 
     return _buildDishTile(
@@ -468,8 +497,6 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
     );
   }
 
-  /// The actual UI for each dish tile.
-  /// Instead of directly adding the dish, we now call _onAddDish.
   Widget _buildDishTile({
     required String vendorDishId,
     required String dishName,
@@ -498,7 +525,6 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Dish name and veg/nonveg indicator.
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -515,9 +541,7 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                     ),
                     const SizedBox(width: 4),
                     Image.asset(
-                      isVeg
-                          ? 'assets/icons/veg.png'
-                          : 'assets/icons/non-veg.png',
+                      isVeg ? 'assets/icons/veg.png' : 'assets/icons/non-veg.png',
                       width: 16,
                       height: 16,
                       errorBuilder: (_, __, ___) => Icon(
@@ -552,8 +576,7 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                         transitionBuilder: (child, animation) =>
                             FadeTransition(opacity: animation, child: child),
                         child: Obx(() {
-                          final int quantity =
-                              cartCtrl.getDishQuantity(vendorDishId);
+                          final int quantity = cartCtrl.getDishQuantity(vendorDishId);
                           if (quantity == 0) {
                             return SizedBox(
                               key: const ValueKey(0),
@@ -599,9 +622,7 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                                   },
                                 ),
                                 Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                  ),
+                                  padding: const EdgeInsets.symmetric(horizontal: 8),
                                   child: Text(
                                     quantity.toString(),
                                     style: GoogleFonts.workSans(fontSize: 16),
@@ -632,8 +653,6 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
     );
   }
 
-  /// New helper function:
-  /// Attempts to add the dish. If a 400 error is detected, shows a styled popup dialog.
   void _onAddDish(
     CartController cartCtrl,
     String vendorDishId,
@@ -646,9 +665,7 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
       vendorId: vendorId,
     );
 
-    if (result.containsKey('vendorMismatch') &&
-        result['vendorMismatch'] == true) {
-      // Show popup to clear cart.
+    if (result.containsKey('vendorMismatch') && result['vendorMismatch'] == true) {
       Get.defaultDialog(
         title: "Clear Cart?",
         titleStyle: GoogleFonts.workSans(
@@ -663,7 +680,7 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
         confirmTextColor: Colors.white,
         buttonColor: RestaurantDetailsView.kPrimaryColor,
         onConfirm: () async {
-          Get.back(); // Close the dialog.
+          Get.back();
           try {
             await cartCtrl.clearEntireCart();
             await cartCtrl.fetchCartItems();
@@ -819,7 +836,6 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
   }
 }
 
-/// A wrapper widget that applies a bounce/elastic scale animation when its child appears.
 class BouncyPage extends StatefulWidget {
   final Widget child;
   const BouncyPage({Key? key, required this.child}) : super(key: key);
@@ -856,10 +872,9 @@ class _BouncyPageState extends State<BouncyPage> with SingleTickerProviderStateM
   }
 }
 
-/// A widget that animates its child by fading and sliding it in with a delay.
 class AnimatedDishTile extends StatefulWidget {
   final Widget child;
-  final int delay; // Delay in milliseconds
+  final int delay;
   const AnimatedDishTile({Key? key, required this.child, this.delay = 0})
       : super(key: key);
 

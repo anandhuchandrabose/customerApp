@@ -44,8 +44,8 @@ class AddressInputView extends GetView<LocationController> {
             const SizedBox(height: 16),
             GestureDetector(
               onTap: () async {
-                await controller.getCurrentLocation(); // Use the new public method
-                Get.toNamed(AppRoutes.locationPicker); // Navigate to the map page
+                await controller.getCurrentLocation();
+                Get.toNamed(AppRoutes.locationPicker, arguments: {'isNewAddress': true});
               },
               child: Row(
                 children: [
@@ -64,8 +64,7 @@ class AddressInputView extends GetView<LocationController> {
             const SizedBox(height: 16),
             GestureDetector(
               onTap: () {
-                // Logic to add new address
-                // Placeholder for navigation or form to add new address
+                Get.toNamed(AppRoutes.locationPicker, arguments: {'isNewAddress': true});
               },
               child: Row(
                 children: [
@@ -95,7 +94,7 @@ class AddressInputView extends GetView<LocationController> {
               if (controller.isLoading.value) {
                 return const Center(child: CircularProgressIndicator(color: kPrimaryColor));
               }
-              final addresses = controller.addresses; // Assuming addresses are stored in the controller
+              final addresses = controller.addresses;
               if (addresses.isEmpty) {
                 return Text(
                   'No saved addresses found.',
@@ -133,13 +132,12 @@ class AddressInputView extends GetView<LocationController> {
                           ? Icon(Icons.check_circle, color: kPrimaryColor)
                           : null,
                       onTap: () async {
-                        // Update selected address and navigate to map for confirmation if needed
                         controller.currentLatitude.value = (address['latitude'] ?? 0).toDouble();
                         controller.currentLongitude.value = (address['longitude'] ?? 0).toDouble();
                         controller.selectedLatitude.value = (address['latitude'] ?? 0).toDouble();
                         controller.selectedLongitude.value = (address['longitude'] ?? 0).toDouble();
                         controller.selectedAddress.value = '${address['addressName'] ?? ''}, ${address['flatHouseNo'] ?? ''}';
-                        Get.toNamed(AppRoutes.locationPicker); // Navigate to map for confirmation
+                        Get.toNamed(AppRoutes.locationPicker, arguments: {'isNewAddress': false});
                       },
                     );
                   },

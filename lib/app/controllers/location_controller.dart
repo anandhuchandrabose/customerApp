@@ -4,8 +4,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:get_storage/get_storage.dart';
-import '../data/services/api_service.dart';
-import 'package:http/http.dart' as http;
+import '../routes/app_routes.dart';
 
 class LocationController extends GetxController {
   // Observables for current location and loading status.
@@ -22,7 +21,7 @@ class LocationController extends GetxController {
   // Observable for the combined selected address string.
   var selectedAddress = ''.obs;
 
-  // Observable for the list of addresses
+  // Observable for the list of addresses (now using local storage or mock data)
   var addresses = <Map<String, dynamic>>[].obs;
 
   // Local storage instance.
@@ -31,47 +30,39 @@ class LocationController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // Fetch all addresses from the API
-    fetchAddresses();
+    loadAddressesFromStorage();
   }
 
-  /// Fetch all addresses from the API
-  Future<void> fetchAddresses() async {
+  /// Load addresses from local storage (mock or previously saved data)
+  Future<void> loadAddressesFromStorage() async {
     try {
       isLoading.value = true;
-      final apiService = ApiService(baseUrl: "https://www.fresmo.in");
-      final http.Response response = await apiService.get('/api/customer/addresses');
+      final storedAddresses = storage.read<List>('addresses') ?? [];
+      addresses.value = List<Map<String, dynamic>>.from(storedAddresses);
+      // Set the selected address if it exists
+      final selected = addresses.firstWhere(
+        (addr) => addr['isSelected'] == true,
+        orElse: () => <String, dynamic>{},
+      );
+      if (selected.isNotEmpty) {
+        final lat = (selected['latitude'] ?? 0).toDouble();
+        final lng = (selected['longitude'] ?? 0).toDouble();
+        currentLatitude.value = lat;
+        currentLongitude.value = lng;
+        selectedLatitude.value = lat;
+        selectedLongitude.value = lng;
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data != null && data['addresses'] != null) {
-          addresses.value = List<Map<String, dynamic>>.from(data['addresses']);
-          // Set the selected address if it exists
-          final selected = addresses.firstWhere(
-            (addr) => addr['isSelected'] == true,
-            orElse: () => <String, dynamic>{},
-          );
-          if (selected != null) {
-            final lat = (selected['latitude'] ?? 0).toDouble();
-            final lng = (selected['longitude'] ?? 0).toDouble();
-            currentLatitude.value = lat;
-            currentLongitude.value = lng;
-            selectedLatitude.value = lat;
-            selectedLongitude.value = lng;
-            String geocodedString = await _reverseGeocodeWithReturn(lat, lng);
-            String finalAddress = selected['addressName'] ?? '';
-            if (geocodedString.isNotEmpty) {
-              finalAddress += ', $geocodedString';
-            }
-            selectedAddress.value = finalAddress;
-            storage.write('userLocation', finalAddress);
-          }
+        // Await the Future<String> from _reverseGeocodeWithReturn
+        String geocodedString = await _reverseGeocodeWithReturn(lat, lng);
+        String finalAddress = selected['addressName'] ?? '';
+        if (geocodedString.isNotEmpty) {
+          finalAddress += ', $geocodedString';
         }
-      } else {
-        throw Exception('Failed to load addresses');
+        selectedAddress.value = finalAddress;
+        storage.write('userLocation', finalAddress);
       }
     } catch (e) {
-      print("Error fetching addresses: $e");
+      print("Error loading addresses from storage: $e");
       addresses.value = [];
     } finally {
       isLoading.value = false;
@@ -147,19 +138,82 @@ class LocationController extends GetxController {
   }
 
   /// Saves the currently selected location to local storage.
-  ///
+  /// 
   /// This writes the current address from [selectedAddress] to storage,
-  /// shows a snackbar, and navigates back.
-  Future<void> saveAddress() async {
+  /// shows a snackbar, and navigates back for existing addresses.
+  /// For new addresses, it navigates to the address form.
+  Future<void> saveAddress({bool isNewAddress = false}) async {
     try {
       isLoading.value = true;
-      storage.write('userLocation', selectedAddress.value);
-      Get.snackbar("Location Saved", selectedAddress.value);
-      Get.back();
+      if (isNewAddress) {
+        // Navigate to the address form with the selected location
+        Get.toNamed(AppRoutes.addressForm, arguments: {
+          'latitude': selectedLatitude.value,
+          'longitude': selectedLongitude.value,
+          'initialAddress': selectedAddress.value,
+        });
+      } else {
+        // Save existing address to local storage
+        final newAddress = {
+          'latitude': selectedLatitude.value,
+          'longitude': selectedLongitude.value,
+          'address': selectedAddress.value,
+          'isSelected': true, // Mark as selected
+          'addressName': selectedAddress.value.split(', ').firstOrNull ?? selectedAddress.value,
+          'flatHouseNo': '', // Default empty for existing address
+          'directions': '', // Default empty for existing address
+          'addressType': 'Home', // Default type
+          'phoneNumber': '', // Default empty for existing address
+        };
+        addresses.add(newAddress);
+        addresses.forEach((addr) => addr['isSelected'] = addr == newAddress);
+        storage.write('userLocation', selectedAddress.value);
+        storage.write('addresses', addresses.toList());
+        Get.snackbar("Location Saved", selectedAddress.value);
+        Get.back();
+      }
     } catch (e) {
       Get.snackbar("Error", e.toString());
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  /// Save a new address locally (mocking API behavior)
+  Future<Map<String, dynamic>> saveNewAddress({
+    required String flatHouseNo,
+    required String addressName,
+    required String directions,
+    required String addressType,
+    required String phoneNumber,
+    required double latitude,
+    required double longitude,
+  }) async {
+    try {
+      final newAddress = {
+        'flatHouseNo': flatHouseNo,
+        'addressName': addressName,
+        'directions': directions,
+        'addressType': addressType,
+        'phoneNumber': phoneNumber,
+        'latitude': latitude,
+        'longitude': longitude,
+        'isSelected': addresses.isEmpty, // Set as selected if no other addresses exist
+      };
+      addresses.add(newAddress);
+      if (newAddress['isSelected'] == true) {
+        currentLatitude.value = latitude;
+        currentLongitude.value = longitude;
+        selectedLatitude.value = latitude;
+        selectedLongitude.value = longitude;
+        selectedAddress.value = '$addressName, $flatHouseNo';
+        storage.write('userLocation', selectedAddress.value);
+      }
+      addresses.forEach((addr) => addr['isSelected'] = addr == newAddress);
+      storage.write('addresses', addresses.toList());
+      return {'success': true, 'message': 'Address saved locally'};
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
     }
   }
 

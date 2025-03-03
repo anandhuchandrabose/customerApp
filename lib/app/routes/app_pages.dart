@@ -18,6 +18,7 @@ import '../controllers/login_controller.dart';
 import '../controllers/otp_controller.dart';
 import '../controllers/home_controller.dart';
 import '../controllers/search_results_controller.dart';
+import '../views/address_form_view.dart';
 import '../views/category_vendors_view.dart';
 import '../views/login_view.dart';
 import '../views/otp_view.dart';
@@ -134,5 +135,17 @@ class AppPages {
         );
       }),
     ),
+
+    GetPage(
+  name: AppRoutes.addressForm,
+  page: () => AddressFormView(
+    latitude: Get.arguments['latitude'] ?? 0.0,
+    longitude: Get.arguments['longitude'] ?? 0.0,
+    initialAddress: Get.arguments['initialAddress'] ?? '',
+  ),
+  binding: BindingsBuilder(() {
+    Get.put(LocationController()); // Ensure LocationController is available
+  }),
+),
   ];
 }

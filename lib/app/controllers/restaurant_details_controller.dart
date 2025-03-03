@@ -1,5 +1,4 @@
-// lib/app/controllers/restaurant_details_controller.dart
-
+// restaurant_details_controller.dart
 import 'dart:developer';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -20,6 +19,7 @@ class RestaurantDetailsController extends GetxController {
   // Restaurant display
   var restaurantName = 'Restaurant'.obs;
   var restaurantImageUrl = ''.obs;
+  var restaurantDescription = ''.obs; // Added description
   var rating = 0.0.obs;
   var servingTime = ''.obs;
 
@@ -28,7 +28,6 @@ class RestaurantDetailsController extends GetxController {
     super.onInit();
     final args = Get.arguments ?? {};
     final storage = GetStorage();
-    // Try to get vendorId from navigation arguments, otherwise from persistent storage.
     vendorId.value = args['vendorId'] ?? storage.read('vendorId') ?? '';
 
     if (vendorId.value.isEmpty) {
@@ -48,24 +47,17 @@ class RestaurantDetailsController extends GetxController {
       log('fetchDishes Response: $data');
 
       if (data['success'] == true) {
-        // The API might return restaurant details inside "data"
         final restaurantData = data['data'] ?? {};
-
-        // Use "vendorName" for the restaurant (vendor) name.
+        
         restaurantName.value = restaurantData['vendorName'] ?? 'Unknown';
-        // Check "vendorImage" first; if not provided, fallback to "image"
-        restaurantImageUrl.value =
-            restaurantData['vendorImage'] ?? restaurantData['image'] ?? '';
-        rating.value = double.tryParse(
-              restaurantData['rating']?.toString() ?? '0',
-            ) ??
-            0.0;
+        restaurantImageUrl.value = restaurantData['vendorImage'] ?? restaurantData['image'] ?? '';
+        restaurantDescription.value = restaurantData['description'] ?? ''; // Handle description
+        rating.value = double.tryParse(restaurantData['rating']?.toString() ?? '0') ?? 0.0;
 
         final dishesData = restaurantData['dishes'] ?? [];
         if (dishesData is List) {
           dishes.value = List<Map<String, dynamic>>.from(dishesData);
         }
-        // Optionally set an error message if no dishes are found
         if (dishes.isEmpty && data['message'] != null) {
           errorMessage.value = data['message'];
         }

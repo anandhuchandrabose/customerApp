@@ -5,7 +5,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_google_maps_webservices/places.dart';
 import '../controllers/location_controller.dart';
 import 'dart:async'; // For debouncing
-import '../routes/app_routes.dart'; // Import app_routes.dart for route constants
+import '../routes/app_routes.dart';
+import 'address_form_view.dart'; // New import for the address form
 
 // Define your primary color.
 const Color kPrimaryColor = Color(0xFFFF3008);
@@ -36,7 +37,6 @@ class LocationView extends GetView<LocationController> {
   }
 }
 
-// Stateful widget to handle dispose method
 class _LocationViewStateful extends StatefulWidget {
   final RxList<Prediction> suggestions;
   final GoogleMapsPlaces places;
@@ -81,6 +81,8 @@ class __LocationViewStatefulState extends State<_LocationViewStateful> {
   @override
   Widget build(BuildContext context) {
     final LocationController controller = Get.find<LocationController>();
+    final args = Get.arguments ?? {'isNewAddress': false};
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Select delivery location', style: GoogleFonts.workSans(color: Colors.white)),
@@ -138,7 +140,6 @@ class __LocationViewStatefulState extends State<_LocationViewStateful> {
                               final placeDetails = await widget.places.getDetailsByPlaceId(prediction.placeId!);
                               if (placeDetails.isOkay) {
                                 final latLng = LatLng(placeDetails.result.geometry!.location.lat, placeDetails.result.geometry!.location.lng);
-                                print('Selected LatLng: $latLng'); // Debug log
                                 if (kazhakootamBounds.contains(latLng)) {
                                   controller.selectedLatitude.value = latLng.latitude;
                                   controller.selectedLongitude.value = latLng.longitude;
@@ -153,6 +154,15 @@ class __LocationViewStatefulState extends State<_LocationViewStateful> {
                                     duration: const Duration(seconds: 2),
                                   );
                                   widget.suggestions.clear(); // Clear suggestions after selection
+
+                                  // Navigate to address form if adding a new address
+                                  if (args['isNewAddress'] == true) {
+                                    Get.to(() => AddressFormView(
+                                      latitude: latLng.latitude,
+                                      longitude: latLng.longitude,
+                                      initialAddress: controller.selectedAddress.value,
+                                    ));
+                                  }
                                 } else {
                                   Get.snackbar('Error', 'Please select a location within Kazhakootam, Trivandrum. (Lat: ${latLng.latitude}, Lng: ${latLng.longitude})');
                                 }
@@ -238,9 +248,18 @@ class __LocationViewStatefulState extends State<_LocationViewStateful> {
             const SizedBox(height: 12),
             ElevatedButton(
               onPressed: () {
-                // Logic to confirm location and navigate to /home
-                controller.saveAddress();
-                Get.offNamed(AppRoutes.home); // Replace current route with /home
+                if (args['isNewAddress'] == true) {
+                  // Navigate to address form for new address
+                  Get.to(() => AddressFormView(
+                    latitude: controller.selectedLatitude.value,
+                    longitude: controller.selectedLongitude.value,
+                    initialAddress: controller.selectedAddress.value,
+                  ));
+                } else {
+                  // Save and proceed for existing address
+                  controller.saveAddress();
+                  Get.offAllNamed('/dashboard'); // Changed from AppRoutes.home to dashboard
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: kPrimaryColor,
