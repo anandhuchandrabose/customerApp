@@ -11,7 +11,6 @@ import 'cart_view.dart';
 import 'dart:ui';
 
 class HomeView extends GetView<HomeController> {
-  // ignore: use_super_parameters
   const HomeView({Key? key}) : super(key: key);
 
   static const Color kPrimaryColor = Color(0xFFFF3008);
@@ -47,6 +46,9 @@ class HomeView extends GetView<HomeController> {
       },
     ];
 
+    // Create a ScrollController to track scroll position
+    final ScrollController scrollController = ScrollController();
+
     return Scaffold(
       backgroundColor: Colors.grey[100],
       body: Obx(() {
@@ -72,14 +74,15 @@ class HomeView extends GetView<HomeController> {
         return ScrollConfiguration(
           behavior: NoScrollGlow(),
           child: CustomScrollView(
+            controller: scrollController, // Attach the ScrollController
             slivers: [
-              // ===== Updated SliverAppBar to show Kazhakootam with truncated address =====
+              // Updated SliverAppBar with dynamic title opacity
               SliverAppBar(
                 pinned: true,
                 floating: false,
                 expandedHeight: 140,
                 backgroundColor: kPrimaryColor,
-                automaticallyImplyLeading: false, // Removes the back arrow
+                automaticallyImplyLeading: false,
                 flexibleSpace: FlexibleSpaceBar(
                   collapseMode: CollapseMode.pin,
                   background: Container(
@@ -100,7 +103,6 @@ class HomeView extends GetView<HomeController> {
                               children: [
                                 GestureDetector(
                                   onTap: () {
-                                    // Navigate to AddressInputView
                                     Get.toNamed('/address-input');
                                   },
                                   child: Row(
@@ -111,7 +113,7 @@ class HomeView extends GetView<HomeController> {
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            'Kazhakootam', // Always show Kazhakootam
+                                            'Kazhakootam',
                                             style: GoogleFonts.workSans(
                                               color: Colors.white,
                                               fontSize: 16,
@@ -143,7 +145,9 @@ class HomeView extends GetView<HomeController> {
                                 ),
                                 IconButton(
                                   icon: const Icon(Icons.account_circle_outlined, color: Colors.white, size: 28),
-                                  onPressed: () {},
+                                  onPressed: () {
+                                    Get.toNamed('/profile');
+                                  },
                                 ),
                               ],
                             ),
@@ -154,19 +158,34 @@ class HomeView extends GetView<HomeController> {
                       ),
                     ),
                   ),
-                  title: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(
-                      'Fresmo',
-                      style: GoogleFonts.workSans(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  centerTitle: true,
                 ),
+                // Use StatefulBuilder or Obx with ScrollController listener for dynamic title
+                title: AnimatedBuilder(
+                  animation: scrollController,
+                  builder: (context, child) {
+                    double opacity = 0.0;
+                    if (scrollController.hasClients) {
+                      final offset = scrollController.offset;
+                      // Adjust the range (e.g., 0 to 100) where opacity changes
+                      opacity = (offset / 100).clamp(0.0, 1.0);
+                    }
+                    return Opacity(
+                      opacity: opacity,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          'Fresmo',
+                          style: GoogleFonts.workSans(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                centerTitle: true,
               ),
               SliverToBoxAdapter(
                 child: Padding(
@@ -584,6 +603,7 @@ class HomeView extends GetView<HomeController> {
 }
 
 class NoScrollGlow extends ScrollBehavior {
+  @override
   Widget buildViewportChrome(BuildContext context, Widget child, AxisDirection axisDirection) {
     return child;
   }

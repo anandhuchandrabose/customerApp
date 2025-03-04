@@ -27,12 +27,22 @@ dependencies:
   permission_handler: ^11.3.1
   pinput: ^5.0.0
   flutter_google_maps_webservices: ^1.1.1
-  flutter_launcher_icons: ^0.13.0
+  flutter_launcher_icons: ^0.14.3
+  flutter_native_splash: ^2.4.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+flutter_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/img/icon.jpg"
+  # color: "#FFFFFF"
+  # image: "assets/img/icon.jpg"
+  # android: true
+  # ios: true
+
 
 flutter:
   uses-material-design: true
@@ -43,3 +53,5 @@ flutter:
     - assets/icons/veg.png
     - assets/icons/non-veg.png
     - assets/img/
+    # - assets/img/icon.png
+    

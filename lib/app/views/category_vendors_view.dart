@@ -70,7 +70,7 @@ class CategoryVendorsView extends GetView<CategoryVendorsController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '$categoryName Restaurants',
+                  '$categoryName Kitchens',
                   style: GoogleFonts.workSans(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,

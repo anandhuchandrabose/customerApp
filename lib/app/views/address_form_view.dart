@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-// import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../controllers/location_controller.dart';
 import '../routes/app_routes.dart';
@@ -74,7 +73,7 @@ class AddressFormView extends GetView<LocationController> {
                   ),
                   child: Stack(
                     children: [
-                      // Simulate a map background (you can replace with Google Maps or a real map image)
+                      // Simulate a map background (replace with Google Maps if needed)
                       Container(
                         color: Colors.grey[200], // Light grey for map placeholder
                         width: double.infinity,
@@ -199,7 +198,6 @@ class AddressFormView extends GetView<LocationController> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                // Fix the Row with Flexible instead of Expanded to handle unbounded width
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
@@ -207,91 +205,151 @@ class AddressFormView extends GetView<LocationController> {
                     mainAxisSize: MainAxisSize.min, // Use min to prevent expansion
                     children: [
                       Flexible(
-                        fit: FlexFit.loose, // Allow the button to size itself
+                        fit: FlexFit.loose,
                         child: Obx(() => OutlinedButton(
-                          onPressed: () => selectedAddressType.value = 'Home',
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: selectedAddressType.value == 'Home' ? kPrimaryColor : Colors.grey[600],
-                            side: BorderSide(color: selectedAddressType.value == 'Home' ? kPrimaryColor : Colors.grey[300]!),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
-                            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.home, color: selectedAddressType.value == 'Home' ? kPrimaryColor : Colors.grey[600], size: 20),
-                              const SizedBox(width: 8),
-                              Text('Home', style: GoogleFonts.workSans(fontSize: 14)),
-                            ],
-                          ),
-                        )),
+                              onPressed: () => selectedAddressType.value = 'Home',
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: selectedAddressType.value == 'Home'
+                                    ? kPrimaryColor
+                                    : Colors.grey[600],
+                                side: BorderSide(
+                                    color: selectedAddressType.value == 'Home'
+                                        ? kPrimaryColor
+                                        : Colors.grey[300]!),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8.0)),
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 10, horizontal: 12),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.home,
+                                    color: selectedAddressType.value == 'Home'
+                                        ? kPrimaryColor
+                                        : Colors.grey[600],
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text('Home',
+                                      style: GoogleFonts.workSans(fontSize: 14)),
+                                ],
+                              ),
+                            )),
                       ),
                       const SizedBox(width: 8),
                       Flexible(
-                        fit: FlexFit.loose, // Allow the button to size itself
-                        child: Obx(() => ElevatedButton(
-                          onPressed: () => selectedAddressType.value = 'Work',
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: selectedAddressType.value == 'Work' ? kPrimaryColor : Colors.grey[200],
-                            foregroundColor: selectedAddressType.value == 'Work' ? Colors.white : Colors.grey[600],
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
-                            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.work, color: selectedAddressType.value == 'Work' ? Colors.white : Colors.grey[600], size: 20),
-                              const SizedBox(width: 8),
-                              Text('Work', style: GoogleFonts.workSans(fontSize: 14)),
-                            ],
-                          ),
-                        )),
+                        fit: FlexFit.loose,
+                        child: Obx(() => OutlinedButton(
+                              onPressed: () => selectedAddressType.value = 'Work',
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: selectedAddressType.value == 'Work'
+                                    ? kPrimaryColor
+                                    : Colors.grey[600],
+                                side: BorderSide(
+                                    color: selectedAddressType.value == 'Work'
+                                        ? kPrimaryColor
+                                        : Colors.grey[300]!),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8.0)),
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 10, horizontal: 12),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.work,
+                                    color: selectedAddressType.value == 'Work'
+                                        ? kPrimaryColor
+                                        : Colors.grey[600],
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text('Work',
+                                      style: GoogleFonts.workSans(fontSize: 14)),
+                                ],
+                              ),
+                            )),
                       ),
                       const SizedBox(width: 8),
                       Flexible(
-                        fit: FlexFit.loose, // Allow the button to size itself
+                        fit: FlexFit.loose,
                         child: Obx(() => OutlinedButton(
-                          onPressed: () => selectedAddressType.value = 'Friends and Family',
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: selectedAddressType.value == 'Friends and Family' ? kPrimaryColor : Colors.grey[600],
-                            side: BorderSide(color: selectedAddressType.value == 'Friends and Family' ? kPrimaryColor : Colors.grey[300]!),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
-                            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.people, color: selectedAddressType.value == 'Friends and Family' ? kPrimaryColor : Colors.grey[600], size: 20),
-                              const SizedBox(width: 8),
-                              Text('Friends and Family', style: GoogleFonts.workSans(fontSize: 14)),
-                            ],
-                          ),
-                        )),
+                              onPressed: () =>
+                                  selectedAddressType.value = 'Friends and Family',
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor:
+                                    selectedAddressType.value == 'Friends and Family'
+                                        ? kPrimaryColor
+                                        : Colors.grey[600],
+                                side: BorderSide(
+                                    color:
+                                        selectedAddressType.value == 'Friends and Family'
+                                            ? kPrimaryColor
+                                            : Colors.grey[300]!),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8.0)),
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 10, horizontal: 12),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.people,
+                                    color:
+                                        selectedAddressType.value == 'Friends and Family'
+                                            ? kPrimaryColor
+                                            : Colors.grey[600],
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text('Friends and Family',
+                                      style: GoogleFonts.workSans(fontSize: 14)),
+                                ],
+                              ),
+                            )),
                       ),
                       const SizedBox(width: 8),
                       Flexible(
-                        fit: FlexFit.loose, // Allow the button to size itself
+                        fit: FlexFit.loose,
                         child: Obx(() => OutlinedButton(
-                          onPressed: () => selectedAddressType.value = 'Other',
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: selectedAddressType.value == 'Other' ? kPrimaryColor : Colors.grey[600],
-                            side: BorderSide(color: selectedAddressType.value == 'Other' ? kPrimaryColor : Colors.grey[300]!),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
-                            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.pin_drop, color: selectedAddressType.value == 'Other' ? kPrimaryColor : Colors.grey[600], size: 20),
-                              const SizedBox(width: 8),
-                              Text('Other', style: GoogleFonts.workSans(fontSize: 14)),
-                            ],
-                          ),
-                        )),
+                              onPressed: () => selectedAddressType.value = 'Other',
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: selectedAddressType.value == 'Other'
+                                    ? kPrimaryColor
+                                    : Colors.grey[600],
+                                side: BorderSide(
+                                    color: selectedAddressType.value == 'Other'
+                                        ? kPrimaryColor
+                                        : Colors.grey[300]!),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8.0)),
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 10, horizontal: 12),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.pin_drop,
+                                    color: selectedAddressType.value == 'Other'
+                                        ? kPrimaryColor
+                                        : Colors.grey[600],
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text('Other',
+                                      style: GoogleFonts.workSans(fontSize: 14)),
+                                ],
+                              ),
+                            )),
                       ),
                     ],
                   ),
