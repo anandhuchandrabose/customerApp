@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_google_maps_webservices/places.dart';
 import '../controllers/location_controller.dart';
 import 'dart:async'; // For debouncing
 import '../routes/app_routes.dart';
 import 'address_form_view.dart'; // New import for the address form
-
-// Define your primary color.
-const Color kPrimaryColor = Color(0xFFFF3008);
+import 'design_system/typography.dart'; // Import AppTypography
+import 'design_system/spacing.dart'; // Import AppSpacing
+import 'design_system/icons.dart'; // Import AppIcons
+import 'design_system/colors.dart'; // Import AppColors
 
 // Define the bounds for Kazhakootam, Trivandrum (adjusted to be more inclusive)
 final LatLngBounds kazhakootamBounds = LatLngBounds(
@@ -66,8 +66,8 @@ class __LocationViewStatefulState extends State<_LocationViewStateful> {
           LatLng(kazhakootamBounds.northeast.latitude, kazhakootamBounds.southwest.longitude),
         ],
         strokeWidth: 2,
-        strokeColor: Colors.red,
-        fillColor: Colors.red.withOpacity(0.1),
+        strokeColor: AppColors.primary,
+        fillColor: AppColors.primary.withOpacity(0.1),
       ),
     };
   }
@@ -84,91 +84,46 @@ class __LocationViewStatefulState extends State<_LocationViewStateful> {
     final args = Get.arguments ?? {'isNewAddress': false};
 
     return Scaffold(
+      backgroundColor: AppColors.backgroundPrimary, // Match HomeView background
       appBar: AppBar(
-        title: Text('Select delivery location', style: GoogleFonts.workSans(color: Colors.white)),
-        backgroundColor: kPrimaryColor,
+        title: Text(
+          'Select Delivery Location',
+          style: AppTypography.heading2.copyWith(color: AppColors.textHighestEmphasis), // Match HomeView heading style
+        ),
+        backgroundColor: AppColors.backgroundPrimary, // Match HomeView SliverAppBar
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppColors.primary.withOpacity(0.9),
+                AppColors.primarySub.withOpacity(0.7),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
       ),
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: AppSpacing.paddingL, // Match HomeView padding
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Search for a place in Kazhakootam...',
-                    hintStyle: GoogleFonts.workSans(color: Colors.grey[600], fontSize: 16),
-                    prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                  ),
-                  onChanged: (value) async {
-                    if (value.isNotEmpty) {
-                      if (_debounce?.isActive ?? false) _debounce?.cancel();
-                      _debounce = Timer(const Duration(milliseconds: 500), () async {
-                        final response = await widget.places.autocomplete(
-                          value, // Input query as String
-                          location: Location(lat: 8.550, lng: 76.940), // Center of Kazhakootam
-                          radius: 3000, // Reduced radius to 3 km for stricter constraint
-                          types: ['address'],
-                        );
-                        if (response.isOkay) {
-                          widget.suggestions.value = response.predictions;
-                        } else {
-                          widget.suggestions.clear();
-                          Get.snackbar('Error', 'No suggestions found or API error: ${response.errorMessage}');
-                        }
-                      });
-                    } else {
-                      widget.suggestions.clear();
-                    }
-                  },
-                ),
+                _buildSearchBar(), // Reusing HomeView's search bar style
+                AppSpacing.gapM,
                 Obx(() => Container(
                       height: widget.suggestions.isNotEmpty ? 200.0 : 0.0,
-                      child: ListView.builder(
+                      child: ListView.separated(
                         shrinkWrap: true,
                         itemCount: widget.suggestions.length,
+                        separatorBuilder: (context, index) => AppSpacing.gapS,
                         itemBuilder: (context, index) {
                           final prediction = widget.suggestions[index];
-                          return ListTile(
-                            title: Text(prediction.description ?? ''),
-                            onTap: () async {
-                              final placeDetails = await widget.places.getDetailsByPlaceId(prediction.placeId!);
-                              if (placeDetails.isOkay) {
-                                final latLng = LatLng(placeDetails.result.geometry!.location.lat, placeDetails.result.geometry!.location.lng);
-                                if (kazhakootamBounds.contains(latLng)) {
-                                  controller.selectedLatitude.value = latLng.latitude;
-                                  controller.selectedLongitude.value = latLng.longitude;
-                                  if (controller.mapController != null) {
-                                    controller.mapController!.animateCamera(CameraUpdate.newLatLng(latLng));
-                                  }
-                                  controller.selectedAddress.value = placeDetails.result.formattedAddress ?? 'No address';
-                                  Get.snackbar(
-                                    'Location Selected',
-                                    'Address: ${controller.selectedAddress.value}',
-                                    snackPosition: SnackPosition.BOTTOM,
-                                    duration: const Duration(seconds: 2),
-                                  );
-                                  widget.suggestions.clear(); // Clear suggestions after selection
-
-                                  // Navigate to address form if adding a new address
-                                  if (args['isNewAddress'] == true) {
-                                    Get.to(() => AddressFormView(
-                                      latitude: latLng.latitude,
-                                      longitude: latLng.longitude,
-                                      initialAddress: controller.selectedAddress.value,
-                                    ));
-                                  }
-                                } else {
-                                  Get.snackbar('Error', 'Please select a location within Kazhakootam, Trivandrum. (Lat: ${latLng.latitude}, Lng: ${latLng.longitude})');
-                                }
-                              }
-                            },
-                          );
+                          return _buildSuggestionCard(prediction, controller, args);
                         },
                       ),
                     )),
@@ -178,7 +133,11 @@ class __LocationViewStatefulState extends State<_LocationViewStateful> {
           Expanded(
             child: Obx(() {
               if (controller.isLoading.value) {
-                return const Center(child: CircularProgressIndicator());
+                return Center(
+                  child: CircularProgressIndicator(
+                    color: AppColors.primary, // Match HomeView refresh indicator
+                  ),
+                );
               }
               return Stack(
                 children: [
@@ -193,12 +152,10 @@ class __LocationViewStatefulState extends State<_LocationViewStateful> {
                     onMapCreated: controller.onMapCreated,
                     myLocationEnabled: true,
                     myLocationButtonEnabled: true,
-                    polygons: _polygons, // Add the boundary polygon
+                    polygons: _polygons,
                     onCameraMove: (CameraPosition position) {
-                      // Update selected position
                       controller.selectedLatitude.value = position.target.latitude;
                       controller.selectedLongitude.value = position.target.longitude;
-                      // Debounce the clamping to avoid lag
                       if (_debounce?.isActive ?? false) _debounce?.cancel();
                       _debounce = Timer(const Duration(milliseconds: 200), () {
                         if (!kazhakootamBounds.contains(position.target)) {
@@ -217,10 +174,13 @@ class __LocationViewStatefulState extends State<_LocationViewStateful> {
                       });
                     },
                     onCameraIdle: controller.onCameraIdle,
-                    minMaxZoomPreference: const MinMaxZoomPreference(10.0, 18.0), // Limit zoom levels
+                    minMaxZoomPreference: const MinMaxZoomPreference(10.0, 18.0),
                   ),
                   Center(
-                    child: Icon(Icons.location_pin, color: Colors.red, size: 50),
+                    child: AppIcons.locationPinIcon(
+                      color: AppColors.primary,
+                      size: 50,
+                    ),
                   ),
                 ],
               );
@@ -229,52 +189,186 @@ class __LocationViewStatefulState extends State<_LocationViewStateful> {
         ],
       ),
       bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: AppSpacing.paddingL,
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Obx(() {
               return Text(
                 controller.selectedAddress.value.isNotEmpty
                     ? controller.selectedAddress.value
                     : 'No location selected',
-                style: GoogleFonts.workSans(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
+                style: AppTypography.bodySmall.copyWith(
+                  color: AppColors.textMedEmphasis,
                 ),
                 textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               );
             }),
-            const SizedBox(height: 12),
+            AppSpacing.gapM,
             ElevatedButton(
               onPressed: () {
                 if (args['isNewAddress'] == true) {
-                  // Navigate to address form for new address
                   Get.to(() => AddressFormView(
-                    latitude: controller.selectedLatitude.value,
-                    longitude: controller.selectedLongitude.value,
-                    initialAddress: controller.selectedAddress.value,
-                  ));
+                        latitude: controller.selectedLatitude.value,
+                        longitude: controller.selectedLongitude.value,
+                        initialAddress: controller.selectedAddress.value,
+                      ));
                 } else {
-                  // Save and proceed for existing address
                   controller.saveAddress();
-                  Get.offAllNamed('/dashboard'); // Changed from AppRoutes.home to dashboard
+                  Get.offAllNamed('/dashboard');
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: kPrimaryColor,
-                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+                backgroundColor: AppColors.primary,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(50),
+                ),
+                elevation: 5,
+                shadowColor: AppColors.textLowEmphasis.withOpacity(0.3),
               ),
               child: Text(
-                'CONFIRM LOCATION',
-                style: GoogleFonts.workSans(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
+                'Confirm Location',
+                style: AppTypography.labelLarge.copyWith(
+                  color: AppColors.backgroundPrimary,
                 ),
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.backgroundSecondary,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.backgroundPrimary,
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.textLowEmphasis.withOpacity(0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: TextField(
+        decoration: InputDecoration(
+          hintText: 'Search for a place in Kazhakootam...',
+          hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.textMedEmphasis),
+          prefixIcon: AppIcons.searchIcon(),
+          suffixIcon: IconButton(
+            icon: const Icon(Icons.mic),
+            color: AppColors.textMedEmphasis,
+            onPressed: () {
+              // Add voice search functionality if needed
+            },
+          ),
+          filled: true,
+          fillColor: AppColors.backgroundSecondary,
+          contentPadding: const EdgeInsets.symmetric(vertical: 0),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+        ),
+        onChanged: (value) async {
+          if (value.isNotEmpty) {
+            if (_debounce?.isActive ?? false) _debounce?.cancel();
+            _debounce = Timer(const Duration(milliseconds: 500), () async {
+              final response = await widget.places.autocomplete(
+                value,
+                location: Location(lat: 8.550, lng: 76.940),
+                radius: 3000,
+                types: ['address'],
+              );
+              if (response.isOkay) {
+                widget.suggestions.value = response.predictions;
+              } else {
+                widget.suggestions.clear();
+                Get.snackbar('Error', 'No suggestions found or API error: ${response.errorMessage}');
+              }
+            });
+          } else {
+            widget.suggestions.clear();
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildSuggestionCard(Prediction prediction, LocationController controller, Map<String, dynamic> args) {
+    return GestureDetector(
+      onTap: () async {
+        final placeDetails = await widget.places.getDetailsByPlaceId(prediction.placeId!);
+        if (placeDetails.isOkay) {
+          final latLng = LatLng(placeDetails.result.geometry!.location.lat, placeDetails.result.geometry!.location.lng);
+          if (kazhakootamBounds.contains(latLng)) {
+            controller.selectedLatitude.value = latLng.latitude;
+            controller.selectedLongitude.value = latLng.longitude;
+            if (controller.mapController != null) {
+              controller.mapController!.animateCamera(CameraUpdate.newLatLng(latLng));
+            }
+            controller.selectedAddress.value = placeDetails.result.formattedAddress ?? 'No address';
+            Get.snackbar(
+              'Location Selected',
+              'Address: ${controller.selectedAddress.value}',
+              snackPosition: SnackPosition.BOTTOM,
+              duration: const Duration(seconds: 2),
+              backgroundColor: AppColors.primary.withOpacity(0.9),
+              colorText: AppColors.backgroundPrimary,
+            );
+            widget.suggestions.clear();
+
+            if (args['isNewAddress'] == true) {
+              Get.to(() => AddressFormView(
+                    latitude: latLng.latitude,
+                    longitude: latLng.longitude,
+                    initialAddress: controller.selectedAddress.value,
+                  ));
+            }
+          } else {
+            Get.snackbar(
+              'Error',
+              'Please select a location within Kazhakootam, Trivandrum.',
+              backgroundColor: AppColors.warning.withOpacity(0.9),
+              colorText: AppColors.backgroundPrimary,
+            );
+          }
+        }
+      },
+      child: Container(
+        padding: AppSpacing.paddingM,
+        decoration: BoxDecoration(
+          color: AppColors.backgroundPrimary,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppColors.textLowEmphasis.withOpacity(0.3),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.textLowEmphasis.withOpacity(0.2),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Text(
+          prediction.description ?? '',
+          style: AppTypography.bodyMedium.copyWith(
+            color: AppColors.textHighestEmphasis,
+          ),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
         ),
       ),
     );

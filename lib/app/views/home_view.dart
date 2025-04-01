@@ -1,19 +1,22 @@
 import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:shimmer/shimmer.dart';
 import '../controllers/home_controller.dart';
 import '../controllers/cart_controller.dart';
 import '../controllers/location_controller.dart';
 import 'cart_view.dart';
 import 'dart:ui';
+import 'design_system/typography.dart';
+import 'design_system/spacing.dart';
+import 'design_system/icons.dart';
+import 'design_system/colors.dart';
 
 class HomeView extends GetView<HomeController> {
   const HomeView({Key? key}) : super(key: key);
-
-  static const Color kPrimaryColor = Color(0xFFFF3008);
 
   @override
   Widget build(BuildContext context) {
@@ -22,81 +25,74 @@ class HomeView extends GetView<HomeController> {
     final locationCtrl = Get.find<LocationController>();
 
     final placeholderOptions = [
-      'Search for bakery...',
-      'Discover sweets...',
-      'Find breakfast...',
-      'Craving lunch?',
-      'Dinner ideas...',
+      'Search for Pizza...',
+      'Discover Burgers...',
+      'Find Shawarma...',
+      'Craving Sandwiches?',
+      'Explore Parotta...',
       'Snack time?',
       'Explore now!',
     ];
     final randomPlaceholder =
         placeholderOptions[Random().nextInt(placeholderOptions.length)];
 
+    // Simulate API response for ad cards
     final adList = [
       {
-        'image': '',
+        'image': 'img/card.jpg',
         'title': 'Special Offer!',
         'description': 'Up to 50% off your first order – limited time!',
+        'isNew': true,
       },
       {
         'image': '',
         'title': 'New Deals!',
         'description': 'Fresh deals on your favorites await.',
+        'isNew': false,
+      },
+      {
+        'image': '',
+        'title': 'Weekend Special!',
+        'description': 'Get 20% off on all orders this weekend.',
+        'isNew': true,
+      },
+      {
+        'image': '',
+        'title': 'Free Delivery!',
+        'description': 'Order now and get free delivery on your first order.',
+        'isNew': false,
       },
     ];
 
-    // Create a ScrollController to track scroll position
     final ScrollController scrollController = ScrollController();
 
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: AppColors.backgroundPrimary,
       body: Obx(() {
-        if (homeCtrl.isLoading.value) {
-          return const Center(child: CircularProgressIndicator(color: kPrimaryColor));
-        }
-        if (homeCtrl.errorMessage.isNotEmpty) {
-          return Center(
-            child: Text(
-              'Error: ${homeCtrl.errorMessage.value}',
-              style: GoogleFonts.workSans(
-                color: Colors.redAccent,
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          );
-        }
-
-        final vendors = homeCtrl.vendors;
-        final categories = homeCtrl.categories;
-
-        return ScrollConfiguration(
-          behavior: NoScrollGlow(),
-          child: CustomScrollView(
-            controller: scrollController, // Attach the ScrollController
-            slivers: [
-              // Updated SliverAppBar with dynamic title opacity
-              SliverAppBar(
-                pinned: true,
-                floating: false,
-                expandedHeight: 140,
-                backgroundColor: kPrimaryColor,
-                automaticallyImplyLeading: false,
-                flexibleSpace: FlexibleSpaceBar(
-                  collapseMode: CollapseMode.pin,
-                  background: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [kPrimaryColor, kPrimaryColor.withOpacity(0.9)],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),
-                    ),
-                    child: SafeArea(
+        return RefreshIndicator(
+          onRefresh: () async {
+            await homeCtrl.fetchHomeData();
+          },
+          color: AppColors.primary,
+          child: ScrollConfiguration(
+            behavior: NoScrollGlow(),
+            child: CustomScrollView(
+              controller: scrollController,
+              slivers: [
+                // Modern App Bar
+                SliverAppBar(
+                  pinned: true,
+                  floating: false,
+                  expandedHeight: 160,
+                  backgroundColor: AppColors.backgroundPrimary,
+                  automaticallyImplyLeading: false,
+                  flexibleSpace: FlexibleSpaceBar(
+                    collapseMode: CollapseMode.pin,
+                    background: SafeArea(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+                        padding: AppSpacing.paddingL,
                         child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -107,51 +103,58 @@ class HomeView extends GetView<HomeController> {
                                   },
                                   child: Row(
                                     children: [
-                                      const Icon(Icons.location_pin, color: Colors.white, size: 20),
-                                      const SizedBox(width: 8),
+                                      AppIcons.homeIcon(
+                                          color: AppColors.primary, size: 30),
+                                      AppSpacing.gapS,
                                       Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            'Kazhakootam',
-                                            style: GoogleFonts.workSans(
-                                              color: Colors.white,
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w600,
-                                            ),
+                                            'Home',
+                                            style: AppTypography.heading2
+                                                .copyWith(
+                                                    color: AppColors
+                                                        .textHighestEmphasis),
                                           ),
                                           Obx(() {
-                                            final address = locationCtrl.selectedAddress.value;
-                                            final truncatedAddress = address.isNotEmpty
-                                                ? (address.length > 25
-                                                    ? '${address.substring(0, 25)}...'
-                                                    : address)
-                                                : 'Select a location';
+                                            final address = locationCtrl
+                                                .selectedAddress.value;
+                                            final truncatedAddress =
+                                                address.isNotEmpty
+                                                    ? (address.length > 25
+                                                        ? '${address.substring(0, 25)}...'
+                                                        : address)
+                                                    : 'Select a location';
                                             return Text(
                                               truncatedAddress,
-                                              style: GoogleFonts.workSans(
-                                                color: Colors.white70,
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w400,
-                                              ),
+                                              style: AppTypography.bodySmall
+                                                  .copyWith(
+                                                      color: AppColors
+                                                          .textMedEmphasis),
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
                                             );
                                           }),
                                         ],
                                       ),
+                                      AppSpacing.gapS,
+                                      // Icon(Icons.keyboard_arrow_down,
+                                      //     color: AppColors.textMedEmphasis),
                                     ],
                                   ),
                                 ),
                                 IconButton(
-                                  icon: const Icon(Icons.account_circle_outlined, color: Colors.white, size: 28),
+                                  icon: AppIcons.profileIcon(),
+                                  iconSize: 36,
+                                  padding: const EdgeInsets.all(12),
                                   onPressed: () {
                                     Get.toNamed('/profile');
                                   },
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 16),
+                            AppSpacing.gapL,
                             _buildSearchBar(randomPlaceholder),
                           ],
                         ),
@@ -159,121 +162,122 @@ class HomeView extends GetView<HomeController> {
                     ),
                   ),
                 ),
-                // Use StatefulBuilder or Obx with ScrollController listener for dynamic title
-                title: AnimatedBuilder(
-                  animation: scrollController,
-                  builder: (context, child) {
-                    double opacity = 0.0;
-                    if (scrollController.hasClients) {
-                      final offset = scrollController.offset;
-                      // Adjust the range (e.g., 0 to 100) where opacity changes
-                      opacity = (offset / 100).clamp(0.0, 1.0);
-                    }
-                    return Opacity(
-                      opacity: opacity,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          'Fresmo',
-                          style: GoogleFonts.workSans(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
+                // Categories Section
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: AppSpacing.paddingL,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "What's on your mind?",
+                          style: AppTypography.heading3.copyWith(
+                              color: AppColors.textHighestEmphasis),
                         ),
-                      ),
-                    );
-                  },
-                ),
-                centerTitle: true,
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Categories',
-                        style: GoogleFonts.workSans(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      categories.isEmpty
-                          ? _buildEmptyState('No categories available.')
-                          : SizedBox(
-                              height: 100,
-                              child: ListView.separated(
-                                scrollDirection: Axis.horizontal,
-                                itemCount: categories.length,
-                                separatorBuilder: (_, __) => const SizedBox(width: 12),
-                                itemBuilder: (_, index) {
-                                  final cat = categories[index];
-                                  final catName = cat['name'] ?? 'Unnamed';
-                                  final catImage = cat['image'] ?? '';
-                                  return GestureDetector(
-                                    onTap: () => Get.toNamed('/category-vendors', arguments: catName),
-                                    child: _buildCategoryCard(catName, catImage),
-                                  );
-                                },
-                              ),
-                            ),
-                    ],
-                  ),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: SizedBox(
-                    height: 160,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: adList.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 12),
-                      itemBuilder: (_, index) => _buildAdCard(context, adList[index]),
+                        AppSpacing.gapM,
+                        homeCtrl.isLoading.value
+                            ? _buildCategorySkeleton()
+                            : homeCtrl.categories.isEmpty
+                                ? _buildEmptyState('No categories available.')
+                                : SizedBox(
+                                    height: 100,
+                                    child: ListView.separated(
+                                      scrollDirection: Axis.horizontal,
+                                      itemCount: homeCtrl.categories.length,
+                                      separatorBuilder: (_, __) =>
+                                          AppSpacing.gapM,
+                                      itemBuilder: (_, index) {
+                                        final cat = homeCtrl.categories[index];
+                                        final catName = cat['name'] ?? 'Unnamed';
+                                        final catImage = cat['image'] ?? '';
+                                        return _buildCategoryCard(
+                                            catName, catImage, index);
+                                      },
+                                    ),
+                                  ),
+                      ],
                     ),
                   ),
                 ),
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Nearby Kitchens',
-                        style: GoogleFonts.workSans(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      vendors.isEmpty
-                          ? _buildEmptyState('No kitchens nearby.')
-                          : Column(
-                              children: vendors.map((vendor) {
-                                final vendorId = vendor['id'] ?? '';
-                                final name = vendor['kitchenName'] ?? 'Unnamed';
-                                final imageUrl = vendor['profile']?['profileImage'] ?? '';
-                                final rating = vendor['rating']?.toString() ?? '4.5';
-                                final isVeg = vendor['isVeg'] ?? false;
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 12),
-                                  child: _buildKitchenCard(name, imageUrl, rating, isVeg, vendorId),
-                                );
-                              }).toList(),
-                            ),
-                    ],
+                // Ads Section with Auto-Scrolling
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: AppSpacing.paddingHorizontalL,
+                    child: SizedBox(
+                      height: 180,
+                      child: _buildAdCarousel(context, adList),
+                    ),
                   ),
                 ),
-              ),
-            ],
+                // Nearby Kitchens Section
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: AppSpacing.paddingL,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Nearby Kitchens',
+                              style: AppTypography.heading3.copyWith(
+                                  color: AppColors.textHighestEmphasis),
+                            ),
+                            // Row(
+                            //   children: [
+                            //     IconButton(
+                            //       icon: const Icon(Icons.filter_list),
+                            //       onPressed: () {
+                            //         // Add filter functionality
+                            //       },
+                            //     ),
+                            //     IconButton(
+                            //       icon: const Icon(Icons.sort),
+                            //       onPressed: () {
+                            //         // Add sort functionality
+                            //       },
+                            //     ),
+                            //   ],
+                            // ),
+                          ],
+                        ),
+                        AppSpacing.gapM,
+                        homeCtrl.isLoading.value
+                            ? _buildKitchenSkeleton()
+                            : homeCtrl.vendors.isEmpty
+                                ? _buildEmptyState('No kitchens nearby.')
+                                : Column(
+                                    children: homeCtrl.vendors
+                                        .asMap()
+                                        .entries
+                                        .map((entry) {
+                                      final index = entry.key;
+                                      final vendor = entry.value;
+                                      final vendorId = vendor['id'] ?? '';
+                                      final name =
+                                          vendor['kitchenName'] ?? 'Unnamed';
+                                      final imageUrl =
+                                          vendor['profile']?['profileImage'] ??
+                                              '';
+                                      final rating =
+                                          vendor['rating']?.toString() ?? '4.5';
+                                      final isVeg = vendor['isVeg'] ?? false;
+                                      final isFeatured = index % 2 == 0;
+                                      return Padding(
+                                        padding:
+                                            const EdgeInsets.only(bottom: 12),
+                                        child: _buildKitchenCard(
+                                            name, imageUrl, rating, isVeg, vendorId, index, isFeatured),
+                                      );
+                                    }).toList(),
+                                  ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       }),
@@ -281,40 +285,35 @@ class HomeView extends GetView<HomeController> {
         final int itemCount = cartCtrl.totalItemCount;
         if (itemCount == 0) return const SizedBox.shrink();
         return Padding(
-          padding: const EdgeInsets.all(16),
+          padding: AppSpacing.paddingL,
           child: ElevatedButton(
             onPressed: () => Get.to(() => const CartView()),
             style: ElevatedButton.styleFrom(
-              backgroundColor: kPrimaryColor,
+              backgroundColor: AppColors.primary,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(50)),
               elevation: 5,
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Icon(Icons.shopping_cart, color: Colors.white, size: 24),
+                AppIcons.cartIcon(color: AppColors.backgroundPrimary),
                 Text(
                   'View Cart',
-                  style: GoogleFonts.workSans(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: AppTypography.labelLarge
+                      .copyWith(color: AppColors.backgroundPrimary),
                 ),
                 Container(
                   padding: const EdgeInsets.all(6),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
+                  decoration: BoxDecoration(
+                    color: AppColors.backgroundPrimary,
                     shape: BoxShape.circle,
                   ),
                   child: Text(
                     '$itemCount',
-                    style: GoogleFonts.workSans(
-                      color: kPrimaryColor,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: AppTypography.labelSmall
+                        .copyWith(color: AppColors.primary),
                   ),
                 ),
               ],
@@ -326,16 +325,53 @@ class HomeView extends GetView<HomeController> {
   }
 
   Widget _buildSearchBar(String placeholder) {
-    return Material(
-      elevation: 4,
-      borderRadius: BorderRadius.circular(12),
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.backgroundSecondary,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.backgroundPrimary,
+          width: 1.5,
+        ),
+      ),
       child: TextField(
         decoration: InputDecoration(
           hintText: placeholder,
-          hintStyle: GoogleFonts.workSans(color: Colors.grey[600], fontSize: 16),
-          prefixIcon: const Icon(Icons.search, color: Colors.grey),
+          hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.textMedEmphasis),
+          prefixIcon: AppIcons.searchIcon(),
+          suffixIcon: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.mic),
+                onPressed: () {
+                  // Add voice search functionality
+                },
+              ),
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.positive.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      AppIcons.vegIcon(size: 16),
+                      AppSpacing.gapXS,
+                      Text(
+                        'VEG',
+                        style: AppTypography.labelSmall.copyWith(color: AppColors.positive),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
           filled: true,
-          fillColor: Colors.white,
+          fillColor: AppColors.backgroundSecondary,
           contentPadding: const EdgeInsets.symmetric(vertical: 0),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
@@ -353,19 +389,62 @@ class HomeView extends GetView<HomeController> {
 
   Widget _buildEmptyState(String message) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: AppSpacing.paddingL,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.backgroundPrimary,
         borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.textLowEmphasis.withOpacity(0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Text(
         message,
-        style: GoogleFonts.workSans(color: Colors.grey[600], fontSize: 14),
+        style: AppTypography.bodyMedium
+            .copyWith(color: AppColors.textMedEmphasis),
       ),
     );
   }
 
-  Widget _buildCategoryCard(String catName, String base64Image) {
+  Widget _buildCategorySkeleton() {
+    return SizedBox(
+      height: 100,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: 5,
+        separatorBuilder: (_, __) => AppSpacing.gapM,
+        itemBuilder: (_, __) {
+          return Shimmer.fromColors(
+            baseColor: AppColors.textLowEmphasis,
+            highlightColor: AppColors.backgroundPrimary,
+            child: Column(
+              children: [
+                Container(
+                  width: 70,
+                  height: 70,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                  ),
+                ),
+                AppSpacing.gapS,
+                Container(
+                  width: 50,
+                  height: 10,
+                  color: Colors.white,
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildCategoryCard(String catName, String base64Image, int index) {
     Uint8List? catImageBytes;
     try {
       if (base64Image.contains(',')) base64Image = base64Image.split(',').last;
@@ -374,83 +453,47 @@ class HomeView extends GetView<HomeController> {
       catImageBytes = null;
     }
 
-    return Column(
-      children: [
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          width: 70,
-          height: 70,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.white,
-            boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.2), blurRadius: 8)],
+    return TweenAnimationBuilder(
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: Duration(milliseconds: 500 + (index * 100)),
+      builder: (context, double value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(0, (1 - value) * 20),
+            child: child,
           ),
-          child: ClipOval(
-            child: catImageBytes != null
-                ? Image.memory(catImageBytes, fit: BoxFit.cover)
-                : Icon(Icons.fastfood, color: Colors.grey[400], size: 30),
-          ),
-        ),
-        const SizedBox(height: 8),
-        SizedBox(
-          width: 70,
-          child: Text(
-            catName,
-            style: GoogleFonts.workSans(fontSize: 13, color: Colors.black87),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAdCard(BuildContext context, Map<String, dynamic> ad) {
-    final String imageUrl = ad['image'] as String;
-    return Container(
-      width: MediaQuery.of(context).size.width * 0.75,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.2), blurRadius: 10)],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Stack(
+        );
+      },
+      child: GestureDetector(
+        onTap: () => Get.toNamed('/category-vendors', arguments: catName),
+        child: Column(
           children: [
-            imageUrl.isNotEmpty
-                ? Image.asset(imageUrl, fit: BoxFit.cover, width: double.infinity, height: 160)
-                : Container(color: Colors.grey[200], height: 160),
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.black.withOpacity(0.7), Colors.transparent],
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter,
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      ad['title'] ?? '',
-                      style: GoogleFonts.workSans(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      ad['description'] ?? '',
-                      style: GoogleFonts.workSans(color: Colors.white70, fontSize: 12),
-                    ),
-                  ],
-                ),
+            Container(
+              width: 70,
+              height: 70,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.backgroundPrimary,
+                boxShadow: [],
+              ),
+              child: ClipOval(
+                child: catImageBytes != null
+                    ? Image.memory(catImageBytes, fit: BoxFit.cover)
+                    : Icon(Icons.fastfood,
+                        color: AppColors.textMedEmphasis, size: 30),
+              ),
+            ),
+            AppSpacing.gapS,
+            SizedBox(
+              width: 70,
+              child: Text(
+                catName,
+                style: AppTypography.bodySmall
+                    .copyWith(color: AppColors.textHighEmphasis),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
@@ -459,7 +502,227 @@ class HomeView extends GetView<HomeController> {
     );
   }
 
-  Widget _buildKitchenCard(String name, String base64Image, String rating, bool isVeg, String vendorId) {
+  Widget _buildAdCarousel(BuildContext context, List<Map<String, dynamic>> adList) {
+    final PageController pageController = PageController(viewportFraction: 0.85);
+    Timer? timer;
+
+    void startAutoScroll() {
+      timer = Timer.periodic(const Duration(seconds: 2), (Timer timer) {
+        if (pageController.hasClients) {
+          int nextPage = (pageController.page?.round() ?? 0) + 1;
+          if (nextPage >= adList.length) {
+            nextPage = 0;
+          }
+          pageController.animateToPage(
+            nextPage,
+            duration: const Duration(milliseconds: 500),
+            curve: Curves.easeInOut,
+          );
+        }
+      });
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      startAutoScroll();
+    });
+
+    void dispose() {
+      timer?.cancel();
+      pageController.dispose();
+    }
+
+    return PageView.builder(
+      controller: pageController,
+      itemCount: adList.length,
+      itemBuilder: (context, index) {
+        return _buildAdCard(context, adList[index], index);
+      },
+      onPageChanged: (index) {},
+    );
+  }
+
+ Widget _buildAdCard(BuildContext context, Map<String, dynamic> ad, int index) {
+  final String imageUrl = ad['image'] as String;
+  final bool isNew = ad['isNew'] as bool;
+
+  // Remove leading '/' from imageUrl to match asset path
+  final String assetPath = imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl;
+
+  return TweenAnimationBuilder(
+    tween: Tween<double>(begin: 0, end: 1),
+    duration: Duration(milliseconds: 500 + (index * 100)),
+    builder: (context, double value, child) {
+      return Opacity(
+        opacity: value,
+        child: Transform.translate(
+          offset: Offset((1 - value) * 20, 0),
+          child: child,
+        ),
+      );
+    },
+    child: Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+      width: MediaQuery.of(context).size.width * 0.85,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          colors: [
+            AppColors.primary.withOpacity(0.2),
+            AppColors.primarySub.withOpacity(0.3),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(
+          color: AppColors.backgroundPrimary.withOpacity(0.3),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.textLowEmphasis.withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: assetPath.isNotEmpty
+                ? Image.asset(
+                    'assets/$assetPath', // Load image from assets
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: double.infinity,
+                    color: Colors.black.withOpacity(0.3),
+                    colorBlendMode: BlendMode.darken,
+                    errorBuilder: (context, error, stackTrace) {
+                      // Fallback if the image fails to load
+                      return Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              AppColors.textLowEmphasis,
+                              AppColors.textMedEmphasis,
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                        ),
+                        child: Center(
+                          child: Icon(
+                            Icons.local_offer,
+                            color: AppColors.backgroundPrimary.withOpacity(0.7),
+                            size: 50,
+                          ),
+                        ),
+                      );
+                    },
+                  )
+                : Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.textLowEmphasis,
+                          AppColors.textMedEmphasis,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.local_offer,
+                        color: AppColors.backgroundPrimary.withOpacity(0.7),
+                        size: 50,
+                      ),
+                    ),
+                  ),
+          ),
+          if (isNew)
+            Positioned(
+              top: 10,
+              left: 10,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.warning,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'New',
+                  style: AppTypography.labelSmall.copyWith(
+                    color: AppColors.backgroundPrimary,
+                  ),
+                ),
+              ),
+            ),
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              padding: AppSpacing.paddingM,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    ad['title'] ?? '',
+                    style: AppTypography.heading3.copyWith(
+                      color: AppColors.backgroundPrimary,
+                      shadows: [
+                        Shadow(
+                          color: AppColors.textHighestEmphasis.withOpacity(0.5),
+                          offset: const Offset(1, 1),
+                          blurRadius: 3,
+                        ),
+                      ],
+                    ),
+                  ),
+                  AppSpacing.gapXS,
+                  Text(
+                    ad['description'] ?? '',
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.backgroundPrimary.withOpacity(0.9),
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+  Widget _buildKitchenSkeleton() {
+    return Column(
+      children: List.generate(
+        3,
+        (_) => Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Shimmer.fromColors(
+            baseColor: AppColors.textLowEmphasis,
+            highlightColor: AppColors.backgroundPrimary,
+            child: Container(
+              height: 200,
+              decoration: BoxDecoration(
+                color: AppColors.backgroundPrimary,
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildKitchenCard(String name, String base64Image, String rating,
+      bool isVeg, String vendorId, int index, bool isFeatured) {
     Uint8List? vendorImageBytes;
     try {
       if (base64Image.contains(',')) base64Image = base64Image.split(',').last;
@@ -468,131 +731,218 @@ class HomeView extends GetView<HomeController> {
       vendorImageBytes = null;
     }
 
-    return GestureDetector(
-      onTap: () => Get.toNamed('/restaurant-details', arguments: {
-        'vendorId': vendorId,
-        'kitchenName': name,
-        'imageUrl': base64Image,
-        'rating': rating,
-        'isVeg': isVeg,
-      }),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeInOut,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.15),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Stack(
+    return TweenAnimationBuilder(
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: Duration(milliseconds: 500 + (index * 100)),
+      builder: (context, double value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(0, (1 - value) * 20),
+            child: child,
+          ),
+        );
+      },
+      child: GestureDetector(
+        onTap: () => Get.toNamed('/restaurant-details', arguments: {
+          'vendorId': vendorId,
+          'kitchenName': name,
+          'imageUrl': base64Image,
+          'rating': rating,
+          'isVeg': isVeg,
+        }),
+        child: Column(
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: SizedBox(
-                height: 180,
-                width: double.infinity,
-                child: vendorImageBytes != null
-                    ? Image.memory(
-                        vendorImageBytes,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
-                          color: Colors.grey[200],
-                          child: Icon(Icons.store, color: Colors.grey[400], size: 50),
-                        ),
-                      )
-                    : Container(
-                        color: Colors.grey[200],
-                        child: Icon(Icons.store, color: Colors.grey[400], size: 50),
-                      ),
-              ),
-            ),
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.black.withOpacity(0.6), Colors.transparent],
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter,
-                  ),
-                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
+            // Main Card (Image and Overlay)
+            Container(
+              height: 180, // Reduced height to make space for the footer
+              decoration: BoxDecoration(
+                color: AppColors.backgroundPrimary,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: AppColors.textLowEmphasis.withOpacity(0.3),
+                  width: 1,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            name,
-                            style: GoogleFonts.workSans(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.textLowEmphasis.withOpacity(0.2),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Stack(
+                children: [
+                  // Image
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: SizedBox(
+                      height: 180,
+                      width: double.infinity,
+                      child: vendorImageBytes != null
+                          ? Image.memory(
+                              vendorImageBytes,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(
+                                color: AppColors.textLowEmphasis,
+                                child: Icon(
+                                  Icons.store,
+                                  color: AppColors.textMedEmphasis,
+                                  size: 50,
+                                ),
+                              ),
+                            )
+                          : Container(
+                              color: AppColors.textLowEmphasis,
+                              child: Icon(
+                                Icons.store,
+                                color: AppColors.textMedEmphasis,
+                                size: 50,
+                              ),
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  // Gradient Overlay
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.transparent,
+                          AppColors.textHighestEmphasis.withOpacity(0.7),
+                        ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                    ),
+                  ),
+                  // Featured Badge
+                  if (isFeatured)
+                    Positioned(
+                      top: 12,
+                      left: 12,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          'Featured',
+                          style: AppTypography.labelSmall.copyWith(
+                            color: AppColors.backgroundPrimary,
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  // Favorite Icon
+                  Positioned(
+                    top: 12,
+                    right: 12,
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.backgroundPrimary.withOpacity(0.9),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.textLowEmphasis.withOpacity(0.2),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: AppIcons.favoriteIcon(
+                        color: AppColors.primary,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                  // Veg/Non-Veg Indicator
+                  Positioned(
+                    bottom: 12,
+                    right: 12,
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.backgroundPrimary.withOpacity(0.9),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.textLowEmphasis.withOpacity(0.2),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: isVeg
+                          ? AppIcons.vegIcon(size: 20)
+                          : AppIcons.nonVegIcon(size: 20),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // White Background Extension (Footer)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: AppColors.backgroundPrimary,
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(16),
+                  bottomRight: Radius.circular(16),
+                ),
+                border: Border.all(
+                  color: AppColors.textLowEmphasis.withOpacity(0.3),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.textLowEmphasis.withOpacity(0.2),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Restaurant Name (Left)
+                  Expanded(
+                    child: Text(
+                      name,
+                      style: AppTypography.bodyLarge.copyWith(
+                        color: AppColors.textHighestEmphasis,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  // Rating (Right)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.backgroundSecondary,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.amber.withOpacity(0.9),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.star, color: Colors.white, size: 14),
-                              const SizedBox(width: 4),
-                              Text(
-                                rating,
-                                style: GoogleFonts.workSans(
-                                  fontSize: 12,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
+                        Icon(Icons.star,
+                          color: AppColors.warning,
+                          size: 16,
                         ),
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.9),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            isVeg ? Icons.eco : Icons.local_dining,
-                            color: isVeg ? Colors.green : Colors.red,
-                            size: 18,
+                        AppSpacing.gapXS,
+                        Text(
+                          rating,
+                          style: AppTypography.labelMedium.copyWith(
+                            color: AppColors.textHighestEmphasis,
                           ),
                         ),
                       ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -604,7 +954,8 @@ class HomeView extends GetView<HomeController> {
 
 class NoScrollGlow extends ScrollBehavior {
   @override
-  Widget buildViewportChrome(BuildContext context, Widget child, AxisDirection axisDirection) {
+  Widget buildViewportChrome(
+      BuildContext context, Widget child, AxisDirection axisDirection) {
     return child;
   }
 }

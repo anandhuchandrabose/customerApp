@@ -220,8 +220,8 @@ Future<Map<String, dynamic>> addItemToCart({
       _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, handleExternalWallet);
 
       var options = {
-        'key': 'rzp_test_fOAj9IBqaGPNY5', // Your Razorpay test/public key
-        'order_id': razorpayOrder['id'], // e.g. "order_PrImk42XFGwCAy"
+        'key': 'rzp_test_fOAj9IBqaGPNY5', 
+        'order_id': razorpayOrder['id'], 
         'name': 'My Awesome App',
         'description': 'Payment for your order',
         'prefill': {

@@ -21,7 +21,7 @@ class InitialBinding extends Bindings {
     // 1) Register ApiService
     Get.lazyPut<ApiService>(
       // () => ApiService(baseUrl: 'http://127.0.0.1:3000'),
-      () => ApiService(baseUrl: 'https://www.fresmo.in'),
+      () => ApiService(baseUrl: 'https://api.fresmo.in'),
       fenix: true,
     );
 

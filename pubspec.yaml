@@ -29,6 +29,7 @@ dependencies:
   flutter_google_maps_webservices: ^1.1.1
   flutter_launcher_icons: ^0.14.3
   flutter_native_splash: ^2.4.1
+  shimmer: ^3.0.0
 
 dev_dependencies:
   flutter_test:
@@ -53,5 +54,6 @@ flutter:
     - assets/icons/veg.png
     - assets/icons/non-veg.png
     - assets/img/
+    - assets/img/card.jpg
     # - assets/img/icon.png
     
