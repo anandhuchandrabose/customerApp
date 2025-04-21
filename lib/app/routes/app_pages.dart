@@ -2,6 +2,7 @@
 import 'package:customerapp/app/controllers/cart_controller.dart';
 import 'package:customerapp/app/controllers/complete_signup_controller.dart';
 import 'package:customerapp/app/controllers/dashboard_controller.dart';
+import 'package:customerapp/app/controllers/network_controller.dart';
 import 'package:customerapp/app/controllers/profile_controller.dart';
 import 'package:customerapp/app/controllers/restaurant_details_controller.dart';
 import 'package:customerapp/app/views/cart_view.dart';
@@ -24,6 +25,7 @@ import '../views/login_view.dart';
 import '../views/otp_view.dart';
 import '../views/home_view.dart';
 import '../views/restaurant_details_view.dart';
+import '../views/network_view.dart';
 import '../views/search_results_view.dart';
 import 'app_routes.dart';
 
@@ -32,6 +34,13 @@ class AppPages {
   static const initial = AppRoutes.login;
 
   static final routes = [
+    GetPage(
+      name: AppRoutes.network,
+      page: () => const NetworkView(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<NetworkController>(() => NetworkController());
+      }),
+    ),
     GetPage(
       name: AppRoutes.login,
       page: () => const LoginView(),

@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import '../data/repositories/restaurant_repository.dart';
 import 'cart_controller.dart';
+import 'network_controller.dart';
 
 class RestaurantDetailsController extends GetxController {
   final RestaurantRepository _restaurantRepo = Get.find<RestaurantRepository>();
@@ -66,8 +67,9 @@ class RestaurantDetailsController extends GetxController {
       }
     } catch (e) {
       errorMessage.value = e.toString();
-      Get.snackbar('Error', errorMessage.value);
       log('Error fetching restaurant data: $e');
+      final networkController = Get.find<NetworkController>();
+      networkController.handleError(e);
     } finally {
       isLoading.value = false;
     }

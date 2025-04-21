@@ -13,4 +13,5 @@ abstract class AppRoutes {
   static const searchResults = '/search-results';
   static const categoryVendors = '/category-vendors';
   static const addressForm = '/address-form';
+  static const network = '/network'; // Network status page
 }

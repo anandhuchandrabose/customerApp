@@ -1,6 +1,7 @@
 // lib/app/bindings/initial_binding.dart
 import 'package:customerapp/app/controllers/cart_controller.dart';
 import 'package:customerapp/app/controllers/dashboard_controller.dart';
+import 'package:customerapp/app/controllers/network_controller.dart';
 import 'package:customerapp/app/controllers/profile_controller.dart';
 import 'package:customerapp/app/controllers/home_controller.dart';
 import 'package:customerapp/app/controllers/orders_controller.dart'; // Import the OrdersController
@@ -18,6 +19,8 @@ import '../data/repositories/home_repository.dart';
 class InitialBinding extends Bindings {
   @override
   void dependencies() {
+    // Initialize NetworkController first to monitor connectivity
+    Get.put(NetworkController(), permanent: true);
     // 1) Register ApiService
     Get.lazyPut<ApiService>(
       // () => ApiService(baseUrl: 'http://127.0.0.1:3000'),

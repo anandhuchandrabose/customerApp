@@ -922,35 +922,131 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
     );
 
     if (result.containsKey('vendorMismatch') && result['vendorMismatch'] == true) {
-      Get.defaultDialog(
-        title: "Clear Cart?",
-        titleStyle: AppTypography.heading3.copyWith(
-          color: AppColors.textHighestEmphasis, // Use AppTypography and AppColors
+      Get.dialog(
+        PopScope(
+          canPop: true,
+          child: AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            contentPadding: EdgeInsets.zero,
+            backgroundColor: AppColors.backgroundPrimary,
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Header with icon
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  ),
+                  child: Center(
+                    child: Icon(
+                      Icons.shopping_cart_outlined,
+                      size: 40,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+                // Title and message
+                Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    children: [
+                      Text(
+                        "Clear Cart?",
+                        style: AppTypography.heading3.copyWith(
+                          color: AppColors.textHighestEmphasis,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        "All items in the cart must be from the same vendor. Would you like to clear the cart and add this dish?",
+                        textAlign: TextAlign.center,
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.textMedEmphasis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Buttons
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border(
+                      top: BorderSide(color: AppColors.textLowEmphasis.withOpacity(0.12)),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () => Get.back(),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: const RoundedRectangleBorder(
+                              borderRadius: BorderRadius.only(
+                                bottomLeft: Radius.circular(16),
+                              ),
+                            ),
+                          ),
+                          child: Text(
+                            "Cancel",
+                            style: AppTypography.labelLarge.copyWith(
+                              color: AppColors.textMedEmphasis,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Container(
+                        width: 1,
+                        height: 56,
+                        color: AppColors.textLowEmphasis.withOpacity(0.12),
+                      ),
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () async {
+                            Get.back();
+                            try {
+                              await cartCtrl.clearEntireCart();
+                              await cartCtrl.fetchCartItems();
+                              await cartCtrl.addItemToCart(
+                                vendorDishId: vendorDishId,
+                                mealType: mealType,
+                                vendorId: vendorId,
+                              );
+                            } catch (e) {
+                              Get.snackbar('Error', 'Failed to add item to cart');
+                            }
+                          },
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: const RoundedRectangleBorder(
+                              borderRadius: BorderRadius.only(
+                                bottomRight: Radius.circular(16),
+                              ),
+                            ),
+                          ),
+                          child: Text(
+                            "Clear & Add",
+                            style: AppTypography.labelLarge.copyWith(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
-        middleText:
-            "All items in the cart must be from the same vendor. Would you like to clear the cart and add this dish?",
-        middleTextStyle: AppTypography.bodyMedium.copyWith(
-          color: AppColors.textMedEmphasis, // Use AppTypography and AppColors
-        ),
-        textCancel: "No",
-        textConfirm: "Yes",
-        confirmTextColor: AppColors.backgroundPrimary,
-        buttonColor: AppColors.primary, // Use AppColors
-        onConfirm: () async {
-          Get.back();
-          try {
-            await cartCtrl.clearEntireCart();
-            await cartCtrl.fetchCartItems();
-            await cartCtrl.addItemToCart(
-              vendorDishId: vendorDishId,
-              mealType: mealType,
-              vendorId: vendorId,
-            );
-          } catch (e) {
-            Get.snackbar("Error", e.toString());
-          }
-        },
-        onCancel: () => Get.back(),
+        barrierDismissible: true,
+        barrierColor: Colors.black54,
       );
     }
   }
@@ -1114,142 +1210,89 @@ class ServingTimesWidget extends StatefulWidget {
   const ServingTimesWidget({Key? key}) : super(key: key);
 
   @override
-  _ServingTimesWidgetState createState() => _ServingTimesWidgetState();
+  State<ServingTimesWidget> createState() => _ServingTimesWidgetState();
 }
 
-class _ServingTimesWidgetState extends State<ServingTimesWidget> with TickerProviderStateMixin {
-  late AnimationController _lunchController;
-  late AnimationController _dinnerController;
-  late Animation<Offset> _lunchSlideAnimation;
-  late Animation<double> _lunchFadeAnimation;
-  late Animation<Offset> _dinnerSlideAnimation;
-  late Animation<double> _dinnerFadeAnimation;
+class _ServingTimesWidgetState extends State<ServingTimesWidget> {
+  final PageController _pageController = PageController();
+  final List<Map<String, dynamic>> _servingTimes = [
+    {
+      'title': 'Lunch',
+      'time': '12 PM - 2 PM',
+      'icon': Icons.lunch_dining,
+    },
+    {
+      'title': 'Dinner',
+      'time': '8 PM - 10 PM',
+      'icon': Icons.dinner_dining,
+    },
+  ];
 
   @override
   void initState() {
     super.initState();
-
-    // Controller for Lunch text animation
-    _lunchController = AnimationController(
-      duration: const Duration(milliseconds: 800), // Duration for slide and fade
-      vsync: this,
-    );
-
-    // Controller for Dinner text animation
-    _dinnerController = AnimationController(
-      duration: const Duration(milliseconds: 800),
-      vsync: this,
-    );
-
-    // Fade and slide animations for Lunch text
-    _lunchFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _lunchController, curve: Curves.easeInOut),
-    );
-    _lunchSlideAnimation = Tween<Offset>(
-      begin: const Offset(0, 1.0), // Start from below
-      end: const Offset(0, -1.0), // End above
-    ).animate(CurvedAnimation(parent: _lunchController, curve: Curves.easeInOut));
-
-    // Fade and slide animations for Dinner text
-    _dinnerFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _dinnerController, curve: Curves.easeInOut),
-    );
-    _dinnerSlideAnimation = Tween<Offset>(
-      begin: const Offset(0, 1.0), // Start from below
-      end: const Offset(0, -1.0), // End above
-    ).animate(CurvedAnimation(parent: _dinnerController, curve: Curves.easeInOut));
-
-    // Start the animation loop
-    _startAnimationLoop();
-  }
-
-  void _startAnimationLoop() async {
-    while (mounted) {
-      // Show Lunch: Slide up from bottom to center and fade in
-      await _lunchController.forward(from: 0.0); // Start from beginning
-      await Future.delayed(const Duration(milliseconds: 1500)); // Display Lunch for 1.5 seconds
-
-      // Hide Lunch: Slide up further and fade out
-      await _lunchController.reverse(from: 1.0); // Reverse to slide up and fade out
-      await Future.delayed(const Duration(milliseconds: 500)); // Short pause
-
-      // Show Dinner: Slide up from bottom to center and fade in
-      await _dinnerController.forward(from: 0.0);
-      await Future.delayed(const Duration(milliseconds: 1500)); // Display Dinner for 1.5 seconds
-
-      // Hide Dinner: Slide up further and fade out
-      await _dinnerController.reverse(from: 1.0);
-      await Future.delayed(const Duration(milliseconds: 500)); // Short pause before restarting
-    }
+    // Set up infinite scroll
+    _pageController.addListener(() {
+      if (_pageController.position.pixels == _pageController.position.maxScrollExtent) {
+        _pageController.jumpTo(0);
+      } else if (_pageController.position.pixels == _pageController.position.minScrollExtent) {
+        _pageController.jumpTo(_pageController.position.maxScrollExtent - 1);
+      }
+    });
   }
 
   @override
   void dispose() {
-    _lunchController.dispose();
-    _dinnerController.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: AppSpacing.paddingM, // Use AppSpacing
-      decoration: BoxDecoration(
-        color: AppColors.backgroundPrimary.withOpacity(0.8), // Use AppColors
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Lunch text with animation
-          FadeTransition(
-            opacity: _lunchFadeAnimation,
-            child: SlideTransition(
-              position: _lunchSlideAnimation,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.lunch_dining,
-                    size: 24,
-                    color: AppColors.primary, // Use AppColors
-                  ),
-                  AppSpacing.gapM, // Use AppSpacing
-                  Text(
-                    'Lunch: 12 PM to 2 PM',
-                    style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.textMedEmphasis, // Use AppTypography and AppColors
-                    ),
-                  ),
-                ],
+    return SizedBox(
+      height: 25, // 1/4 of original height
+      child: PageView.builder(
+        controller: _pageController,
+        itemBuilder: (context, index) {
+          final actualIndex = index % _servingTimes.length;
+          final item = _servingTimes[actualIndex];
+          return Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColors.primary.withOpacity(0.1),
+                width: 1,
               ),
             ),
-          ),
-          // Dinner text with animation
-          FadeTransition(
-            opacity: _dinnerFadeAnimation,
-            child: SlideTransition(
-              position: _dinnerSlideAnimation,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.dinner_dining,
-                    size: 24,
-                    color: AppColors.primary, // Use AppColors
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  item['icon'] as IconData,
+                  size: 20, // Smaller icon size
+                  color: AppColors.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  item['title'],
+                  style: AppTypography.labelLarge.copyWith(
+                    color: AppColors.textHighestEmphasis,
+                    fontWeight: FontWeight.w600,
                   ),
-                  AppSpacing.gapM, // Use AppSpacing
-                  Text(
-                    'Dinner: 8 PM to 10 PM',
-                    style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.textMedEmphasis, // Use AppTypography and AppColors
-                    ),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  item['time'],
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.textMedEmphasis,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }

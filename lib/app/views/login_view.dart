@@ -32,7 +32,7 @@ class LoginView extends GetView<LoginController> {
                     width: double.infinity,
                     height: size.height * 0.4,
                     child: Image.asset(
-                      'assets/img/Frwshmologo-01.jpg', // Ensure this matches your file path
+                      'img/card.jpg', // Ensure this matches your file path
                       fit: BoxFit.cover,
                       color: Colors.black38, // Overlay for darkening
                       colorBlendMode: BlendMode.darken,

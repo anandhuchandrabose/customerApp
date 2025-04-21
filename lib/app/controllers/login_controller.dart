@@ -22,15 +22,13 @@ class LoginController extends GetxController {
       isLoading.value = true;
 
       final data = await _authRepo.requestOtp(phoneNumber.value);
-      // Suppose backend returns { "message": "...", "otp": "5174", "isNewUser": true/false }
       final bool isNewUser = data['isNewUser'] ?? false;
-      final String devOtp = data['otp'] ?? ''; // <-- Capture the OTP
+      final String devOtp = data['otp'] ?? '';
 
-      // Navigate to OTP page & pass OTP for development
       Get.toNamed('/otp', arguments: {
         'phone': phoneNumber.value,
         'isNewUser': isNewUser,
-        'devOtp': devOtp, // <-- Pass the OTP along
+        'devOtp': devOtp,
       });
     } catch (e) {
       Get.snackbar('OTP Error', e.toString());
