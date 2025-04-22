@@ -1,15 +1,15 @@
-// lib/app/controllers/cart_controller.dart
-
 import 'dart:developer';
 import 'package:get/get.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import '../data/repositories/cart_repository.dart';
 import '../data/repositories/order_repository.dart';
+import '../controllers/location_controller.dart';
 import 'package:customerapp/app/views/payment_success_screen.dart';
 
 class CartController extends GetxController {
   final CartRepository _cartRepo = Get.find<CartRepository>();
   final OrderRepository _orderRepo = Get.find<OrderRepository>();
+  final LocationController _locationController = Get.find<LocationController>();
 
   var cartItems = <Map<String, dynamic>>[].obs;
   var cartData = <String, dynamic>{}.obs;
@@ -55,33 +55,28 @@ class CartController extends GetxController {
   // ============================
   // 2) Add Item to Cart
   // ============================
- // lib/app/controllers/cart_controller.dart
-
-Future<Map<String, dynamic>> addItemToCart({
-  required String vendorDishId,
-  required String mealType,
-  required String vendorId,
-}) async {
-  try {
-    isLoading.value = true;
-    // Call the repository method and capture its result.
-    final result = await _cartRepo.addItemToCart(
-      vendorDishId: vendorDishId,
-      quantity: 1,
-      mealType: mealType,
-    );
-    // Refresh cart items after adding.
-    await fetchCartItems();
-    return result;
-  } catch (e) {
-    errorMessage.value = e.toString();
-    Get.snackbar("Error", errorMessage.value);
-    // Return an error map so the caller can inspect it.
-    return {'error': errorMessage.value};
-  } finally {
-    isLoading.value = false;
+  Future<Map<String, dynamic>> addItemToCart({
+    required String vendorDishId,
+    required String mealType,
+    required String vendorId,
+  }) async {
+    try {
+      isLoading.value = true;
+      final result = await _cartRepo.addItemToCart(
+        vendorDishId: vendorDishId,
+        quantity: 1,
+        mealType: mealType,
+      );
+      await fetchCartItems();
+      return result;
+    } catch (e) {
+      errorMessage.value = e.toString();
+      Get.snackbar("Error", errorMessage.value);
+      return {'error': errorMessage.value};
+    } finally {
+      isLoading.value = false;
+    }
   }
-}
 
   // ============================
   // 3) Increase/Decrease Quantity
@@ -202,9 +197,29 @@ Future<Map<String, dynamic>> addItemToCart({
     errorMessage.value = '';
 
     try {
-      print("1) Calling placeOrder...");
+      // Find the selected address
+      final selectedAddress = _locationController.addresses.firstWhere(
+        (address) => address['isSelected'] == true,
+        orElse: () => <String, dynamic>{},
+      );
+
+      if (selectedAddress.isEmpty || selectedAddress['addressId'] == null) {
+        Get.snackbar(
+          'Error',
+          'No address selected. Please select a delivery address.',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        Get.toNamed('/address-input');
+        return;
+      }
+
+      final addressId = selectedAddress['addressId'].toString();
+
+      print("1) Calling placeOrder with addressId: $addressId...");
       final placeOrderResponse = await _orderRepo.placeOrder(
-        {'exampleKey': 'exampleValue'},
+        {
+          'addressId': addressId,
+        },
         paymentMethod: 'card',
       );
       print("2) placeOrderResponse: $placeOrderResponse");
@@ -220,8 +235,8 @@ Future<Map<String, dynamic>> addItemToCart({
       _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, handleExternalWallet);
 
       var options = {
-        'key': 'rzp_test_fOAj9IBqaGPNY5', 
-        'order_id': razorpayOrder['id'], 
+        'key': 'rzp_test_fOAj9IBqaGPNY5',
+        'order_id': razorpayOrder['id'],
         'name': 'My Awesome App',
         'description': 'Payment for your order',
         'prefill': {
@@ -248,7 +263,6 @@ Future<Map<String, dynamic>> addItemToCart({
     }
   }
 
-  /// Called when payment is successful in the Razorpay flow.
   void handlePaymentSuccess(PaymentSuccessResponse response) async {
     print("Payment Success: ${response.paymentId}");
     await verifyPayment(
@@ -258,7 +272,6 @@ Future<Map<String, dynamic>> addItemToCart({
     );
   }
 
-  /// Called when there is an error in the Razorpay flow.
   void handlePaymentError(PaymentFailureResponse response) {
     print("Payment Error: ${response.code} - ${response.message}");
     Get.snackbar(
@@ -268,7 +281,6 @@ Future<Map<String, dynamic>> addItemToCart({
     );
   }
 
-  /// Called when an external wallet is selected, e.g. Paytm.
   void handleExternalWallet(ExternalWalletResponse response) {
     print("External Wallet: ${response.walletName}");
     Get.snackbar(
@@ -278,7 +290,6 @@ Future<Map<String, dynamic>> addItemToCart({
     );
   }
 
-  /// Verify payment on the server and refresh cart afterward.
   Future<void> verifyPayment({
     required String razorpayOrderId,
     required String razorpayPaymentId,
@@ -294,7 +305,6 @@ Future<Map<String, dynamic>> addItemToCart({
         razorpaySignature,
       );
 
-      // Check if the response indicates a successful verification.
       if (response.containsKey('success')) {
         if (response['success'] == true) {
           print("Payment verification successful: $response");
@@ -303,16 +313,12 @@ Future<Map<String, dynamic>> addItemToCart({
             'Your payment has been successfully verified!',
             snackPosition: SnackPosition.BOTTOM,
           );
-          // Refresh the cart after payment verification.
           await fetchCartItems();
-          // Navigate to the success screen.
           Get.to(() => PaymentSuccessScreen(orderId: razorpayOrderId));
         } else {
-          throw Exception(
-              'Payment verification failed: ${response['message']}');
+          throw Exception('Payment verification failed: ${response['message']}');
         }
       } else {
-        // If there's no 'success' key, inspect the message.
         final message = (response['message'] as String?) ?? '';
         if (message.toLowerCase().contains('payment confirmed')) {
           print("Payment verification successful: $response");
@@ -321,12 +327,10 @@ Future<Map<String, dynamic>> addItemToCart({
             'Your payment has been successfully verified!',
             snackPosition: SnackPosition.BOTTOM,
           );
-          // Refresh the cart after payment verification.
           await fetchCartItems();
           Get.to(() => PaymentSuccessScreen(orderId: razorpayOrderId));
         } else {
-          throw Exception(
-              'Payment verification failed: ${response['message']}');
+          throw Exception('Payment verification failed: ${response['message']}');
         }
       }
     } catch (e) {

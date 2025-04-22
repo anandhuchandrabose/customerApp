@@ -6,7 +6,6 @@ class CartRepository {
 
   CartRepository({required this.api});
 
-  /// POST /api/customer-cart/get-cart
   Future<Map<String, dynamic>> fetchCartItems() async {
     final response = await api.post('/api/customer-cart/get-cart', {});
     if (response.statusCode == 200) {
@@ -17,9 +16,6 @@ class CartRepository {
     }
   }
 
-  /// POST /api/customer-cart/add-item
-  /// If the API returns a 400 error (vendor mismatch), this method returns a map with a
-  /// vendorMismatch flag instead of throwing an exception.
   Future<Map<String, dynamic>> addItemToCart({
     required String vendorDishId,
     required int quantity,
@@ -37,7 +33,6 @@ class CartRepository {
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else if (response.statusCode == 406) {
-      // If status is 400, return a map with vendorMismatch flag.
       final error = jsonDecode(response.body);
       return {
         'vendorMismatch': true,
@@ -49,7 +44,6 @@ class CartRepository {
     }
   }
 
-  /// POST /api/customer-cart/increase
   Future<Map<String, dynamic>> increaseQuantity({
     required String vendorDishId,
     required String mealType,
@@ -70,7 +64,6 @@ class CartRepository {
     }
   }
 
-  /// POST /api/customer-cart/decrease
   Future<Map<String, dynamic>> decreaseQuantity({
     required String vendorDishId,
     required String mealType,
@@ -91,7 +84,6 @@ class CartRepository {
     }
   }
 
-  /// POST /api/customer-cart/clear-cart
   Future<Map<String, dynamic>> clearCart() async {
     final response = await api.post(
       '/api/customer-cart/clear-cart',
