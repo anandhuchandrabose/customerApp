@@ -509,7 +509,7 @@ class HomeView extends GetView<HomeController> {
     void startAutoScroll() {
       timer = Timer.periodic(const Duration(seconds: 2), (Timer timer) {
         if (pageController.hasClients) {
-          int nextPage = (pageController.page?.round() ?? 0) + 1;
+          int nextPage = (pageController.page?.round() ?? 1) + 1;
           if (nextPage >= adList.length) {
             nextPage = 0;
           }

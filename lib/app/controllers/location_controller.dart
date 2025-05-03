@@ -1,3 +1,4 @@
+import 'package:customerapp/app/views/design_system/colors.dart';
 import 'package:get/get.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -19,6 +20,37 @@ class LocationController extends GetxController {
   GoogleMapController? mapController;
   final LocationRepository repository = Get.find<LocationRepository>();
   final Uuid _uuid = Uuid();
+
+  // Define the GeoJSON polygon coordinates
+  static const List<LatLng> kazhakootamPolygonPoints = [
+    LatLng(8.593783616905327, 76.85565122175746),
+    LatLng(8.583403273109397, 76.8337328656599),
+    LatLng(8.533435849110546, 76.87390739237031),
+    LatLng(8.536342760270198, 76.87805793322745),
+    LatLng(8.51490877852696, 76.89586585161314),
+    LatLng(8.524229118179374, 76.90931148785268),
+    LatLng(8.535959392813886, 76.89279502159607),
+    LatLng(8.548940916698314, 76.91681223486785),
+    LatLng(8.593783616905327, 76.85565122175746), // Closing the polygon
+  ];
+
+  // Point-in-polygon algorithm (ray-casting)
+  bool isPointInPolygon(LatLng point, List<LatLng> polygon) {
+    int intersectCount = 0;
+    for (int i = 0; i < polygon.length - 1; i++) {
+      final LatLng vertex1 = polygon[i];
+      final LatLng vertex2 = polygon[(i + 1) % polygon.length];
+      if ((vertex1.latitude > point.latitude) != (vertex2.latitude > point.latitude) &&
+          point.longitude <
+              (vertex2.longitude - vertex1.longitude) *
+                  (point.latitude - vertex1.latitude) /
+                  (vertex2.latitude - vertex1.latitude) +
+                  vertex1.longitude) {
+        intersectCount++;
+      }
+    }
+    return (intersectCount % 2) == 1;
+  }
 
   @override
   void onInit() {
@@ -137,6 +169,19 @@ class LocationController extends GetxController {
   Future<void> saveAddress({bool isNewAddress = false}) async {
     try {
       isLoading.value = true;
+      // Validate if the selected point is inside the polygon
+      final selectedPoint = LatLng(selectedLatitude.value, selectedLongitude.value);
+      if (!isPointInPolygon(selectedPoint, kazhakootamPolygonPoints)) {
+        if (!Get.isSnackbarOpen) {
+          Get.snackbar(
+            'Invalid Location',
+            'Please select a location within the Kazhakootam polygon.',
+            backgroundColor: AppColors.warning.withOpacity(0.9),
+            colorText: AppColors.backgroundPrimary,
+          );
+        }
+        return;
+      }
       if (isNewAddress) {
         Get.toNamed(AppRoutes.addressForm, arguments: {
           'latitude': selectedLatitude.value,

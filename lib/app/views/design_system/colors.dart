@@ -22,5 +22,7 @@ class AppColors {
   // Additional Colors
   static const Color accent = Color(0xFFFFF3E0); // Light Orange for accents
   static const Color error = Color(0xFFD32F2F); // Red for errors
-  static const Color warning = Color(0xFFFFA000); // Amber for warnings
+  static const Color warning = Color(0xFFFFA000);
+
+  static var negative; // Amber for warnings
 }

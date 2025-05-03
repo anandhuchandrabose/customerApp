@@ -118,5 +118,23 @@ class AppIcons {
         color: color ?? Colors.red,
         size: size ?? defaultSize,
       );
+
+  static cardGiftcardIcon() {}
+
+  static helpIcon() {}
+
+  static privacyIcon() {}
+
+  static legalIcon() {}
+
+  static faqIcon() {}
+
+  static exitIcon({required color}) {}
+
+  static addressIcon() {}
+
+  static editIcon() {}
+
+  static notificationIcon() {}
   
 }

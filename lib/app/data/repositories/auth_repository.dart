@@ -52,4 +52,8 @@ class AuthRepository {
   }
 
   saveName(value) {}
+
+  getUserProfile() {}
+
+  logout() {}
 }

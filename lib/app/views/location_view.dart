@@ -12,7 +12,53 @@ import 'design_system/icons.dart';
 import 'design_system/colors.dart';
 import '../../config.dart';
 
-final LatLngBounds kazhakootamBounds = AppConfig.kazhakootamBounds;
+// Define the GeoJSON coordinates as a static list
+final List<LatLng> kazhakootamPolygonPoints = [
+  LatLng(8.593783616905327, 76.85565122175746),
+  LatLng(8.583403273109397, 76.8337328656599),
+  LatLng(8.533435849110546, 76.87390739237031),
+  LatLng(8.536342760270198, 76.87805793322745),
+  LatLng(8.51490877852696, 76.89586585161314),
+  LatLng(8.524229118179374, 76.90931148785268),
+  LatLng(8.535959392813886, 76.89279502159607),
+  LatLng(8.548940916698314, 76.91681223486785),
+  LatLng(8.593783616905327, 76.85565122175746), // Closing the polygon
+];
+
+// Compute LatLngBounds from the polygon points
+LatLngBounds computeBounds(List<LatLng> points) {
+  double minLat = points[0].latitude;
+  double maxLat = points[0].latitude;
+  double minLng = points[0].longitude;
+  double maxLng = points[0].longitude;
+
+  for (var point in points) {
+    if (point.latitude < minLat) minLat = point.latitude;
+    if (point.latitude > maxLat) maxLat = point.latitude;
+    if (point.longitude < minLng) minLng = point.longitude;
+    if (point.longitude > maxLng) maxLng = point.longitude;
+  }
+
+  return LatLngBounds(
+    southwest: LatLng(minLat, minLng),
+    northeast: LatLng(maxLat, maxLng),
+  );
+}
+
+final LatLngBounds kazhakootamBounds = computeBounds(kazhakootamPolygonPoints);
+
+// Compute the centroid for search center
+LatLng computeCentroid(List<LatLng> points) {
+  double latSum = 0;
+  double lngSum = 0;
+  for (var point in points) {
+    latSum += point.latitude;
+    lngSum += point.longitude;
+  }
+  return LatLng(latSum / points.length, lngSum / points.length);
+}
+
+final LatLng kazhakootamCenter = computeCentroid(kazhakootamPolygonPoints);
 
 class LocationView extends GetView<LocationController> {
   LocationView({Key? key}) : super(key: key);
@@ -46,12 +92,7 @@ class __LocationViewStatefulState extends State<_LocationViewStateful> {
     _polygons = {
       Polygon(
         polygonId: const PolygonId('kazhakootamBounds'),
-        points: [
-          kazhakootamBounds.southwest,
-          LatLng(kazhakootamBounds.southwest.latitude, kazhakootamBounds.northeast.longitude),
-          kazhakootamBounds.northeast,
-          LatLng(kazhakootamBounds.northeast.latitude, kazhakootamBounds.southwest.longitude),
-        ],
+        points: kazhakootamPolygonPoints,
         strokeWidth: 2,
         strokeColor: AppColors.primary,
         fillColor: AppColors.primary.withOpacity(0.1),
@@ -67,7 +108,6 @@ class __LocationViewStatefulState extends State<_LocationViewStateful> {
 
   @override
   Widget build(BuildContext context) {
-    // Define controller here
     final LocationController controller = Get.find<LocationController>();
     final args = Get.arguments ?? {'isNewAddress': false};
 
@@ -137,10 +177,10 @@ class __LocationViewStatefulState extends State<_LocationViewStateful> {
                         target: LatLng(
                           controller.currentLatitude.value != 0.0
                               ? controller.currentLatitude.value
-                              : AppConfig.kazhakootamCenter.latitude,
+                              : kazhakootamCenter.latitude,
                           controller.currentLongitude.value != 0.0
                               ? controller.currentLongitude.value
-                              : AppConfig.kazhakootamCenter.longitude,
+                              : kazhakootamCenter.longitude,
                         ),
                         zoom: 15,
                       ),
@@ -151,32 +191,31 @@ class __LocationViewStatefulState extends State<_LocationViewStateful> {
                       onCameraMove: controller.onCameraMove,
                       onCameraIdle: controller.onCameraIdle,
                       minMaxZoomPreference: MinMaxZoomPreference(10.0, 18.0),
-                    onCameraMoveStarted: () {
-  if (_debounce?.isActive ?? false) _debounce?.cancel();
-  _debounce = Timer(Duration(milliseconds: 100), () async {
-    final visibleRegion = await controller.mapController?.getVisibleRegion();
-    if (visibleRegion != null) {
-      // Check if the center of the visible region is within bounds
-      final centerLat = (visibleRegion.southwest.latitude + visibleRegion.northeast.latitude) / 2;
-      final centerLng = (visibleRegion.southwest.longitude + visibleRegion.northeast.longitude) / 2;
-      final center = LatLng(centerLat, centerLng);
-      if (!kazhakootamBounds.contains(center)) {
-        Get.snackbar('Restricted Area', 'Please select a location within Kazhakootam.');
-        final clampedLat = controller.selectedLatitude.value.clamp(
-          kazhakootamBounds.southwest.latitude,
-          kazhakootamBounds.northeast.latitude,
-        );
-        final clampedLng = controller.selectedLongitude.value.clamp(
-          kazhakootamBounds.southwest.longitude,
-          kazhakootamBounds.northeast.longitude,
-        );
-        controller.mapController?.animateCamera(
-          CameraUpdate.newLatLng(LatLng(clampedLat, clampedLng)),
-        );
-      }
-    }
-  });
-},
+                      onCameraMoveStarted: () {
+                        if (_debounce?.isActive ?? false) _debounce?.cancel();
+                        _debounce = Timer(Duration(milliseconds: 100), () async {
+                          final visibleRegion = await controller.mapController?.getVisibleRegion();
+                          if (visibleRegion != null) {
+                            final centerLat = (visibleRegion.southwest.latitude + visibleRegion.northeast.latitude) / 2;
+                            final centerLng = (visibleRegion.southwest.longitude + visibleRegion.northeast.longitude) / 2;
+                            final center = LatLng(centerLat, centerLng);
+                            if (!kazhakootamBounds.contains(center)) {
+                              Get.snackbar('Restricted Area', 'Please select a location within Kazhakootam.');
+                              final clampedLat = controller.selectedLatitude.value.clamp(
+                                kazhakootamBounds.southwest.latitude,
+                                kazhakootamBounds.northeast.latitude,
+                              );
+                              final clampedLng = controller.selectedLongitude.value.clamp(
+                                kazhakootamBounds.southwest.longitude,
+                                kazhakootamBounds.northeast.longitude,
+                              );
+                              controller.mapController?.animateCamera(
+                                CameraUpdate.newLatLng(LatLng(clampedLat, clampedLng)),
+                              );
+                            }
+                          }
+                        });
+                      },
                     ),
                     Center(
                       child: AppIcons.locationPinIcon(color: AppColors.primary, size: 50),
@@ -278,7 +317,7 @@ class __LocationViewStatefulState extends State<_LocationViewStateful> {
             _debounce = Timer(Duration(milliseconds: 300), () async {
               final response = await widget.places.autocomplete(
                 value,
-                location: Location(lat: AppConfig.kazhakootamCenter.latitude, lng: AppConfig.kazhakootamCenter.longitude),
+                location: Location(lat: kazhakootamCenter.latitude, lng: kazhakootamCenter.longitude),
                 radius: 3000,
                 types: ['address'],
               );

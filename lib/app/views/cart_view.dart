@@ -1,4 +1,3 @@
-// lib/app/views/cart_view.dart
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -6,22 +5,18 @@ import 'package:slide_to_act/slide_to_act.dart';
 import 'package:lottie/lottie.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-// Import your controllers.
 import '../controllers/cart_controller.dart';
 import '../controllers/location_controller.dart';
-// import 'package:customerapp/app/views/payment_success_screen.dart';
 
 class CartView extends GetView<CartController> {
-  // ignore: use_super_parameters
   const CartView({Key? key}) : super(key: key);
 
-  // Primary color.
   static const Color kPrimaryColor = Color(0xFFFF3008);
 
   @override
   Widget build(BuildContext context) {
     final cartCtrl = Get.find<CartController>();
-    final locationCtrl = Get.find<LocationController>(); // Get the location controller
+    final locationCtrl = Get.find<LocationController>();
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -31,7 +26,7 @@ class CartView extends GetView<CartController> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () {
-            Get.back(); // Pop CartView
+            Get.back();
           },
         ),
         title: Text(
@@ -43,206 +38,147 @@ class CartView extends GetView<CartController> {
         ),
         centerTitle: false,
       ),
-      body: Obx(() {
-        // Show loading spinner if needed.
-        if (cartCtrl.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        // Show error if exists.
-        if (cartCtrl.errorMessage.isNotEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    cartCtrl.errorMessage.value,
-                    style: GoogleFonts.workSans(
-                      color: Colors.red,
-                      fontSize: 16,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 12),
-                  ElevatedButton(
-                    onPressed: () => cartCtrl.fetchCartItems(),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: kPrimaryColor,
-                    ),
-                    child: Text(
-                      'Retry',
-                      style: GoogleFonts.workSans(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  )
-                ],
-              ),
-            ),
-          );
-        }
-        // If cart is empty, show empty cart view.
-        if (cartCtrl.cartItems.isEmpty) {
-          return _buildEmptyCart();
-        }
-
-        return SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // --- Delivery Address Section ---
-              Obx(() {
-                final address = locationCtrl.selectedAddress.value;
-                return Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  color: Colors.white,
-                  child: Row(
-                    children: [
-                      const Icon(Icons.location_on, color: Colors.black54),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          // If an address is selected, show it. Otherwise, prompt to select one.
-                          address.isNotEmpty ? address : 'Select Delivery Address',
-                          style: GoogleFonts.workSans(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: address.isNotEmpty ? Colors.black87 : Colors.grey,
-                          ),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          // Navigate to the Location Picker screen.
-                          Get.toNamed('/location-picker');
-                        },
-                        child: Text(
-                          address.isNotEmpty ? 'Change' : 'Select',
-                          style: GoogleFonts.workSans(
-                            fontSize: 14,
-                            color: kPrimaryColor,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }),
-              // --- Store Name Section ---
-              // Container(
-              //   width: double.infinity,
-              //   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              //   decoration: const BoxDecoration(
-              //     color: Colors.white,
-              //     border: Border(bottom: BorderSide(color: Colors.black12)),
-              //   ),
-              //   child: Text(
-              //     'Fresmo',
-              //     style: GoogleFonts.workSans(
-              //       color: Colors.black,
-              //       fontWeight: FontWeight.w600,
-              //       fontSize: 18,
-              //     ),
-              //   ),
-              // ),
-              // // --- Address/Delivery/Phone (from cartData) ---
-              // Container(
-              //   padding: const EdgeInsets.only(left: 16, right: 16, top: 12),
-              //   color: Colors.white,
-              //   child: Column(
-              //     children: [
-              //       _menuItemRow(
-              //         icon: Icons.location_on,
-              //         // You can decide whether to use cartData or the selected address.
-              //         // Here we keep the cartData value as additional info.
-              //         title: cartCtrl.cartData['address'] ?? '',
-              //         onTap: () {
-              //           // Optionally implement "Change address"
-              //         },
-              //       ),
-              //       const SizedBox(height: 8),
-              //       _menuItemRow(
-              //         icon: Icons.phone,
-              //         title: cartCtrl.cartData['phone'] ?? '(215) 268-8872',
-              //         onTap: () {
-              //           // Optionally let user edit phone number.
-              //         },
-              //       ),
-              //       const SizedBox(height: 16),
-              //     ],
-              //   ),
-              // ),
-              const Divider(height: 1, color: Colors.black12),
-              // --- Promotion Section ---
-              Container(
-                color: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(), // Dismiss keyboard
+        child: Obx(() {
+          if (cartCtrl.isLoading.value) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (cartCtrl.errorMessage.isNotEmpty) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Add a promotion',
-                          style: GoogleFonts.workSans(
-                            fontSize: 16,
-                            color: Colors.black,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const Icon(Icons.chevron_right, color: Colors.black38),
-                      ],
+                    Text(
+                      cartCtrl.errorMessage.value,
+                      style: GoogleFonts.workSans(
+                        color: Colors.red,
+                        fontSize: 16,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
+                    ElevatedButton(
+                      onPressed: () => cartCtrl.fetchCartItems(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: kPrimaryColor,
+                      ),
+                      child: Text(
+                        'Retry',
+                        style: GoogleFonts.workSans(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    )
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
-              // --- Cart Items Section ---
-              _buildCartItemsSection(),
-              const SizedBox(height: 12),
-              // --- Order Summary Section ---
-              _buildOrderSummary(),
-              const SizedBox(height: 24),
-              // --- Slide to Pay Section ---
-              Container(
-                color: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                child: SlideAction(
-  // Remove 'key: someGlobalKey' or ensure each SlideAction has a unique key
-  outerColor: kPrimaryColor,
-  innerColor: Colors.white,
-  text: "Slide to Pay",
-  textStyle: GoogleFonts.workSans(
-    fontSize: 16,
-    color: Colors.white,
-    fontWeight: FontWeight.w600,
-  ),
-  onSubmit: () {
-    cartCtrl.initiatePayment();
-    Future.delayed(const Duration(milliseconds: 300), () {
-      Get.snackbar(
-        'Success',
-        'Your order has been placed!',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-    });
-    return null;
-  },
-),
-              ),
-              const SizedBox(height: 24),
-            ],
-          ),
-        );
-      }),
+            );
+          }
+          if (cartCtrl.cartItems.isEmpty) {
+            return _buildEmptyCart();
+          }
+
+          return SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Obx(() {
+                  final address = locationCtrl.selectedAddress.value;
+                  return Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    color: Colors.white,
+                    child: Row(
+                      children: [
+                        const Icon(Icons.location_on, color: Colors.black54),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            address.isNotEmpty ? address : 'Select Delivery Address',
+                            style: GoogleFonts.workSans(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: address.isNotEmpty ? Colors.black87 : Colors.grey,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Get.toNamed('/address-input'); // Updated to AddressInputView
+                          },
+                          child: Text(
+                            address.isNotEmpty ? 'Change' : 'Select',
+                            style: GoogleFonts.workSans(
+                              fontSize: 14,
+                              color: kPrimaryColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+                const Divider(height: 1, color: Colors.black12),
+                Container(
+                  color: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Add a promotion',
+                            style: GoogleFonts.workSans(
+                              fontSize: 16,
+                              color: Colors.black,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const Icon(Icons.chevron_right, color: Colors.black38),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _buildCartItemsSection(),
+                const SizedBox(height: 12),
+                _buildOrderSummary(),
+                const SizedBox(height: 24),
+                Container(
+                  color: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  child: SlideAction(
+                    key: UniqueKey(),
+                    outerColor: kPrimaryColor,
+                    innerColor: Colors.white,
+                    text: "Slide to Pay",
+                    textStyle: GoogleFonts.workSans(
+                      fontSize: 16,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    onSubmit: () {
+                      cartCtrl.initiatePayment();
+                      return null; // Remove premature success snackbar
+                    },
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ],
+            ),
+          );
+        }),
+      ),
     );
   }
 
-  // --- Empty Cart Widget ---
   Widget _buildEmptyCart() {
     return Center(
       child: Padding(
@@ -282,7 +218,6 @@ class CartView extends GetView<CartController> {
     );
   }
 
-  // --- Cart Items Section ---
   Widget _buildCartItemsSection() {
     final cartCtrl = Get.find<CartController>();
     final cartItems = cartCtrl.cartItems;
@@ -313,8 +248,7 @@ class CartView extends GetView<CartController> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding:
-                        const EdgeInsets.only(left: 16, right: 16, bottom: 6),
+                    padding: const EdgeInsets.only(left: 16, right: 16, bottom: 6),
                     child: Text(
                       mealType.capitalizeFirst ?? mealType,
                       style: GoogleFonts.workSans(
@@ -343,7 +277,6 @@ class CartView extends GetView<CartController> {
     );
   }
 
-  // --- Group Cart Items by Meal Type ---
   Map<String, List<Map<String, dynamic>>> _groupCartItemsByMealType(
       List<Map<String, dynamic>> items) {
     final Map<String, List<Map<String, dynamic>>> grouped = {};
@@ -356,7 +289,6 @@ class CartView extends GetView<CartController> {
     return grouped;
   }
 
-  // --- Single Cart Item Row ---
   Widget _buildCartItemRow(Map<String, dynamic> item) {
     final cartCtrl = Get.find<CartController>();
     final quantity = item['quantity'] ?? 1;
@@ -367,8 +299,7 @@ class CartView extends GetView<CartController> {
     final mealType = vendorDish['mealType'] ?? '';
     final vendorDishId = vendorDish['id'] ?? '';
 
-    final priceStr =
-        vendorDish['vendorSpecificPrice']?.toString() ?? '0.00';
+    final priceStr = vendorDish['vendorSpecificPrice']?.toString() ?? '0.00';
     final priceDouble = double.tryParse(priceStr) ?? 0.0;
     final lineTotal = priceDouble * quantity;
 
@@ -445,7 +376,6 @@ class CartView extends GetView<CartController> {
     );
   }
 
-  // --- Build Dish Image ---
   Widget _buildDishImage(String imageUrl) {
     if (imageUrl.isNotEmpty) {
       if (imageUrl.startsWith("data:image")) {
@@ -494,7 +424,6 @@ class CartView extends GetView<CartController> {
     );
   }
 
-  // --- Circle Button for Stepper ---
   Widget _circleButton({required IconData icon, required VoidCallback onTap}) {
     return InkWell(
       onTap: onTap,
@@ -516,7 +445,6 @@ class CartView extends GetView<CartController> {
     );
   }
 
-  // --- Order Summary Section ---
   Widget _buildOrderSummary() {
     final cartCtrl = Get.find<CartController>();
 
@@ -566,7 +494,6 @@ class CartView extends GetView<CartController> {
     );
   }
 
-  // --- Reusable Row for Address & Phone ---
   Widget _menuItemRow({
     required IconData icon,
     required String title,
@@ -603,13 +530,11 @@ class CartView extends GetView<CartController> {
   }
 }
 
-/// A wrapper widget that applies a bounce/elastic scale animation when its child appears.
 class BouncyPage extends StatefulWidget {
   final Widget child;
   const BouncyPage({super.key, required this.child});
 
   @override
-  // ignore: library_private_types_in_public_api
   _BouncyPageState createState() => _BouncyPageState();
 }
 
@@ -640,14 +565,12 @@ class _BouncyPageState extends State<BouncyPage> with SingleTickerProviderStateM
   }
 }
 
-/// A widget that animates its child by fading and sliding it in with a delay.
 class AnimatedDishTile extends StatefulWidget {
   final Widget child;
-  final int delay; // Delay in milliseconds
+  final int delay;
   const AnimatedDishTile({super.key, required this.child, this.delay = 0});
 
   @override
-  // ignore: library_private_types_in_public_api
   _AnimatedDishTileState createState() => _AnimatedDishTileState();
 }
 
