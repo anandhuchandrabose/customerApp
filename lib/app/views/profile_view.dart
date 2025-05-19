@@ -13,10 +13,9 @@ class ProfileView extends GetView<ProfileController> {
       appBar: AppBar(
         title: const Text('Profile'),
       ),
-      backgroundColor: Colors.white, // Set background color to white
+      backgroundColor: Colors.white,
       body: Column(
         children: [
-          // Profile Content
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
@@ -24,7 +23,6 @@ class ProfileView extends GetView<ProfileController> {
                 return Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Profile picture placeholder
                     CircleAvatar(
                       radius: 50,
                       backgroundColor: Colors.grey.shade300,
@@ -35,7 +33,6 @@ class ProfileView extends GetView<ProfileController> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    // User name
                     Text(
                       'Hello, ${profileCtrl.userName.value}!',
                       style: const TextStyle(
@@ -44,7 +41,6 @@ class ProfileView extends GetView<ProfileController> {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    // Email
                     Text(
                       profileCtrl.email.value.isEmpty
                           ? 'No email provided'
@@ -52,7 +48,6 @@ class ProfileView extends GetView<ProfileController> {
                       style: const TextStyle(fontSize: 16, color: Colors.grey),
                     ),
                     const SizedBox(height: 10),
-                    // Phone number
                     Text(
                       profileCtrl.phoneNumber.value.isEmpty
                           ? 'No phone number provided'
@@ -64,7 +59,6 @@ class ProfileView extends GetView<ProfileController> {
               }),
             ),
           ),
-          // Profile Options List
           ListTile(
             leading: const Icon(Icons.card_giftcard),
             title: const Text('Coupons'),
@@ -100,7 +94,7 @@ class ProfileView extends GetView<ProfileController> {
             title: const Text('Notifications'),
             trailing: Obx(() => Switch(
                   value: profileCtrl.notificationsEnabled.value,
-                  onChanged: (value) => profileCtrl.toggleNotifications(value),
+                  onChanged: profileCtrl.toggleNotifications,
                 )),
           ),
           ListTile(

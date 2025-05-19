@@ -17,6 +17,7 @@ class OrderRepository {
         {
           ...payload, // Includes addressId
           'paymentMethod': paymentMethod,
+          'cutleryRequired': ['lunch'], // Added cutleryRequired field
         },
       );
 

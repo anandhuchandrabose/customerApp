@@ -87,7 +87,17 @@ class CartView extends GetView<CartController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Obx(() {
-                  final address = locationCtrl.selectedAddress.value;
+                  // Find the selected address from LocationController's addresses
+                  final selectedAddressMap = locationCtrl.addresses.firstWhere(
+                    (address) => address['isSelected'] == true,
+                    orElse: () => <String, dynamic>{},
+                  );
+                  final flatHouseNo = selectedAddressMap['flatHouseNo']?.toString() ?? '';
+                  // Only show flat/house number
+                  final displayAddress = flatHouseNo.isNotEmpty
+                      ? flatHouseNo
+                      : 'Select Delivery Address';
+
                   return Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -98,20 +108,20 @@ class CartView extends GetView<CartController> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            address.isNotEmpty ? address : 'Select Delivery Address',
+                            displayAddress,
                             style: GoogleFonts.workSans(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: address.isNotEmpty ? Colors.black87 : Colors.grey,
+                              color: flatHouseNo.isNotEmpty ? Colors.black87 : Colors.grey,
                             ),
                           ),
                         ),
                         TextButton(
                           onPressed: () {
-                            Get.toNamed('/address-input'); // Updated to AddressInputView
+                            Get.toNamed('/address-input'); // Navigate to AddressInputView
                           },
                           child: Text(
-                            address.isNotEmpty ? 'Change' : 'Select',
+                            flatHouseNo.isNotEmpty ? 'Change' : 'Select',
                             style: GoogleFonts.workSans(
                               fontSize: 14,
                               color: kPrimaryColor,
@@ -271,7 +281,7 @@ class CartView extends GetView<CartController> {
                 ],
               ),
             );
-          }),
+          }).toList(),
         ],
       ),
     );

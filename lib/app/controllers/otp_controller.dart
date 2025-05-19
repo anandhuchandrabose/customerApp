@@ -1,5 +1,3 @@
-// lib/app/controllers/otp_controller.dart
-
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import '../data/repositories/auth_repository.dart';
@@ -44,17 +42,22 @@ class OtpController extends GetxController {
 
       if (isNewUser.value) {
         // Navigate to Complete Signup if new user
-        Get.toNamed('/complete-signup',
-            arguments: {'phone': phoneNumber.value});
+        Get.toNamed('/complete-signup', arguments: {'phone': phoneNumber.value});
       } else {
-        // Store the token for existing users
         final token = data['token'];
-        if (token != null) {
+        final customer = data['customer'];
+
+        if (token != null && customer != null) {
+          // Store token and customer data
           storage.write('token', token);
+          storage.write('customerId', customer['id']);
+          storage.write('customerName', customer['name']);
+          storage.write('customerMobile', customer['mobileNumber']);
+
           Get.snackbar('Success', 'Login successful!');
           Get.offAllNamed('/dashboard');
         } else {
-          Get.snackbar('Error', 'Token not received');
+          Get.snackbar('Error', 'Login data incomplete');
         }
       }
     } catch (e) {
