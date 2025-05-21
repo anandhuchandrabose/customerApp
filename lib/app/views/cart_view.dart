@@ -137,6 +137,7 @@ class CartView extends GetView<CartController> {
                   color: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -153,6 +154,66 @@ class CartView extends GetView<CartController> {
                         ],
                       ),
                       const SizedBox(height: 12),
+                      // Dynamic cutlery checkboxes based on meal types
+                      Obx(() {
+                        final mealTypes = cartCtrl.getMealTypes();
+                        if (mealTypes.isEmpty) {
+                          return const SizedBox.shrink();
+                        }
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Cutlery Options',
+                              style: GoogleFonts.workSans(
+                                fontSize: 16,
+                                color: Colors.black,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            if (mealTypes.contains('lunch'))
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Require cutlery for lunch',
+                                    style: GoogleFonts.workSans(
+                                      fontSize: 15,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                  Checkbox(
+                                    value: cartCtrl.isLunchCutleryRequired.value,
+                                    onChanged: (value) {
+                                      cartCtrl.isLunchCutleryRequired.value = value ?? false;
+                                    },
+                                    activeColor: kPrimaryColor,
+                                  ),
+                                ],
+                              ),
+                            if (mealTypes.contains('dinner'))
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Require cutlery for dinner',
+                                    style: GoogleFonts.workSans(
+                                      fontSize: 15,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                  Checkbox(
+                                    value: cartCtrl.isDinnerCutleryRequired.value,
+                                    onChanged: (value) {
+                                      cartCtrl.isDinnerCutleryRequired.value = value ?? false;
+                                    },
+                                    activeColor: kPrimaryColor,
+                                  ),
+                                ],
+                              ),
+                          ],
+                        );
+                      }),
                     ],
                   ),
                 ),

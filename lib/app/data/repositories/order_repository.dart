@@ -9,7 +9,7 @@ class OrderRepository {
   /// POST /api/customer/place-order
   Future<Map<String, dynamic>> placeOrder(
     Map<String, dynamic> payload,
-    {required String paymentMethod}
+    {required String paymentMethod, required List<String> cutleryRequired}
   ) async {
     try {
       final response = await api.post(
@@ -17,7 +17,7 @@ class OrderRepository {
         {
           ...payload, // Includes addressId
           'paymentMethod': paymentMethod,
-          'cutleryRequired': ['lunch'], // Added cutleryRequired field
+          'cutleryRequired': cutleryRequired, // List of meal types (e.g., ["lunch", "dinner"])
         },
       );
 

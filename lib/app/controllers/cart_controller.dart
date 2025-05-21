@@ -16,6 +16,8 @@ class CartController extends GetxController {
 
   var isLoading = false.obs;
   var errorMessage = ''.obs;
+  var isLunchCutleryRequired = false.obs; // Track lunch cutlery
+  var isDinnerCutleryRequired = false.obs; // Track dinner cutlery
 
   late Razorpay _razorpay;
 
@@ -33,6 +35,19 @@ class CartController extends GetxController {
     super.onClose();
   }
 
+  // Get unique meal types in cart
+  List<String> getMealTypes() {
+    final mealTypes = <String>{};
+    for (final item in cartItems) {
+      final vendorDish = item['vendorDish'] ?? {};
+      final mealType = (vendorDish['mealType'] ?? 'Unknown').toString().toLowerCase();
+      if (mealType == 'lunch' || mealType == 'dinner') {
+        mealTypes.add(mealType);
+      }
+    }
+    return mealTypes.toList();
+  }
+
   // ========================
   // 1) Fetch All Cart Items
   // ========================
@@ -42,11 +57,24 @@ class CartController extends GetxController {
       errorMessage.value = '';
       final data = await _cartRepo.fetchCartItems();
       _parseCartResponse(data);
+      
+      // Reset cutlery states based on current meal types
+      final mealTypes = getMealTypes();
+      if (!mealTypes.contains('lunch')) {
+        isLunchCutleryRequired.value = false;
+      }
+      if (!mealTypes.contains('dinner')) {
+        isDinnerCutleryRequired.value = false;
+      }
+      
       log('Cart fetched successfully.');
     } catch (e) {
       errorMessage.value = e.toString();
       log('Error fetching cart: $e');
       cartItems.clear();
+      // Clear cutlery states on error
+      isLunchCutleryRequired.value = false;
+      isDinnerCutleryRequired.value = false;
     } finally {
       isLoading.value = false;
     }
@@ -139,6 +167,7 @@ class CartController extends GetxController {
     errorMessage.value = "";
     try {
       await _cartRepo.clearCart();
+      await fetchCartItems();
     } catch (e) {
       errorMessage.value = e.toString();
       rethrow;
@@ -215,12 +244,23 @@ class CartController extends GetxController {
 
       final addressId = selectedAddress['addressId'].toString();
 
-      print("1) Calling placeOrder with addressId: $addressId...");
+      // Build cutleryRequired list based on checkbox states and current meal types
+      final mealTypes = getMealTypes();
+      final cutleryRequired = <String>[];
+      if (mealTypes.contains('lunch') && isLunchCutleryRequired.value) {
+        cutleryRequired.add('lunch');
+      }
+      if (mealTypes.contains('dinner') && isDinnerCutleryRequired.value) {
+        cutleryRequired.add('dinner');
+      }
+
+      print("1) Calling placeOrder with addressId: $addressId, cutleryRequired: $cutleryRequired...");
       final placeOrderResponse = await _orderRepo.placeOrder(
         {
           'addressId': addressId,
         },
         paymentMethod: 'card',
+        cutleryRequired: cutleryRequired,
       );
       print("2) placeOrderResponse: $placeOrderResponse");
 

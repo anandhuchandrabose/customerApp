@@ -1,5 +1,5 @@
-// lib/app/controllers/orders_controller.dart
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../data/services/api_service.dart';
 
@@ -21,20 +21,50 @@ class OrdersController extends GetxController {
       isLoading.value = true;
       errorMessage.value = '';
       
-      // Since it's a POST request without a payload, pass an empty map.
+      // POST request without payload
       final response = await _api.post('/api/customer/get-customer-orders', {});
       
-      // Decode the response body from JSON.
       final Map<String, dynamic> data = jsonDecode(response.body);
       
-      // Check if the response contains an 'orders' list.
       if (data['orders'] is List) {
         orders.value = List<Map<String, dynamic>>.from(data['orders']);
       } else {
         orders.clear();
       }
     } catch (e) {
-      errorMessage.value = e.toString();
+      errorMessage.value = 'Failed to fetch orders: $e';
+      Get.snackbar('Error', errorMessage.value, snackPosition: SnackPosition.BOTTOM);
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> cancelSubOrder(String subOrderId) async {
+    try {
+      isLoading.value = true;
+      errorMessage.value = '';
+
+      final response = await _api.post(
+        '/api/order/cancel-suborder',
+        {'subOrderIdd': subOrderId},
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        Get.snackbar(
+          'Success',
+          'Sub-order cancelled successfully',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+        await fetchOrders(); // Refresh orders list
+      } else {
+        final error = jsonDecode(response.body);
+        throw Exception(error['message'] ?? 'Failed to cancel sub-order');
+      }
+    } catch (e) {
+      errorMessage.value = 'Failed to cancel sub-order: $e';
+      Get.snackbar('Error', errorMessage.value, snackPosition: SnackPosition.BOTTOM);
     } finally {
       isLoading.value = false;
     }
