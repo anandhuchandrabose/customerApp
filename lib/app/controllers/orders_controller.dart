@@ -26,7 +26,7 @@ class OrdersController extends GetxController {
       final Map<String, dynamic> data = jsonDecode(response.body);
       
       if (data['orders'] is List) {
-        orders.value = List<Map<String, dynamic>>.from(data['orders']);
+       orders.value = List<Map<String, dynamic>>.from(data['orders'].reversed);
       } else {
         orders.clear();
       }
@@ -38,36 +38,38 @@ class OrdersController extends GetxController {
     }
   }
 
-  Future<void> cancelSubOrder(String subOrderId) async {
-    try {
-      isLoading.value = true;
-      errorMessage.value = '';
+  Future<void> cancelSubOrder(String subOrderId, String reason) async {
+  try {
+    isLoading.value = true;
+    errorMessage.value = '';
 
-      final response = await _api.post(
-        '/api/order/cancel-suborder',
-        {'subOrderId': subOrderId}, // Fixed typo from 'subOrderIdd'
+    final payload = {
+      'subOrderId': subOrderId,
+      'reason': reason.trim(),
+    };
+
+    final response = await _api.post('/api/order/cancel-suborder', payload);
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      Get.snackbar(
+        'Cancelled',
+        'Sub-order cancelled successfully.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
       );
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        Get.snackbar(
-          'Success',
-          'Sub-order cancelled successfully',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
-        await fetchOrders();
-      } else {
-        final error = jsonDecode(response.body);
-        throw Exception(error['message'] ?? 'Failed to cancel sub-order');
-      }
-    } catch (e) {
-      errorMessage.value = 'Failed to cancel sub-order: $e';
-      Get.snackbar('Error', errorMessage.value, snackPosition: SnackPosition.BOTTOM);
-    } finally {
-      isLoading.value = false;
+      await fetchOrders();
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['message'] ?? 'Unexpected error');
     }
+  } catch (e) {
+    errorMessage.value = 'Cancel failed: $e';
+    Get.snackbar('Error', errorMessage.value, snackPosition: SnackPosition.BOTTOM);
+  } finally {
+    isLoading.value = false;
   }
+}
 
   Future<void> submitRating(String subOrderId, String vendorId, int rating, String comment) async {
     try {

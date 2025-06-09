@@ -120,14 +120,108 @@ class OrdersView extends GetView<OrdersController> {
               final String orderId = order['id']?.toString() ?? 'N/A';
               final String status = order['status']?.toString() ?? 'Unknown';
               final String orderDate = order['orderDate']?.toString() ?? 'N/A';
-              final String totalAmount = order['totalAmount']?.toString() ?? '0.00';
+              final String totalAmount =
+                  order['totalAmount']?.toString() ?? '0.00';
               final List subOrders = order['subOrders'] ?? [];
 
-              return _buildOrderCard(context, orderId, status, orderDate, totalAmount, subOrders);
+              return _buildOrderCard(
+                  context, orderId, status, orderDate, totalAmount, subOrders);
             },
           ),
         );
       }),
+    );
+  }
+
+  void _showCancelSubOrderDialog(BuildContext context, String subOrderId) {
+    final TextEditingController reasonController = TextEditingController();
+    final RxString selectedReason = ''.obs;
+
+    final List<String> predefinedReasons = [
+      'Ordered by mistake',
+      'Change of mind',
+      'Delay in delivery',
+      'Found a better deal',
+      'Other',
+    ];
+
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Cancel Sub-Order',
+          style: GoogleFonts.workSans(fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Obx(() => DropdownButtonFormField<String>(
+                  value: selectedReason.value.isNotEmpty
+                      ? selectedReason.value
+                      : null,
+                  hint: const Text('Select a reason'),
+                  items: predefinedReasons.map((reason) {
+                    return DropdownMenuItem(
+                      value: reason,
+                      child: Text(reason),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    selectedReason.value = value ?? '';
+                  },
+                  decoration: InputDecoration(
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 12),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                  ),
+                )),
+            const SizedBox(height: 12),
+            if (selectedReason.value == 'Other')
+              TextField(
+                controller: reasonController,
+                maxLines: 2,
+                decoration: InputDecoration(
+                  hintText: 'Please provide a reason',
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Close'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () {
+              final reason = selectedReason.value == 'Other'
+                  ? reasonController.text.trim()
+                  : selectedReason.value;
+
+              if (reason.isEmpty) {
+                Get.snackbar(
+                  'Reason required',
+                  'Please provide a reason for cancellation.',
+                  backgroundColor: Colors.orange,
+                  colorText: Colors.white,
+                );
+                return;
+              }
+
+              Get.back(); // Close dialog
+              Get.find<OrdersController>().cancelSubOrder(subOrderId, reason);
+            },
+            child: const Text('Submit'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -184,7 +278,8 @@ class OrdersView extends GetView<OrdersController> {
                 ),
                 const SizedBox(width: 12),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: _getStatusColor(status).withOpacity(0.15),
                     borderRadius: BorderRadius.circular(16),
@@ -201,7 +296,8 @@ class OrdersView extends GetView<OrdersController> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        StringExtension(status).capitalize, // Use explicit extension
+                        StringExtension(status)
+                            .capitalize, // Use explicit extension
                         style: GoogleFonts.workSans(
                           fontSize: 13,
                           color: _getStatusColor(status),
@@ -238,9 +334,12 @@ class OrdersView extends GetView<OrdersController> {
           final String subOrderId = subOrder['id']?.toString() ?? 'N/A';
           final String vendorId = subOrder['vendorId']?.toString() ?? 'N/A';
           final String mealType = subOrder['mealType']?.toString() ?? 'N/A';
-          final String deliveryDate = subOrder['deliveryDate']?.toString() ?? 'N/A';
-          final String subTotalAmount = subOrder['subTotalAmount']?.toString() ?? '0.00';
-          final String subOrderStatus = subOrder['status']?.toString() ?? 'Unknown';
+          final String deliveryDate =
+              subOrder['deliveryDate']?.toString() ?? 'N/A';
+          final String subTotalAmount =
+              subOrder['subTotalAmount']?.toString() ?? '0.00';
+          final String subOrderStatus =
+              subOrder['status']?.toString() ?? 'Unknown';
           final List orderItems = subOrder['orderItems'] ?? [];
           final bool isRated = subOrder['isRated'] ?? false;
 
@@ -253,7 +352,8 @@ class OrdersView extends GetView<OrdersController> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      StringExtension(mealType).capitalize, // Use explicit extension
+                      StringExtension(mealType)
+                          .capitalize, // Use explicit extension
                       style: GoogleFonts.workSans(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -262,7 +362,8 @@ class OrdersView extends GetView<OrdersController> {
                     ),
                     Row(
                       children: [
-                        if (subOrderStatus.toLowerCase() == 'delivered' && !isRated)
+                        if (subOrderStatus.toLowerCase() == 'delivered' &&
+                            !isRated)
                           GestureDetector(
                             onTap: () {
                               if (vendorId == 'N/A') {
@@ -275,14 +376,17 @@ class OrdersView extends GetView<OrdersController> {
                                 );
                                 return;
                               }
-                              _showRatingBottomSheet(context, subOrderId, vendorId, mealType);
+                              _showRatingBottomSheet(
+                                  context, subOrderId, vendorId, mealType);
                             },
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
                                 color: Colors.amber.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                                border: Border.all(
+                                    color: Colors.amber.withOpacity(0.3)),
                               ),
                               child: Row(
                                 children: [
@@ -304,64 +408,20 @@ class OrdersView extends GetView<OrdersController> {
                               ),
                             ),
                           ),
-                        if (subOrderStatus.toLowerCase() == 'created')
+                        if (['created', 'placed']
+                            .contains(subOrderStatus.toLowerCase()))
                           GestureDetector(
                             onTap: () {
-                              Get.dialog(
-                                AlertDialog(
-                                  title: Text(
-                                    'Cancel Sub-Order',
-                                    style: GoogleFonts.workSans(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                  content: Text(
-                                    'Are you sure you want to cancel this sub-order ($mealType)?',
-                                    style: GoogleFonts.workSans(fontSize: 14),
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Get.back(),
-                                      child: Text(
-                                        'No',
-                                        style: GoogleFonts.workSans(
-                                          color: Colors.grey[600],
-                                        ),
-                                      ),
-                                    ),
-                                    ElevatedButton(
-                                      onPressed: () async {
-                                        await Get.find<OrdersController>().cancelSubOrder(subOrderId);
-                                        Get.back();
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.redAccent,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(8),
-                                        ),
-                                      ),
-                                      child: Text(
-                                        'Yes, Cancel',
-                                        style: GoogleFonts.workSans(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                ),
-                              );
+                              _showCancelSubOrderDialog(context, subOrderId);
                             },
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
                                 color: Colors.redAccent.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.redAccent.withOpacity(0.3)),
+                                border: Border.all(
+                                    color: Colors.redAccent.withOpacity(0.3)),
                               ),
                               child: Row(
                                 children: [
@@ -419,9 +479,11 @@ class OrdersView extends GetView<OrdersController> {
                   itemCount: orderItems.length,
                   itemBuilder: (context, itemIndex) {
                     final item = orderItems[itemIndex];
-                    final String dishName = item['vendorDish']?['dishName']?.toString() ?? 'N/A';
+                    final String dishName =
+                        item['vendorDish']?['dishName']?.toString() ?? 'N/A';
                     final int quantity = item['quantity'] ?? 0;
-                    final String priceAtOrder = item['priceAtOrder']?.toString() ?? '0.00';
+                    final String priceAtOrder =
+                        item['priceAtOrder']?.toString() ?? '0.00';
 
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 10),
@@ -482,7 +544,8 @@ class OrdersView extends GetView<OrdersController> {
     );
   }
 
-  void _showRatingBottomSheet(BuildContext context, String subOrderId, String vendorId, String mealType) {
+  void _showRatingBottomSheet(BuildContext context, String subOrderId,
+      String vendorId, String mealType) {
     final TextEditingController commentController = TextEditingController();
     RxInt rating = 0.obs;
 
@@ -568,7 +631,8 @@ class OrdersView extends GetView<OrdersController> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
                   ),
                   child: Text(
                     'Submit',
@@ -617,5 +681,6 @@ class OrdersView extends GetView<OrdersController> {
 
 // Extension for capitalizing strings
 extension StringExtension on String {
-  String get capitalize => isNotEmpty ? '${this[0].toUpperCase()}${substring(1)}' : this;
+  String get capitalize =>
+      isNotEmpty ? '${this[0].toUpperCase()}${substring(1)}' : this;
 }
