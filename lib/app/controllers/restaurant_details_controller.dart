@@ -11,6 +11,8 @@ class RestaurantDetailsController extends GetxController {
   final CartController cartCtrl = Get.find<CartController>();
 
   // Basic fields
+  static const String baseUrl =
+      'https://api.fresmo.in/'; // Include trailing slash
   var vendorId = ''.obs;
   var dishes = <Map<String, dynamic>>[].obs;
 
@@ -49,11 +51,18 @@ class RestaurantDetailsController extends GetxController {
 
       if (data['success'] == true) {
         final restaurantData = data['data'] ?? {};
-        
+
         restaurantName.value = restaurantData['vendorName'] ?? 'Unknown';
-        restaurantImageUrl.value = restaurantData['vendorImage'] ?? restaurantData['image'] ?? '';
-        restaurantDescription.value = restaurantData['description'] ?? ''; // Handle description
-        rating.value = double.tryParse(restaurantData['rating']?.toString() ?? '0') ?? 0.0;
+        final imagePath =
+            restaurantData['vendorImage'] ?? restaurantData['image'] ?? '';
+        restaurantImageUrl.value = imagePath.startsWith('http')
+            ? imagePath
+            : 'https://api.fresmo.in/$imagePath';
+        restaurantDescription.value = restaurantData['description'] ??
+            'description'; // Handle description
+        rating.value =
+            double.tryParse(restaurantData['rating']?.toString() ?? '0') ?? 0.0;
+        log('Using image URL: ${restaurantImageUrl.value}');
 
         final dishesData = restaurantData['dishes'] ?? [];
         if (dishesData is List) {

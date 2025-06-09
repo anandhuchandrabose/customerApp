@@ -29,6 +29,7 @@ ImageProvider getVendorImage(String imageString) {
     }
   }
 }
+const String baseUrl = 'https://api.fresmo.in/';
 
 class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
   final RxString selectedFilter = ''.obs;
@@ -46,6 +47,7 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
   Widget build(BuildContext context) {
     final cartCtrl = Get.find<CartController>();
     final detailsCtrl = Get.find<RestaurantDetailsController>();
+    
 
     Future<void> _onRefresh() async {
       await detailsCtrl.fetchRestaurantAndDishes(); // Assuming this method exists in the controller
@@ -639,7 +641,7 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
     required double rating,
   }) {
     return SizedBox(
-      height: 260, // Reduced height since we're removing the bottom half
+      height: 300, // Reduced height since we're removing the bottom half
       child: Stack(
         children: [
           // Background image (top half only)
@@ -727,7 +729,10 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
 
     final String mealType = dish['mealType'] ?? 'lunch';
     final String vendorDishId = dish['vendorDishId'] ?? '';
-    final String dishImageUrl = dish['image'] ?? '';
+final String rawImage = dish['image'] ?? '';
+final String dishImageUrl = rawImage.startsWith('http')
+    ? rawImage
+    : '${RestaurantDetailsController.baseUrl}$rawImage';
     final double ratingValue = dish['rating'] is num ? (dish['rating'] as num).toDouble() : 3.9;
     final int ratingCount = dish['ratingCount'] is int ? dish['ratingCount'] : 0;
     final bool isBestseller = (ratingValue >= 4.0);

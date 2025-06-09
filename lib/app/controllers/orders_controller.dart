@@ -21,7 +21,6 @@ class OrdersController extends GetxController {
       isLoading.value = true;
       errorMessage.value = '';
       
-      // POST request without payload
       final response = await _api.post('/api/customer/get-customer-orders', {});
       
       final Map<String, dynamic> data = jsonDecode(response.body);
@@ -46,7 +45,7 @@ class OrdersController extends GetxController {
 
       final response = await _api.post(
         '/api/order/cancel-suborder',
-        {'subOrderIdd': subOrderId},
+        {'subOrderId': subOrderId}, // Fixed typo from 'subOrderIdd'
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -57,13 +56,49 @@ class OrdersController extends GetxController {
           backgroundColor: Colors.green,
           colorText: Colors.white,
         );
-        await fetchOrders(); // Refresh orders list
+        await fetchOrders();
       } else {
         final error = jsonDecode(response.body);
         throw Exception(error['message'] ?? 'Failed to cancel sub-order');
       }
     } catch (e) {
       errorMessage.value = 'Failed to cancel sub-order: $e';
+      Get.snackbar('Error', errorMessage.value, snackPosition: SnackPosition.BOTTOM);
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> submitRating(String subOrderId, String vendorId, int rating, String comment) async {
+    try {
+      isLoading.value = true;
+      errorMessage.value = '';
+
+      final response = await _api.post(
+        '/api/rating/add',
+        {
+          'subOrderId': subOrderId,
+          'vendorId': vendorId,
+          'rating': rating.toString(), // Convert int to string as per payload
+          'comment': comment.isNotEmpty ? comment : null, // Send null if empty
+        },
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        Get.snackbar(
+          'Success',
+          'Rating submitted successfully',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+        await fetchOrders(); // Refresh orders to update isRated status
+      } else {
+        final error = jsonDecode(response.body);
+        throw Exception(error['message'] ?? 'Failed to submit rating');
+      }
+    } catch (e) {
+      errorMessage.value = 'Failed to submit rating: $e';
       Get.snackbar('Error', errorMessage.value, snackPosition: SnackPosition.BOTTOM);
     } finally {
       isLoading.value = false;

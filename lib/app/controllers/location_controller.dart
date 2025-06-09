@@ -87,7 +87,7 @@ class LocationController extends GetxController {
         selectedLatitude.value = lat;
         selectedLongitude.value = lng;
         String geocodedString = await _reverseGeocodeWithReturn(lat, lng);
-        String finalAddress = selected['addressName'] ?? '';
+        String finalAddress = selected['flatHouseNo'] ?? '';
         if (geocodedString.isNotEmpty) {
           finalAddress += ', $geocodedString';
         }

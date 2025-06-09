@@ -123,7 +123,7 @@ class OrdersView extends GetView<OrdersController> {
               final String totalAmount = order['totalAmount']?.toString() ?? '0.00';
               final List subOrders = order['subOrders'] ?? [];
 
-              return _buildOrderCard(orderId, status, orderDate, totalAmount, subOrders);
+              return _buildOrderCard(context, orderId, status, orderDate, totalAmount, subOrders);
             },
           ),
         );
@@ -132,6 +132,7 @@ class OrdersView extends GetView<OrdersController> {
   }
 
   Widget _buildOrderCard(
+    BuildContext context,
     String orderId,
     String status,
     String orderDate,
@@ -200,7 +201,7 @@ class OrdersView extends GetView<OrdersController> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        status.capitalize!,
+                        StringExtension(status).capitalize, // Use explicit extension
                         style: GoogleFonts.workSans(
                           fontSize: 13,
                           color: _getStatusColor(status),
@@ -235,11 +236,13 @@ class OrdersView extends GetView<OrdersController> {
         ),
         children: subOrders.map<Widget>((subOrder) {
           final String subOrderId = subOrder['id']?.toString() ?? 'N/A';
+          final String vendorId = subOrder['vendorId']?.toString() ?? 'N/A';
           final String mealType = subOrder['mealType']?.toString() ?? 'N/A';
           final String deliveryDate = subOrder['deliveryDate']?.toString() ?? 'N/A';
           final String subTotalAmount = subOrder['subTotalAmount']?.toString() ?? '0.00';
           final String subOrderStatus = subOrder['status']?.toString() ?? 'Unknown';
           final List orderItems = subOrder['orderItems'] ?? [];
+          final bool isRated = subOrder['isRated'] ?? false;
 
           return Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
@@ -250,92 +253,138 @@ class OrdersView extends GetView<OrdersController> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      mealType.capitalize!,
+                      StringExtension(mealType).capitalize, // Use explicit extension
                       style: GoogleFonts.workSans(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: Colors.black87,
                       ),
                     ),
-                    if (subOrderStatus.toLowerCase() == 'created')
-                      GestureDetector(
-                        onTap: () {
-                          Get.dialog(
-                            AlertDialog(
-                              title: Text(
-                                'Cancel Sub-Order',
-                                style: GoogleFonts.workSans(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
-                                ),
+                    Row(
+                      children: [
+                        if (subOrderStatus.toLowerCase() == 'delivered' && !isRated)
+                          GestureDetector(
+                            onTap: () {
+                              if (vendorId == 'N/A') {
+                                Get.snackbar(
+                                  'Error',
+                                  'Vendor ID not available',
+                                  snackPosition: SnackPosition.BOTTOM,
+                                  backgroundColor: Colors.redAccent,
+                                  colorText: Colors.white,
+                                );
+                                return;
+                              }
+                              _showRatingBottomSheet(context, subOrderId, vendorId, mealType);
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.amber.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.amber.withOpacity(0.3)),
                               ),
-                              content: Text(
-                                'Are you sure you want to cancel this sub-order ($mealType)?',
-                                style: GoogleFonts.workSans(fontSize: 14),
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Get.back(),
-                                  child: Text(
-                                    'No',
-                                    style: GoogleFonts.workSans(
-                                      color: Colors.grey[600],
-                                    ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.star,
+                                    size: 14,
+                                    color: Colors.amber,
                                   ),
-                                ),
-                                ElevatedButton(
-                                  onPressed: () async {
-                                    await Get.find<OrdersController>().cancelSubOrder(subOrderId);
-                                    Get.back();
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.redAccent,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    'Yes, Cancel',
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Rate',
                                     style: GoogleFonts.workSans(
-                                      color: Colors.white,
+                                      fontSize: 12,
+                                      color: Colors.amber,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
-                                ),
-                              ],
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
+                                ],
                               ),
                             ),
-                          );
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: Colors.redAccent.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.redAccent.withOpacity(0.3)),
                           ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.cancel,
-                                size: 14,
-                                color: Colors.redAccent,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Cancel',
-                                style: GoogleFonts.workSans(
-                                  fontSize: 12,
-                                  color: Colors.redAccent,
-                                  fontWeight: FontWeight.w600,
+                        if (subOrderStatus.toLowerCase() == 'created')
+                          GestureDetector(
+                            onTap: () {
+                              Get.dialog(
+                                AlertDialog(
+                                  title: Text(
+                                    'Cancel Sub-Order',
+                                    style: GoogleFonts.workSans(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                  content: Text(
+                                    'Are you sure you want to cancel this sub-order ($mealType)?',
+                                    style: GoogleFonts.workSans(fontSize: 14),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Get.back(),
+                                      child: Text(
+                                        'No',
+                                        style: GoogleFonts.workSans(
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () async {
+                                        await Get.find<OrdersController>().cancelSubOrder(subOrderId);
+                                        Get.back();
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.redAccent,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        'Yes, Cancel',
+                                        style: GoogleFonts.workSans(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
                                 ),
+                              );
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.redAccent.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.redAccent.withOpacity(0.3)),
                               ),
-                            ],
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.cancel,
+                                    size: 14,
+                                    color: Colors.redAccent,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Cancel',
+                                    style: GoogleFonts.workSans(
+                                      fontSize: 12,
+                                      color: Colors.redAccent,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
+                      ],
+                    ),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -433,7 +482,112 @@ class OrdersView extends GetView<OrdersController> {
     );
   }
 
-  // Helper method to determine status color
+  void _showRatingBottomSheet(BuildContext context, String subOrderId, String vendorId, String mealType) {
+    final TextEditingController commentController = TextEditingController();
+    RxInt rating = 0.obs;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 16,
+            right: 16,
+            top: 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Rate $mealType',
+                style: GoogleFonts.workSans(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Obx(() => Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (index) {
+                      return IconButton(
+                        icon: Icon(
+                          index < rating.value ? Icons.star : Icons.star_border,
+                          color: Colors.amber,
+                          size: 32,
+                        ),
+                        onPressed: () {
+                          rating.value = index + 1;
+                        },
+                      );
+                    }),
+                  )),
+              const SizedBox(height: 16),
+              TextField(
+                controller: commentController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  hintText: 'Leave a comment (optional)',
+                  hintStyle: GoogleFonts.workSans(
+                    color: Colors.grey[500],
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: kPrimaryColor),
+                  ),
+                ),
+                style: GoogleFonts.workSans(fontSize: 14),
+              ),
+              const SizedBox(height: 16),
+              Align(
+                alignment: Alignment.centerRight,
+                child: ElevatedButton(
+                  onPressed: rating.value > 0
+                      ? () async {
+                          await Get.find<OrdersController>().submitRating(
+                            subOrderId,
+                            vendorId,
+                            rating.value,
+                            commentController.text,
+                          );
+                          Get.back();
+                        }
+                      : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kPrimaryColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  ),
+                  child: Text(
+                    'Submit',
+                    style: GoogleFonts.workSans(
+                      fontSize: 16,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
       case 'delivered':
@@ -447,7 +601,6 @@ class OrdersView extends GetView<OrdersController> {
     }
   }
 
-  // Helper method to determine status icon
   IconData _getStatusIcon(String status) {
     switch (status.toLowerCase()) {
       case 'delivered':
@@ -460,4 +613,9 @@ class OrdersView extends GetView<OrdersController> {
         return Icons.info;
     }
   }
+}
+
+// Extension for capitalizing strings
+extension StringExtension on String {
+  String get capitalize => isNotEmpty ? '${this[0].toUpperCase()}${substring(1)}' : this;
 }

@@ -137,7 +137,7 @@ class SearchResultsView extends GetView<SearchResultsController> {
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                   child: imagePath.isNotEmpty
                       ? Image.network(
-                          "https://www.fresmo.in/$imagePath",
+                          "https://api.fresmo.in/$imagePath",
                           width: double.infinity,
                           height: 140,
                           fit: BoxFit.cover,

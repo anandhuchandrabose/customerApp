@@ -12,6 +12,7 @@ class CartView extends GetView<CartController> {
   const CartView({Key? key}) : super(key: key);
 
   static const Color kPrimaryColor = Color(0xFFFF3008);
+  static const String baseUrl = 'https://api.fresmo.in/';
 
   @override
   Widget build(BuildContext context) {
@@ -467,21 +468,24 @@ class CartView extends GetView<CartController> {
           ),
         );
       } else {
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: Image.network(
-            imageUrl,
-            width: 60,
-            height: 60,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => Container(
-              width: 60,
-              height: 60,
-              color: Colors.grey.shade300,
-              child: const Icon(Icons.broken_image),
-            ),
-          ),
-        );
+       const String baseUrl = 'https://api.fresmo.in/';
+final fullUrl = imageUrl.startsWith('http') ? imageUrl : '$baseUrl$imageUrl';
+
+return ClipRRect(
+  borderRadius: BorderRadius.circular(8),
+  child: Image.network(
+    fullUrl,
+    width: 60,
+    height: 60,
+    fit: BoxFit.cover,
+    errorBuilder: (context, error, stackTrace) => Container(
+      width: 60,
+      height: 60,
+      color: Colors.grey.shade300,
+      child: const Icon(Icons.broken_image),
+    ),
+  ),
+);
       }
     }
     return Container(
