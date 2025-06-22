@@ -118,23 +118,14 @@ class HomeView extends GetView<HomeController> {
                                                         .textHighestEmphasis),
                                           ),
                                           Obx(() {
-                                            final address = locationCtrl
-                                                .selectedAddress.value;
-                                            final truncatedAddress =
-                                                address.isNotEmpty
-                                                    ? (address.length > 25
-                                                        ? '${address.substring(0, 25)}...'
-                                                        : address)
-                                                    : 'Select a location';
-                                            return Text(
-                                              truncatedAddress,
-                                              style: AppTypography.bodySmall
-                                                  .copyWith(
-                                                      color: AppColors
-                                                          .textMedEmphasis),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            );
+                                            final flatHouseNo = locationCtrl.addresses
+    .firstWhereOrNull((addr) => addr['isSelected'] == true)?['flatHouseNo'] ?? '';
+return Text(
+  flatHouseNo.isNotEmpty ? flatHouseNo : 'Select a location',
+  style: AppTypography.bodySmall.copyWith(color: AppColors.textMedEmphasis),
+  maxLines: 1,
+  overflow: TextOverflow.ellipsis,
+);
                                           }),
                                         ],
                                       ),

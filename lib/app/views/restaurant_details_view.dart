@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -29,6 +30,7 @@ ImageProvider getVendorImage(String imageString) {
     }
   }
 }
+
 const String baseUrl = 'https://api.fresmo.in/';
 
 class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
@@ -47,10 +49,10 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
   Widget build(BuildContext context) {
     final cartCtrl = Get.find<CartController>();
     final detailsCtrl = Get.find<RestaurantDetailsController>();
-    
 
     Future<void> _onRefresh() async {
-      await detailsCtrl.fetchRestaurantAndDishes(); // Assuming this method exists in the controller
+      await detailsCtrl
+          .fetchRestaurantAndDishes(); // Assuming this method exists in the controller
     }
 
     return Scaffold(
@@ -59,13 +61,15 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
         backgroundColor: AppColors.backgroundPrimary,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppColors.textHighestEmphasis), // Use AppColors
+          icon: Icon(Icons.arrow_back,
+              color: AppColors.textHighestEmphasis), // Use AppColors
           onPressed: () => Get.back(),
         ),
         title: Text(
           'Restaurant Details',
           style: AppTypography.heading3.copyWith(
-            color: AppColors.textHighestEmphasis, // Use AppTypography and AppColors
+            color: AppColors
+                .textHighestEmphasis, // Use AppTypography and AppColors
           ),
         ),
         centerTitle: false,
@@ -80,17 +84,20 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary, // Use AppColors
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(50)),
               elevation: 5,
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                AppIcons.cartIcon(color: AppColors.backgroundPrimary), // Use AppIcons
+                AppIcons.cartIcon(
+                    color: AppColors.backgroundPrimary), // Use AppIcons
                 Text(
                   'View Cart',
                   style: AppTypography.labelLarge.copyWith(
-                    color: AppColors.backgroundPrimary, // Use AppTypography and AppColors
+                    color: AppColors
+                        .backgroundPrimary, // Use AppTypography and AppColors
                   ),
                 ),
                 Container(
@@ -102,7 +109,8 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                   child: Text(
                     '$itemCount',
                     style: AppTypography.labelSmall.copyWith(
-                      color: AppColors.primary, // Use AppTypography and AppColors
+                      color:
+                          AppColors.primary, // Use AppTypography and AppColors
                     ),
                   ),
                 ),
@@ -114,13 +122,16 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
       body: BouncyPage(
         child: Obx(() {
           if (detailsCtrl.isLoading.value) {
-            return _buildSkeletonLoader(context); // Show skeleton loader while loading
+            return _buildSkeletonLoader(
+                context); // Show skeleton loader while loading
           }
           if (detailsCtrl.errorMessage.isNotEmpty) {
             return Center(
               child: Text(
                 detailsCtrl.errorMessage.value,
-                style: AppTypography.bodyMedium.copyWith(color: AppColors.warning), // Use AppTypography and AppColors
+                style: AppTypography.bodyMedium.copyWith(
+                    color:
+                        AppColors.warning), // Use AppTypography and AppColors
               ),
             );
           }
@@ -136,7 +147,8 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
               child: Text(
                 'No dishes available.',
                 style: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.textMedEmphasis, // Use AppTypography and AppColors
+                  color: AppColors
+                      .textMedEmphasis, // Use AppTypography and AppColors
                 ),
               ),
             );
@@ -156,7 +168,8 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
             return true;
           }).toList();
 
-          bool showGrouped = (selectedFilter.value.isEmpty || selectedFilter.value == 'All');
+          bool showGrouped =
+              (selectedFilter.value.isEmpty || selectedFilter.value == 'All');
           List<dynamic> lunchDishes = [];
           List<dynamic> dinnerDishes = [];
           if (showGrouped) {
@@ -177,7 +190,8 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                   child: _buildHeader(
                     vendorImage: vendorImage,
                     vendorName: vendorName,
-                    description: description.isNotEmpty ? description : servingTime,
+                    description:
+                        description.isNotEmpty ? description : servingTime,
                     rating: ratingFixed,
                   ),
                 ),
@@ -224,7 +238,8 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 300),
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 24, // Adjusted padding for full text visibility
+                                horizontal:
+                                    24, // Adjusted padding for full text visibility
                                 vertical: 10,
                               ),
                               decoration: BoxDecoration(
@@ -238,23 +253,30 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                                         end: Alignment.bottomRight,
                                       )
                                     : null,
-                                color: isSelected ? null : AppColors.backgroundPrimary, // Use AppColors
+                                color: isSelected
+                                    ? null
+                                    : AppColors
+                                        .backgroundPrimary, // Use AppColors
                                 borderRadius: BorderRadius.circular(50),
                                 border: Border.all(
-                                  color: isSelected ? AppColors.primary : AppColors.textLowEmphasis,
+                                  color: isSelected
+                                      ? AppColors.primary
+                                      : AppColors.textLowEmphasis,
                                   width: 0.5,
                                 ),
                                 boxShadow: isSelected
                                     ? [
                                         BoxShadow(
-                                          color: AppColors.primary.withOpacity(0.3),
+                                          color: AppColors.primary
+                                              .withOpacity(0.3),
                                           blurRadius: 8,
                                           offset: const Offset(0, 4),
                                         ),
                                       ]
                                     : [
                                         BoxShadow(
-                                          color: AppColors.textLowEmphasis.withOpacity(0.1),
+                                          color: AppColors.textLowEmphasis
+                                              .withOpacity(0.1),
                                           blurRadius: 4,
                                           offset: const Offset(0, 2),
                                         ),
@@ -271,7 +293,10 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                                   Text(
                                     label,
                                     style: AppTypography.labelSmall.copyWith(
-                                      color: isSelected ? AppColors.backgroundPrimary : AppColors.textHighEmphasis, // Use AppTypography and AppColors
+                                      color: isSelected
+                                          ? AppColors.backgroundPrimary
+                                          : AppColors
+                                              .textHighEmphasis, // Use AppTypography and AppColors
                                     ),
                                   ),
                                 ],
@@ -297,7 +322,8 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                         child: Text(
                           'Lunch',
                           style: AppTypography.heading3.copyWith(
-                            color: AppColors.textHighestEmphasis, // Use AppTypography and AppColors
+                            color: AppColors
+                                .textHighestEmphasis, // Use AppTypography and AppColors
                           ),
                         ),
                       ),
@@ -317,7 +343,8 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                               if (index < lunchDishes.length - 1)
                                 Divider(
                                   height: 1,
-                                  color: AppColors.textLowEmphasis, // Use AppColors
+                                  color: AppColors
+                                      .textLowEmphasis, // Use AppColors
                                   indent: 16,
                                   endIndent: 16,
                                 ),
@@ -343,7 +370,8 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                         child: Text(
                           'Dinner',
                           style: AppTypography.heading3.copyWith(
-                            color: AppColors.textHighestEmphasis, // Use AppTypography and AppColors
+                            color: AppColors
+                                .textHighestEmphasis, // Use AppTypography and AppColors
                           ),
                         ),
                       ),
@@ -363,7 +391,8 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                               if (index < dinnerDishes.length - 1)
                                 Divider(
                                   height: 1,
-                                  color: AppColors.textLowEmphasis, // Use AppColors
+                                  color: AppColors
+                                      .textLowEmphasis, // Use AppColors
                                   indent: 16,
                                   endIndent: 16,
                                 ),
@@ -388,7 +417,8 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                             if (index < filteredDishes.length - 1)
                               Divider(
                                 height: 1,
-                                color: AppColors.textLowEmphasis, // Use AppColors
+                                color:
+                                    AppColors.textLowEmphasis, // Use AppColors
                                 indent: 16,
                                 endIndent: 16,
                               ),
@@ -420,7 +450,8 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                 // Background image placeholder
                 Shimmer.fromColors(
                   baseColor: AppColors.backgroundSecondary.withOpacity(0.5),
-                  highlightColor: AppColors.backgroundSecondary.withOpacity(0.2),
+                  highlightColor:
+                      AppColors.backgroundSecondary.withOpacity(0.2),
                   child: Container(
                     height: 150,
                     width: double.infinity,
@@ -435,7 +466,8 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                   child: Center(
                     child: Shimmer.fromColors(
                       baseColor: AppColors.backgroundSecondary.withOpacity(0.5),
-                      highlightColor: AppColors.backgroundSecondary.withOpacity(0.2),
+                      highlightColor:
+                          AppColors.backgroundSecondary.withOpacity(0.2),
                       child: CircleAvatar(
                         radius: 50,
                         backgroundColor: AppColors.backgroundSecondary,
@@ -451,8 +483,10 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                   child: Column(
                     children: [
                       Shimmer.fromColors(
-                        baseColor: AppColors.backgroundSecondary.withValues(alpha: 128),
-                        highlightColor: AppColors.backgroundSecondary.withValues(alpha: 51), // 0.2 * 255 ≈ 51
+                        baseColor: AppColors.backgroundSecondary
+                            .withValues(alpha: 128),
+                        highlightColor: AppColors.backgroundSecondary
+                            .withValues(alpha: 51), // 0.2 * 255 ≈ 51
                         child: Container(
                           width: 150,
                           height: 20,
@@ -461,8 +495,10 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                       ),
                       AppSpacing.gapS,
                       Shimmer.fromColors(
-                        baseColor: AppColors.backgroundSecondary.withValues(alpha: 128),
-                        highlightColor: AppColors.backgroundSecondary.withValues(alpha: 51), // 0.2 * 255 ≈ 51
+                        baseColor: AppColors.backgroundSecondary
+                            .withValues(alpha: 128),
+                        highlightColor: AppColors.backgroundSecondary
+                            .withValues(alpha: 51), // 0.2 * 255 ≈ 51
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: List.generate(
@@ -477,8 +513,10 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                       ),
                       AppSpacing.gapS,
                       Shimmer.fromColors(
-                        baseColor: AppColors.backgroundSecondary.withOpacity(0.5),
-                        highlightColor: AppColors.backgroundSecondary.withOpacity(0.2),
+                        baseColor:
+                            AppColors.backgroundSecondary.withOpacity(0.5),
+                        highlightColor:
+                            AppColors.backgroundSecondary.withOpacity(0.2),
                         child: Container(
                           width: 200,
                           height: 16,
@@ -505,7 +543,8 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                   padding: const EdgeInsets.only(left: 10, right: 5),
                   child: Shimmer.fromColors(
                     baseColor: AppColors.backgroundSecondary.withOpacity(0.5),
-                    highlightColor: AppColors.backgroundSecondary.withOpacity(0.2),
+                    highlightColor:
+                        AppColors.backgroundSecondary.withOpacity(0.2),
                     child: Container(
                       width: 80,
                       height: 40,
@@ -561,7 +600,8 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                 padding: AppSpacing.paddingL,
                 child: Shimmer.fromColors(
                   baseColor: AppColors.backgroundSecondary.withOpacity(0.5),
-                  highlightColor: AppColors.backgroundSecondary.withOpacity(0.2),
+                  highlightColor:
+                      AppColors.backgroundSecondary.withOpacity(0.2),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -655,19 +695,23 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                       fit: BoxFit.cover,
                     )
                   : null,
-              color: vendorImage.isEmpty ? AppColors.backgroundSecondary : null, // Use AppColors
+              color: vendorImage.isEmpty
+                  ? AppColors.backgroundSecondary
+                  : null, // Use AppColors
             ),
           ),
           // Circle avatar for kitchen image
           Positioned(
-            top: 100, // Position the avatar so it slightly overlaps the background image
+            top:
+                100, // Position the avatar so it slightly overlaps the background image
             left: 0,
             right: 0,
             child: Center(
               child: CircleAvatar(
                 radius: 50,
                 backgroundColor: AppColors.backgroundSecondary, // Use AppColors
-                backgroundImage: vendorImage.isNotEmpty ? getVendorImage(vendorImage) : null,
+                backgroundImage:
+                    vendorImage.isNotEmpty ? getVendorImage(vendorImage) : null,
                 child: vendorImage.isEmpty
                     ? const Icon(Icons.restaurant, size: 50)
                     : null,
@@ -684,7 +728,8 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                 Text(
                   vendorName,
                   style: AppTypography.heading3.copyWith(
-                    color: AppColors.textHighestEmphasis, // Use AppTypography and AppColors
+                    color: AppColors
+                        .textHighestEmphasis, // Use AppTypography and AppColors
                   ),
                 ),
                 AppSpacing.gapS, // Use AppSpacing
@@ -699,7 +744,8 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
                     description,
                     textAlign: TextAlign.center,
                     style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.textMedEmphasis, // Use AppTypography and AppColors
+                      color: AppColors
+                          .textMedEmphasis, // Use AppTypography and AppColors
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -729,12 +775,14 @@ class RestaurantDetailsView extends GetView<RestaurantDetailsController> {
 
     final String mealType = dish['mealType'] ?? 'lunch';
     final String vendorDishId = dish['vendorDishId'] ?? '';
-final String rawImage = dish['image'] ?? '';
-final String dishImageUrl = rawImage.startsWith('http')
-    ? rawImage
-    : '${RestaurantDetailsController.baseUrl}$rawImage';
-    final double ratingValue = dish['rating'] is num ? (dish['rating'] as num).toDouble() : 3.9;
-    final int ratingCount = dish['ratingCount'] is int ? dish['ratingCount'] : 0;
+    final String rawImage = dish['image'] ?? '';
+    final String dishImageUrl = rawImage.startsWith('http')
+        ? rawImage
+        : '${RestaurantDetailsController.baseUrl}$rawImage';
+    final double ratingValue =
+        dish['rating'] is num ? (dish['rating'] as num).toDouble() : 3.9;
+    final int ratingCount =
+        dish['ratingCount'] is int ? dish['ratingCount'] : 0;
     final bool isBestseller = (ratingValue >= 4.0);
 
     return _buildDishTile(
@@ -752,167 +800,178 @@ final String dishImageUrl = rawImage.startsWith('http')
   }
 
   Widget _buildDishTile({
-  required String vendorDishId,
-  required String dishName,
-  required String description,
-  required String price,
-  required bool isVeg,
-  required String mealType,
-  required String? dishImageUrl,
-  required double ratingValue,
-  required int ratingCount,
-  required bool isBestseller,
-}) {
-  final cartCtrl = Get.find<CartController>();
-  final detailsCtrl = Get.find<RestaurantDetailsController>();
+    required String vendorDishId,
+    required String dishName,
+    required String description,
+    required String price,
+    required bool isVeg,
+    required String mealType,
+    required String? dishImageUrl,
+    required double ratingValue,
+    required int ratingCount,
+    required bool isBestseller,
+  }) {
+    final cartCtrl = Get.find<CartController>();
+    final detailsCtrl = Get.find<RestaurantDetailsController>();
 
-  return Container(
-    margin: AppSpacing.paddingVerticalS, // Use AppSpacing
-    padding: AppSpacing.paddingM, // Use AppSpacing
-    color: AppColors.backgroundPrimary, // Use AppColors
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildDishImage(dishImageUrl, isVeg),
-        AppSpacing.gapM, // Use AppSpacing
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: Text(
-                      dishName,
-                      style: AppTypography.bodyLarge.copyWith(
-                        color: AppColors.textHighestEmphasis, // Use AppTypography and AppColors
+    return Container(
+      margin: AppSpacing.paddingVerticalS, // Use AppSpacing
+      padding: AppSpacing.paddingM, // Use AppSpacing
+      color: AppColors.backgroundPrimary, // Use AppColors
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildDishImage(dishImageUrl, isVeg),
+          AppSpacing.gapM, // Use AppSpacing
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        dishName,
+                        style: AppTypography.bodyLarge.copyWith(
+                          color: AppColors
+                              .textHighestEmphasis, // Use AppTypography and AppColors
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    AppSpacing.gapS, // Use AppSpacing
+                    isVeg
+                        ? AppIcons.vegIcon(size: 16) // Use AppIcons
+                        : AppIcons.nonVegIcon(size: 16), // Use AppIcons
+                  ],
+                ),
+                AppSpacing.gapS, // Use AppSpacing
+                Row(
+                  children: _buildRatingStars(ratingValue),
+                ),
+                AppSpacing.gapS, // Use AppSpacing
+                _buildTruncatedDescription(description),
+                AppSpacing.gapS, // Use AppSpacing
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '₹$price',
+                      style: AppTypography.labelMedium.copyWith(
+                        color: AppColors
+                            .textHighestEmphasis, // Use AppTypography and AppColors
                         fontWeight: FontWeight.w600,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  AppSpacing.gapS, // Use AppSpacing
-                  isVeg
-                      ? AppIcons.vegIcon(size: 16) // Use AppIcons
-                      : AppIcons.nonVegIcon(size: 16), // Use AppIcons
-                ],
-              ),
-              AppSpacing.gapS, // Use AppSpacing
-              Row(
-                children: _buildRatingStars(ratingValue),
-              ),
-              AppSpacing.gapS, // Use AppSpacing
-              _buildTruncatedDescription(description),
-              AppSpacing.gapS, // Use AppSpacing
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '₹$price',
-                    style: AppTypography.labelMedium.copyWith(
-                      color: AppColors.textHighestEmphasis, // Use AppTypography and AppColors
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 300), // Smooth transition duration
-                      transitionBuilder: (child, animation) {
-                        return FadeTransition(
-                          opacity: animation,
-                          child: ScaleTransition(
-                            scale: animation,
-                            child: child,
-                          ),
-                        );
-                      },
-                      child: Obx(() {
-                        final int quantity = cartCtrl.getDishQuantity(vendorDishId);
-                        if (quantity == 0) {
-                          return SizedBox(
-                            key: const ValueKey(0),
-                            height: 36,
-                            child: ElevatedButton(
-                              onPressed: () {
-                                _onAddDish(
-                                  cartCtrl,
-                                  vendorDishId,
-                                  mealType,
-                                  detailsCtrl.vendorId.value,
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary, // Use AppColors
-                                foregroundColor: AppColors.backgroundPrimary,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                elevation: 2, // Subtle shadow for depth
-                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                              ),
-                              child: Text(
-                                'ADD',
-                                style: AppTypography.labelMedium.copyWith(
-                                  color: AppColors.backgroundPrimary, // Use AppTypography and AppColors
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: AnimatedSwitcher(
+                        duration: const Duration(
+                            milliseconds: 300), // Smooth transition duration
+                        transitionBuilder: (child, animation) {
+                          return FadeTransition(
+                            opacity: animation,
+                            child: ScaleTransition(
+                              scale: animation,
+                              child: child,
                             ),
                           );
-                        } else {
-                          return Row(
-                            key: ValueKey(quantity),
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              _stepperButton(
-                                iconData: Icons.remove,
-                                onTap: () {
-                                  cartCtrl.decreaseItemQuantity(
-                                    vendorDishId: vendorDishId,
-                                    mealType: mealType,
+                        },
+                        child: Obx(() {
+                          final int quantity =
+                              cartCtrl.getDishQuantity(vendorDishId);
+                          if (quantity == 0) {
+                            return SizedBox(
+                              key: const ValueKey(0),
+                              height: 36,
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  _onAddDish(
+                                    cartCtrl,
+                                    vendorDishId,
+                                    mealType,
+                                    detailsCtrl.vendorId.value,
                                   );
                                 },
-                              ),
-                              Padding(
-                                padding: AppSpacing.paddingHorizontalS, // Use AppSpacing
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200), // Smooth transition for quantity
-                                  child: Text(
-                                    quantity.toString(),
-                                    style: AppTypography.labelMedium.copyWith(
-                                      color: AppColors.textHighestEmphasis, // Use AppTypography and AppColors
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor:
+                                      AppColors.primary, // Use AppColors
+                                  foregroundColor: AppColors.backgroundPrimary,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  elevation: 2, // Subtle shadow for depth
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20, vertical: 8),
+                                ),
+                                child: Text(
+                                  'ADD',
+                                  style: AppTypography.labelMedium.copyWith(
+                                    color: AppColors
+                                        .backgroundPrimary, // Use AppTypography and AppColors
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
                               ),
-                              _stepperButton(
-                                iconData: Icons.add,
-                                onTap: () {
-                                  cartCtrl.increaseItemQuantity(
-                                    vendorDishId: vendorDishId,
-                                    mealType: mealType,
-                                  );
-                                },
-                              ),
-                            ],
-                          );
-                        }
-                      }),
+                            );
+                          } else {
+                            return Row(
+                              key: ValueKey(quantity),
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                _stepperButton(
+                                  iconData: Icons.remove,
+                                  onTap: () {
+                                    cartCtrl.decreaseItemQuantity(
+                                      vendorDishId: vendorDishId,
+                                      mealType: mealType,
+                                    );
+                                  },
+                                ),
+                                Padding(
+                                  padding: AppSpacing
+                                      .paddingHorizontalS, // Use AppSpacing
+                                  child: AnimatedContainer(
+                                    duration: const Duration(
+                                        milliseconds:
+                                            200), // Smooth transition for quantity
+                                    child: Text(
+                                      quantity.toString(),
+                                      style: AppTypography.labelMedium.copyWith(
+                                        color: AppColors
+                                            .textHighestEmphasis, // Use AppTypography and AppColors
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                _stepperButton(
+                                  iconData: Icons.add,
+                                  onTap: () {
+                                    cartCtrl.increaseItemQuantity(
+                                      vendorDishId: vendorDishId,
+                                      mealType: mealType,
+                                    );
+                                  },
+                                ),
+                              ],
+                            );
+                          }
+                        }),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
 
   void _onAddDish(
     CartController cartCtrl,
@@ -926,7 +985,8 @@ final String dishImageUrl = rawImage.startsWith('http')
       vendorId: vendorId,
     );
 
-    if (result.containsKey('vendorMismatch') && result['vendorMismatch'] == true) {
+    if (result.containsKey('vendorMismatch') &&
+        result['vendorMismatch'] == true) {
       Get.dialog(
         PopScope(
           canPop: true,
@@ -944,7 +1004,8 @@ final String dishImageUrl = rawImage.startsWith('http')
                   padding: const EdgeInsets.symmetric(vertical: 20),
                   decoration: BoxDecoration(
                     color: AppColors.primary.withOpacity(0.1),
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(16)),
                   ),
                   child: Center(
                     child: Icon(
@@ -980,7 +1041,8 @@ final String dishImageUrl = rawImage.startsWith('http')
                 Container(
                   decoration: BoxDecoration(
                     border: Border(
-                      top: BorderSide(color: AppColors.textLowEmphasis.withOpacity(0.12)),
+                      top: BorderSide(
+                          color: AppColors.textLowEmphasis.withOpacity(0.12)),
                     ),
                   ),
                   child: Row(
@@ -1023,7 +1085,8 @@ final String dishImageUrl = rawImage.startsWith('http')
                                 vendorId: vendorId,
                               );
                             } catch (e) {
-                              Get.snackbar('Error', 'Failed to add item to cart');
+                              Get.snackbar(
+                                  'Error', 'Failed to add item to cart');
                             }
                           },
                           style: TextButton.styleFrom(
@@ -1069,7 +1132,8 @@ final String dishImageUrl = rawImage.startsWith('http')
         child: Icon(
           Icons.fastfood,
           size: 50,
-          color: isVeg ? AppColors.positive : AppColors.warning, // Use AppColors
+          color:
+              isVeg ? AppColors.positive : AppColors.warning, // Use AppColors
         ),
       );
     }
@@ -1123,44 +1187,46 @@ final String dishImageUrl = rawImage.startsWith('http')
   }
 
   Widget _stepperButton({
-  required IconData iconData,
-  required VoidCallback onTap,
-}) {
-  return GestureDetector(
-    onTap: onTap,
-    child: AnimatedContainer(
-      duration: const Duration(milliseconds: 200), // Smooth transition for color/size changes
-      width: 32, // Slightly larger for better touch area
-      height: 32,
-      decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.1), // Subtle background color
-        border: Border.all(
-          color: AppColors.primary.withOpacity(0.5), // Softer border
-          width: 1,
-        ),
-        borderRadius: BorderRadius.circular(16), // Fully rounded
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withOpacity(0.2),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+    required IconData iconData,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(
+            milliseconds: 200), // Smooth transition for color/size changes
+        width: 32, // Slightly larger for better touch area
+        height: 32,
+        decoration: BoxDecoration(
+          color: AppColors.primary.withOpacity(0.1), // Subtle background color
+          border: Border.all(
+            color: AppColors.primary.withOpacity(0.5), // Softer border
+            width: 1,
           ),
-        ],
-      ),
-      child: Center(
-        child: AnimatedScale(
-          duration: const Duration(milliseconds: 100), // Scale animation on tap
-          scale: 1.0, // Default scale
-          child: Icon(
-            iconData,
-            size: 18, // Slightly larger icon
-            color: AppColors.primary, // Use AppColors
+          borderRadius: BorderRadius.circular(16), // Fully rounded
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withOpacity(0.2),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Center(
+          child: AnimatedScale(
+            duration:
+                const Duration(milliseconds: 100), // Scale animation on tap
+            scale: 1.0, // Default scale
+            child: Icon(
+              iconData,
+              size: 18, // Slightly larger icon
+              color: AppColors.primary, // Use AppColors
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   List<Widget> _buildRatingStars(double rating) {
     int fullStars = rating.floor();
@@ -1168,13 +1234,16 @@ final String dishImageUrl = rawImage.startsWith('http')
     int emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
     List<Widget> stars = [];
     for (int i = 0; i < fullStars; i++) {
-      stars.add(const Icon(Icons.star, color: AppColors.warning, size: 16)); // Use AppColors
+      stars.add(const Icon(Icons.star,
+          color: AppColors.warning, size: 16)); // Use AppColors
     }
     if (hasHalfStar) {
-      stars.add(const Icon(Icons.star_half, color: AppColors.warning, size: 16));
+      stars
+          .add(const Icon(Icons.star_half, color: AppColors.warning, size: 16));
     }
     for (int i = 0; i < emptyStars; i++) {
-      stars.add(const Icon(Icons.star_border, color: AppColors.warning, size: 16));
+      stars.add(
+          const Icon(Icons.star_border, color: AppColors.warning, size: 16));
     }
     return stars;
   }
@@ -1219,6 +1288,9 @@ class ServingTimesWidget extends StatefulWidget {
 }
 
 class _ServingTimesWidgetState extends State<ServingTimesWidget> {
+  late Timer _autoScrollTimer;
+  int _currentPage = 0;
+
   final PageController _pageController = PageController();
   final List<Map<String, dynamic>> _servingTimes = [
     {
@@ -1236,18 +1308,40 @@ class _ServingTimesWidgetState extends State<ServingTimesWidget> {
   @override
   void initState() {
     super.initState();
-    // Set up infinite scroll
-    _pageController.addListener(() {
-      if (_pageController.position.pixels == _pageController.position.maxScrollExtent) {
-        _pageController.jumpTo(0);
-      } else if (_pageController.position.pixels == _pageController.position.minScrollExtent) {
-        _pageController.jumpTo(_pageController.position.maxScrollExtent - 1);
+    _autoScrollTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_pageController.hasClients) {
+        _currentPage++;
+        _pageController.animateToPage(
+          _currentPage % _servingTimes.length,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+        );
       }
     });
   }
 
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   // Set up infinite scroll
+  //   _pageController.addListener(() {
+  //     if (_pageController.position.pixels == _pageController.position.maxScrollExtent) {
+  //       _pageController.jumpTo(0);
+  //     } else if (_pageController.position.pixels == _pageController.position.minScrollExtent) {
+  //       _pageController.jumpTo(_pageController.position.maxScrollExtent - 1);
+  //     }
+  //   });
+  // }
+
+  // @override
+  // void dispose() {
+  //   _pageController.dispose();
+  //   super.dispose();
+  // }
+
   @override
   void dispose() {
+    _autoScrollTimer.cancel();
     _pageController.dispose();
     super.dispose();
   }
@@ -1255,51 +1349,46 @@ class _ServingTimesWidgetState extends State<ServingTimesWidget> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 25, // 1/4 of original height
-      child: PageView.builder(
-        controller: _pageController,
-        itemBuilder: (context, index) {
-          final actualIndex = index % _servingTimes.length;
-          final item = _servingTimes[actualIndex];
-          return Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppColors.primary.withOpacity(0.1),
-                width: 1,
+        height: 25, // 1/4 of original height
+        child: PageView.builder(
+          controller: _pageController,
+          itemCount: _servingTimes.length,
+          itemBuilder: (context, index) {
+            final item = _servingTimes[index];
+            return Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.primary.withOpacity(0.1),
+                  width: 1,
+                ),
               ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  item['icon'] as IconData,
-                  size: 20, // Smaller icon size
-                  color: AppColors.primary,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  item['title'],
-                  style: AppTypography.labelLarge.copyWith(
-                    color: AppColors.textHighestEmphasis,
-                    fontWeight: FontWeight.w600,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(item['icon'], size: 20, color: AppColors.primary),
+                  const SizedBox(width: 8),
+                  Text(
+                    item['title'],
+                    style: AppTypography.labelLarge.copyWith(
+                      color: AppColors.textHighestEmphasis,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  item['time'],
-                  style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.textMedEmphasis,
+                  const SizedBox(width: 4),
+                  Text(
+                    item['time'],
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.textMedEmphasis,
+                    ),
                   ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
+                ],
+              ),
+            );
+          },
+        ));
   }
 }
 
@@ -1311,7 +1400,8 @@ class BouncyPage extends StatefulWidget {
   _BouncyPageState createState() => _BouncyPageState();
 }
 
-class _BouncyPageState extends State<BouncyPage> with SingleTickerProviderStateMixin {
+class _BouncyPageState extends State<BouncyPage>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
 
@@ -1349,7 +1439,8 @@ class AnimatedDishTile extends StatefulWidget {
   _AnimatedDishTileState createState() => _AnimatedDishTileState();
 }
 
-class _AnimatedDishTileState extends State<AnimatedDishTile> with SingleTickerProviderStateMixin {
+class _AnimatedDishTileState extends State<AnimatedDishTile>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _opacityAnimation;
   late Animation<Offset> _offsetAnimation;

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
+import 'package:intl/intl.dart'; // For date formatting
 import '../controllers/orders_controller.dart';
 
 class OrdersView extends GetView<OrdersController> {
@@ -119,13 +120,28 @@ class OrdersView extends GetView<OrdersController> {
               final order = ordersCtrl.orders[index];
               final String orderId = order['id']?.toString() ?? 'N/A';
               final String status = order['status']?.toString() ?? 'Unknown';
-              final String orderDate = order['orderDate']?.toString() ?? 'N/A';
-              final String totalAmount =
-                  order['totalAmount']?.toString() ?? '0.00';
-              final List subOrders = order['subOrders'] ?? [];
+              // Use createdAt for precise date and time
+              final String createdAt = order['createdAt']?.toString() ?? '';
+              String orderDateTime = 'N/A';
+              if (createdAt.isNotEmpty) {
+                try {
+                  final DateTime parsedDate = DateTime.parse(createdAt);
+                  orderDateTime = DateFormat('MMM d, h:mm a').format(parsedDate);
+                } catch (e) {
+                  orderDateTime = order['orderDate']?.toString() ?? 'N/A';
+                }
+              }
+              final String totalAmount = order['totalAmount']?.toString() ?? '0.00';
+              final List<Map<String, dynamic>> subOrders = (order['subOrders'] as List<dynamic>?)?.cast<Map<String, dynamic>>() ?? [];
 
               return _buildOrderCard(
-                  context, orderId, status, orderDate, totalAmount, subOrders);
+                context,
+                orderId,
+                status,
+                orderDateTime,
+                totalAmount,
+                subOrders,
+              );
             },
           ),
         );
@@ -229,217 +245,210 @@ class OrdersView extends GetView<OrdersController> {
     BuildContext context,
     String orderId,
     String status,
-    String orderDate,
+    String orderDateTime,
     String totalAmount,
-    List subOrders,
+    List<Map<String, dynamic>> subOrders,
   ) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
+    // Extract vendor details (assuming the first subOrder has the same vendor as the order)
+    final vendor = subOrders.isNotEmpty ? subOrders[0]['vendor'] ?? {} : {};
+    final String kitchenName = vendor['kitchenName']?.toString() ?? 'N/A';
+    final String imagePath = subOrders.isNotEmpty &&
+            subOrders[0]['orderItems'] != null &&
+            subOrders[0]['orderItems'].isNotEmpty &&
+            subOrders[0]['orderItems'][0]['vendorDish'] != null
+        ? (subOrders[0]['orderItems'][0]['vendorDish']['imagePath']?.toString() ?? '')
+        : '';
+    final String fullImagePath = imagePath.isNotEmpty ? 'https://api.fresmo.in/$imagePath' : '';
+
+    // Debug print to check image paths
+    print('Image Path: $imagePath');
+    print('Full Image Path: $fullImagePath');
+
+    return Container(
       margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.white, Colors.grey[50]!],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
+            color: Colors.grey.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: ExpansionTile(
-        tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        collapsedIconColor: Colors.grey[600],
-        iconColor: kPrimaryColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    "Order #$orderId",
-                    style: GoogleFonts.workSans(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Restaurant Info Row (Image, Name, Status)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Restaurant Image
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  color: Colors.grey[200], // Fallback color if image fails
                 ),
-                const SizedBox(width: 12),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: _getStatusColor(status).withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: _getStatusColor(status).withOpacity(0.3),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        _getStatusIcon(status),
-                        size: 14,
-                        color: _getStatusColor(status),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        StringExtension(status)
-                            .capitalize, // Use explicit extension
-                        style: GoogleFonts.workSans(
-                          fontSize: 13,
-                          color: _getStatusColor(status),
-                          fontWeight: FontWeight.w600,
+                child: imagePath.isNotEmpty
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          fullImagePath,
+                          width: 48,
+                          height: 48,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            print('Image Load Error: $error');
+                            return const Icon(
+                              Icons.restaurant,
+                              size: 24,
+                              color: Colors.grey,
+                            );
+                          },
                         ),
+                      )
+                    : const Icon(
+                        Icons.restaurant,
+                        size: 24,
+                        color: Colors.grey,
                       ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              "Date: $orderDate",
-              style: GoogleFonts.workSans(
-                fontSize: 14,
-                color: Colors.grey[600],
               ),
-            ),
-          ],
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child: Text(
-            "Total: ₹$totalAmount",
-            style: GoogleFonts.workSans(
-              fontSize: 16,
-              color: kPrimaryColor,
-              fontWeight: FontWeight.bold,
-            ),
+              const SizedBox(width: 12),
+              // Restaurant Name and Status
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          kitchenName,
+                          style: GoogleFonts.workSans(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: _getStatusColor(status).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                _getStatusIcon(status),
+                                size: 14,
+                                color: _getStatusColor(status),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                StringExtension(status).capitalize,
+                                style: GoogleFonts.workSans(
+                                  fontSize: 12,
+                                  color: _getStatusColor(status),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ),
-        children: subOrders.map<Widget>((subOrder) {
-          final String subOrderId = subOrder['id']?.toString() ?? 'N/A';
-          final String vendorId = subOrder['vendorId']?.toString() ?? 'N/A';
-          final String mealType = subOrder['mealType']?.toString() ?? 'N/A';
-          final String deliveryDate =
-              subOrder['deliveryDate']?.toString() ?? 'N/A';
-          final String subTotalAmount =
-              subOrder['subTotalAmount']?.toString() ?? '0.00';
-          final String subOrderStatus =
-              subOrder['status']?.toString() ?? 'Unknown';
-          final List orderItems = subOrder['orderItems'] ?? [];
-          final bool isRated = subOrder['isRated'] ?? false;
+          const SizedBox(height: 12),
+          // Order Items with Cancel and Rate Buttons for each Sub-Order
+          ...subOrders.asMap().entries.map<Widget>((entry) {
+            final int index = entry.key;
+            final subOrder = entry.value;
+            final String mealType = subOrder['mealType']?.toString() ?? 'N/A';
+            final List orderItems = subOrder['orderItems'] ?? [];
+            final String subOrderStatus = subOrder['status']?.toString().toLowerCase() ?? '';
+            final bool isCancellable = subOrderStatus == 'created' || subOrderStatus == 'placed';
+            final String? subOrderId = subOrder['id']?.toString();
+            final String? vendorId = subOrder['vendor'] != null ? subOrder['vendor']['id']?.toString() : null;
 
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-            child: Column(
+            // Debug prints to verify data
+            print('SubOrder ID: $subOrderId, Vendor ID: $vendorId, Status: $subOrderStatus');
+
+            return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Meal Type with Cancel and Rate Buttons
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      StringExtension(mealType)
-                          .capitalize, // Use explicit extension
+                      StringExtension(mealType).capitalize,
                       style: GoogleFonts.workSans(
                         fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w600,
                         color: Colors.black87,
                       ),
                     ),
                     Row(
                       children: [
-                        if (subOrderStatus.toLowerCase() == 'delivered' &&
-                            !isRated)
-                          GestureDetector(
-                            onTap: () {
-                              if (vendorId == 'N/A') {
-                                Get.snackbar(
-                                  'Error',
-                                  'Vendor ID not available',
-                                  snackPosition: SnackPosition.BOTTOM,
-                                  backgroundColor: Colors.redAccent,
-                                  colorText: Colors.white,
-                                );
-                                return;
-                              }
-                              _showRatingBottomSheet(
-                                  context, subOrderId, vendorId, mealType);
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: Colors.amber.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                    color: Colors.amber.withOpacity(0.3)),
+                        if (isCancellable && subOrderId != null)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: ElevatedButton(
+                              onPressed: () {
+                                _showCancelSubOrderDialog(context, subOrderId);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                                foregroundColor: const Color.fromARGB(255, 255, 255, 255),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                minimumSize: const Size(0, 0),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               ),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.star,
-                                    size: 14,
-                                    color: Colors.amber,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'Rate',
-                                    style: GoogleFonts.workSans(
-                                      fontSize: 12,
-                                      color: Colors.amber,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
+                              child: Text(
+                                "Cancel",
+                                style: GoogleFonts.workSans(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.redAccent,
+                                ),
                               ),
                             ),
                           ),
-                        if (['created', 'placed']
-                            .contains(subOrderStatus.toLowerCase()))
-                          GestureDetector(
-                            onTap: () {
-                              _showCancelSubOrderDialog(context, subOrderId);
+                        // Show Rate button for all sub-orders (for testing)
+                        if (subOrderId != null)
+                          ElevatedButton(
+                            onPressed: () {
+                              // Use a placeholder vendorId if null for testing
+                              final String effectiveVendorId = vendorId ?? 'placeholder-vendor-id';
+                              _showRatingBottomSheet(context, subOrderId, effectiveVendorId, mealType);
                             },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: Colors.redAccent.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                    color: Colors.redAccent.withOpacity(0.3)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.amber[700], // For Rate
+                              foregroundColor: const Color.fromARGB(255, 250, 250, 250),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(6),
                               ),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.cancel,
-                                    size: 14,
-                                    color: Colors.redAccent,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'Cancel',
-                                    style: GoogleFonts.workSans(
-                                      fontSize: 12,
-                                      color: Colors.redAccent,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                              minimumSize: const Size(0, 0),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: Text(
+                              "Rate",
+                              style: GoogleFonts.workSans(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.amber[700],
                               ),
                             ),
                           ),
@@ -447,99 +456,82 @@ class OrdersView extends GetView<OrdersController> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        "Delivery: $deliveryDate",
-                        style: GoogleFonts.workSans(
-                          fontSize: 14,
-                          color: Colors.grey[600],
+                const SizedBox(height: 8),
+                // Order Items
+                ...orderItems.map<Widget>((item) {
+                  final String dishName = item['vendorDish']?['dishName']?.toString() ?? 'N/A';
+                  final int quantity = item['quantity'] ?? 0;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      children: [
+                        Text(
+                          "$quantity×",
+                          style: GoogleFonts.workSans(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
                         ),
-                      ),
-                    ),
-                    Text(
-                      "₹$subTotalAmount",
-                      style: GoogleFonts.workSans(
-                        fontSize: 15,
-                        color: Colors.black87,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Divider(color: Colors.grey[300], height: 1),
-                const SizedBox(height: 16),
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: orderItems.length,
-                  itemBuilder: (context, itemIndex) {
-                    final item = orderItems[itemIndex];
-                    final String dishName =
-                        item['vendorDish']?['dishName']?.toString() ?? 'N/A';
-                    final int quantity = item['quantity'] ?? 0;
-                    final String priceAtOrder =
-                        item['priceAtOrder']?.toString() ?? '0.00';
-
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 28,
-                            height: 28,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [Colors.grey[200]!, Colors.grey[300]!],
-                              ),
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: Center(
-                              child: Text(
-                                "$quantity",
-                                style: GoogleFonts.workSans(
-                                  fontSize: 13,
-                                  color: Colors.grey[800],
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              dishName,
-                              style: GoogleFonts.workSans(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.black87,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            "₹$priceAtOrder",
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            dishName,
                             style: GoogleFonts.workSans(
-                              fontSize: 15,
+                              fontSize: 14,
                               color: Colors.black87,
-                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+                // Divider between sub-orders (except for the last one)
+                if (index < subOrders.length - 1)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Divider(
+                      color: Colors.grey[300],
+                      thickness: 1,
+                    ),
+                  ),
               ],
+            );
+          }).toList(),
+          const SizedBox(height: 12),
+          // Star Rating (or empty stars if not available)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(5, (index) {
+              // Average rating across all sub-orders if multiple ratings exist
+              double averageRating = 0.0;
+              int ratedSubOrders = 0;
+              for (var subOrder in subOrders) {
+                if (subOrder['rating'] != null) {
+                  averageRating += (subOrder['rating'] as num).toDouble();
+                  ratedSubOrders++;
+                }
+              }
+              averageRating = ratedSubOrders > 0 ? averageRating / ratedSubOrders : 0.0;
+              return Icon(
+                index < averageRating ? Icons.star : Icons.star_border,
+                size: 20,
+                color: Colors.amber,
+              );
+            }),
+          ),
+          const SizedBox(height: 8),
+          // Order Details
+          Center(
+            child: Text(
+              "Ordered: ${orderDateTime} • Bill Total: ₹${totalAmount}",
+              style: GoogleFonts.workSans(
+                fontSize: 12,
+                color: Colors.grey[600],
+              ),
             ),
-          );
-        }).toList(),
+          ),
+        ],
       ),
     );
   }
@@ -615,17 +607,16 @@ class OrdersView extends GetView<OrdersController> {
               Align(
                 alignment: Alignment.centerRight,
                 child: ElevatedButton(
-                  onPressed: rating.value > 0
-                      ? () async {
-                          await Get.find<OrdersController>().submitRating(
-                            subOrderId,
-                            vendorId,
-                            rating.value,
-                            commentController.text,
-                          );
-                          Get.back();
-                        }
-                      : null,
+                  onPressed: () async {
+                    // Allow submission even if rating is 0 (for testing)
+                    await Get.find<OrdersController>().submitRating(
+                      subOrderId,
+                      vendorId,
+                      rating.value,
+                      commentController.text,
+                    );
+                    Get.back();
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: kPrimaryColor,
                     shape: RoundedRectangleBorder(
@@ -660,6 +651,10 @@ class OrdersView extends GetView<OrdersController> {
         return Colors.orange;
       case 'cancelled':
         return Colors.red;
+      case 'created':
+        return Colors.blue;
+      case 'placed':
+        return Colors.purple;
       default:
         return Colors.grey;
     }
@@ -673,6 +668,10 @@ class OrdersView extends GetView<OrdersController> {
         return Icons.hourglass_empty;
       case 'cancelled':
         return Icons.cancel;
+      case 'created':
+        return Icons.create;
+      case 'placed':
+        return Icons.place;
       default:
         return Icons.info;
     }
