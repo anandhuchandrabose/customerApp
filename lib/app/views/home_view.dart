@@ -332,34 +332,34 @@ return Text(
           prefixIcon: AppIcons.searchIcon(),
           suffixIcon: Row(
             mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.mic),
-                onPressed: () {
-                  // Add voice search functionality
-                },
-              ),
-              Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.positive.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      AppIcons.vegIcon(size: 16),
-                      AppSpacing.gapXS,
-                      Text(
-                        'VEG',
-                        style: AppTypography.labelSmall.copyWith(color: AppColors.positive),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+            // children: [
+            //   IconButton(
+            //     icon: const Icon(Icons.mic),
+            //     onPressed: () {
+            //       // Add voice search functionality
+            //     },
+            //   ),
+            //   Padding(
+            //     padding: const EdgeInsets.only(right: 8),
+            //     child: Container(
+            //       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            //       decoration: BoxDecoration(
+            //         color: AppColors.positive.withOpacity(0.1),
+            //         borderRadius: BorderRadius.circular(12),
+            //       ),
+            //       child: Row(
+            //         children: [
+            //           AppIcons.vegIcon(size: 16),
+            //           AppSpacing.gapXS,
+            //           Text(
+            //             'VEG',
+            //             style: AppTypography.labelSmall.copyWith(color: AppColors.positive),
+            //           ),
+            //         ],
+            //       ),
+            //     ),
+            //   ),
+            // ],
           ),
           filled: true,
           fillColor: AppColors.backgroundSecondary,
@@ -827,28 +827,28 @@ return Text(
                       ),
                     ),
                   // Favorite Icon
-                  Positioned(
-                    top: 12,
-                    right: 12,
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppColors.backgroundPrimary.withOpacity(0.9),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.textLowEmphasis.withOpacity(0.2),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: AppIcons.favoriteIcon(
-                        color: AppColors.primary,
-                        size: 20,
-                      ),
-                    ),
-                  ),
+                  // Positioned(
+                  //   top: 12,
+                  //   right: 12,
+                  //   child: Container(
+                  //     padding: const EdgeInsets.all(8),
+                  //     decoration: BoxDecoration(
+                  //       color: AppColors.backgroundPrimary.withOpacity(0.9),
+                  //       shape: BoxShape.circle,
+                  //       boxShadow: [
+                  //         BoxShadow(
+                  //           color: AppColors.textLowEmphasis.withOpacity(0.2),
+                  //           blurRadius: 4,
+                  //           offset: const Offset(0, 2),
+                  //         ),
+                  //       ],
+                  //     ),
+                  //     child: AppIcons.favoriteIcon(
+                  //       color: AppColors.primary,
+                  //       size: 20,
+                  //     ),
+                  //   ),
+                  // ),
                   // Veg/Non-Veg Indicator
                   Positioned(
                     bottom: 12,

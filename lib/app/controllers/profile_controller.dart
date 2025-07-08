@@ -18,22 +18,21 @@ class ProfileController extends GetxController {
     fetchUserData();
   }
 
-  Future<void> fetchUserData() async {
-    isLoading.value = true;
-    try {
-      final userData = await _authRepo.getUserProfile();
-      print('Fetched User Data: $userData'); // Debug print
-      userName.value = userData['name'] ?? 'user';
-      email.value = userData['email'] ?? '';
-      phoneNumber.value = userData['phone'] ?? '';
-      addresses.value = (userData['addresses'] as List<dynamic>?)?.cast<Map<String, String>>() ?? [];
-    } catch (e) {
-      print('Error fetching user data: $e'); // Debug print
-      Get.snackbar('Error', 'Failed to load user data: $e');
-    } finally {
-      isLoading.value = false;
-    }
+Future<void> fetchUserData() async {
+  isLoading.value = true;
+  try {
+    final userData = await _authRepo.getUserProfile();
+    print('Fetched User Data: $userData');
+    userName.value = userData['name'] ?? 'user';
+    email.value = userData['email'] ?? '';
+    phoneNumber.value = userData['phone'] ?? '';
+    addresses.value = (userData['addresses'] as List<dynamic>?)?.cast<Map<String, String>>() ?? [];
+  } catch (e) {
+    print('Error fetching profile: $e');
+  } finally {
+    isLoading.value = false;
   }
+}
 
   void addAddress() {
     addresses.add({

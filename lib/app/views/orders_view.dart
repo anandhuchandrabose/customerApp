@@ -398,7 +398,24 @@ class OrdersView extends GetView<OrdersController> {
                     ),
                     Row(
                       children: [
-                        if (isCancellable && subOrderId != null)
+                        if (subOrderStatus == 'cancelled')
+  Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    decoration: BoxDecoration(
+      color: Colors.red.withOpacity(0.1),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Text(
+      'Cancelled',
+      style: GoogleFonts.workSans(
+        fontSize: 12,
+        fontWeight: FontWeight.bold,
+        color: Colors.red,
+      ),
+    ),
+  )
+else if (isCancellable && subOrderId != null)if (isCancellable && subOrderId != null)
+
                           Padding(
                             padding: const EdgeInsets.only(right: 8),
                             child: ElevatedButton(
@@ -416,13 +433,13 @@ class OrdersView extends GetView<OrdersController> {
                                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               ),
                               child: Text(
-                                "Cancel",
-                                style: GoogleFonts.workSans(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.redAccent,
-                                ),
-                              ),
+  "Cancel",
+  style: GoogleFonts.workSans(
+    fontSize: 12,
+    fontWeight: FontWeight.w600,
+    color: Colors.white, // Fix text color
+  ),
+),
                             ),
                           ),
                         // Show Rate button for all sub-orders (for testing)
@@ -444,13 +461,13 @@ class OrdersView extends GetView<OrdersController> {
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
                             child: Text(
-                              "Rate",
-                              style: GoogleFonts.workSans(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.amber[700],
-                              ),
-                            ),
+  "Rate",
+  style: GoogleFonts.workSans(
+    fontSize: 12,
+    fontWeight: FontWeight.w600,
+    color: Colors.white, // ✅ FIXED
+  ),
+),
                           ),
                       ],
                     ),
