@@ -31,43 +31,41 @@ class CompleteSignupController extends GetxController {
     lastName.value = value;
   }
 
-  Future<void> completeSignup() async {
-    // Validate that the required fields are filled.
-    if (firstName.value.isEmpty || lastName.value.isEmpty) {
-      Get.snackbar('Error', 'Please fill all fields');
-      return;
-    }
-
-    try {
-      isLoading.value = true;
-
-      // Call the completeSignup API.
-      final data = await _authRepo.completeSignup(
-        phoneNumber.value,
-        firstName.value,
-        lastName.value,
-      );
-
-      // Retrieve the token from the response.
-      final token = data['token'];
-      if (token != null) {
-        // Save the token in persistent storage.
-        storage.write('token', token);
-        Get.snackbar('Success', 'Signup completed successfully!');
-
-        // Navigate to the dashboard using a fade transition.
-        Get.offAll(
-          () => DashboardView(),
-          transition: Transition.fadeIn,
-          duration: const Duration(milliseconds: 500),
-        );
-      } else {
-        Get.snackbar('Error', 'Token not received');
-      }
-    } catch (e) {
-      Get.snackbar('Signup Error', e.toString());
-    } finally {
-      isLoading.value = false;
-    }
+ Future<void> completeSignup() async {
+  if (firstName.value.isEmpty || lastName.value.isEmpty) {
+    Get.snackbar('Error', 'Please fill all fields');
+    return;
   }
+
+  try {
+    isLoading.value = true;
+
+    // Send request
+    final data = await _authRepo.completeSignup(
+      phoneNumber.value,
+      firstName.value,
+      lastName.value,
+    );
+
+    print('API response: $data');
+
+    final token = data['token'];
+
+    if (token != null) {
+      // Store token and user info you already have locally
+      storage.write('token', token);
+      storage.write('customerName', '${firstName.value} ${lastName.value}');
+      storage.write('customerMobile', phoneNumber.value);
+
+      Get.snackbar('Success', 'Signup completed successfully!');
+      Get.offAllNamed('/dashboard');
+    } else {
+      Get.snackbar('Error', 'Token not received from server');
+    }
+  } catch (e) {
+    Get.snackbar('Signup Error', e.toString());
+  } finally {
+    isLoading.value = false;
+  }
+}
 }

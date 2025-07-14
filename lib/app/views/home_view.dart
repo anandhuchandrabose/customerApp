@@ -23,6 +23,7 @@ class HomeView extends GetView<HomeController> {
     final homeCtrl = Get.find<HomeController>();
     final cartCtrl = Get.find<CartController>();
     final locationCtrl = Get.find<LocationController>();
+    
 
     final placeholderOptions = [
       'Search for Pizza...',
@@ -118,14 +119,23 @@ class HomeView extends GetView<HomeController> {
                                                         .textHighestEmphasis),
                                           ),
                                           Obx(() {
-                                            final flatHouseNo = locationCtrl.addresses
-    .firstWhereOrNull((addr) => addr['isSelected'] == true)?['flatHouseNo'] ?? '';
-return Text(
-  flatHouseNo.isNotEmpty ? flatHouseNo : 'Select a location',
-  style: AppTypography.bodySmall.copyWith(color: AppColors.textMedEmphasis),
-  maxLines: 1,
-  overflow: TextOverflow.ellipsis,
-);
+                                            final flatHouseNo = locationCtrl
+                                                    .addresses
+                                                    .firstWhereOrNull((addr) =>
+                                                        addr['isSelected'] ==
+                                                        true)?['flatHouseNo'] ??
+                                                '';
+                                            return Text(
+                                              flatHouseNo.isNotEmpty
+                                                  ? flatHouseNo
+                                                  : 'Select a location',
+                                              style: AppTypography.bodySmall
+                                                  .copyWith(
+                                                      color: AppColors
+                                                          .textMedEmphasis),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            );
                                           }),
                                         ],
                                       ),
@@ -162,8 +172,8 @@ return Text(
                       children: [
                         Text(
                           "What's on your mind?",
-                          style: AppTypography.heading3.copyWith(
-                              color: AppColors.textHighestEmphasis),
+                          style: AppTypography.heading3
+                              .copyWith(color: AppColors.textHighestEmphasis),
                         ),
                         AppSpacing.gapM,
                         homeCtrl.isLoading.value
@@ -179,7 +189,8 @@ return Text(
                                           AppSpacing.gapM,
                                       itemBuilder: (_, index) {
                                         final cat = homeCtrl.categories[index];
-                                        final catName = cat['name'] ?? 'Unnamed';
+                                        final catName =
+                                            cat['name'] ?? 'Unnamed';
                                         final catImage = cat['image'] ?? '';
                                         return _buildCategoryCard(
                                             catName, catImage, index);
@@ -248,9 +259,9 @@ return Text(
                                       final vendorId = vendor['id'] ?? '';
                                       final name =
                                           vendor['kitchenName'] ?? 'Unnamed';
-                                      final imageUrl =
-                                          vendor['profile']?['profileImage'] ??
-                                              '';
+                                      final imageUrl = vendor['profile']
+                                              ?['profileImage'] ??
+                                          '';
                                       final rating =
                                           vendor['rating']?.toString() ?? '4.5';
                                       final isVeg = vendor['isVeg'] ?? false;
@@ -259,7 +270,13 @@ return Text(
                                         padding:
                                             const EdgeInsets.only(bottom: 12),
                                         child: _buildKitchenCard(
-                                            name, imageUrl, rating, isVeg, vendorId, index, isFeatured),
+                                            name,
+                                            imageUrl,
+                                            rating,
+                                            isVeg,
+                                            vendorId,
+                                            index,
+                                            isFeatured),
                                       );
                                     }).toList(),
                                   ),
@@ -328,7 +345,8 @@ return Text(
       child: TextField(
         decoration: InputDecoration(
           hintText: placeholder,
-          hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.textMedEmphasis),
+          hintStyle: AppTypography.bodyMedium
+              .copyWith(color: AppColors.textMedEmphasis),
           prefixIcon: AppIcons.searchIcon(),
           suffixIcon: Row(
             mainAxisSize: MainAxisSize.min,
@@ -371,7 +389,8 @@ return Text(
         ),
         onSubmitted: (value) {
           if (value.trim().isNotEmpty) {
-            Get.toNamed('/search-results', arguments: {'searchKey': value.trim()});
+            Get.toNamed('/search-results',
+                arguments: {'searchKey': value.trim()});
           }
         },
       ),
@@ -394,8 +413,8 @@ return Text(
       ),
       child: Text(
         message,
-        style: AppTypography.bodyMedium
-            .copyWith(color: AppColors.textMedEmphasis),
+        style:
+            AppTypography.bodyMedium.copyWith(color: AppColors.textMedEmphasis),
       ),
     );
   }
@@ -493,8 +512,10 @@ return Text(
     );
   }
 
-  Widget _buildAdCarousel(BuildContext context, List<Map<String, dynamic>> adList) {
-    final PageController pageController = PageController(viewportFraction: 0.85);
+  Widget _buildAdCarousel(
+      BuildContext context, List<Map<String, dynamic>> adList) {
+    final PageController pageController =
+        PageController(viewportFraction: 0.85);
     Timer? timer;
 
     void startAutoScroll() {
@@ -532,163 +553,168 @@ return Text(
     );
   }
 
- Widget _buildAdCard(BuildContext context, Map<String, dynamic> ad, int index) {
-  final String imageUrl = ad['image'] as String;
-  final bool isNew = ad['isNew'] as bool;
+  Widget _buildAdCard(
+      BuildContext context, Map<String, dynamic> ad, int index) {
+    final String imageUrl = ad['image'] as String;
+    final bool isNew = ad['isNew'] as bool;
 
-  // Remove leading '/' from imageUrl to match asset path
-  final String assetPath = imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl;
+    // Remove leading '/' from imageUrl to match asset path
+    final String assetPath =
+        imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl;
 
-  return TweenAnimationBuilder(
-    tween: Tween<double>(begin: 0, end: 1),
-    duration: Duration(milliseconds: 500 + (index * 100)),
-    builder: (context, double value, child) {
-      return Opacity(
-        opacity: value,
-        child: Transform.translate(
-          offset: Offset((1 - value) * 20, 0),
-          child: child,
-        ),
-      );
-    },
-    child: Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-      width: MediaQuery.of(context).size.width * 0.85,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: LinearGradient(
-          colors: [
-            AppColors.primary.withOpacity(0.2),
-            AppColors.primarySub.withOpacity(0.3),
+    return TweenAnimationBuilder(
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: Duration(milliseconds: 500 + (index * 100)),
+      builder: (context, double value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset((1 - value) * 20, 0),
+            child: child,
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        width: MediaQuery.of(context).size.width * 0.85,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            colors: [
+              AppColors.primary.withOpacity(0.2),
+              AppColors.primarySub.withOpacity(0.3),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          border: Border.all(
+            color: AppColors.backgroundPrimary.withOpacity(0.3),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.textLowEmphasis.withOpacity(0.3),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
           ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
         ),
-        border: Border.all(
-          color: AppColors.backgroundPrimary.withOpacity(0.3),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.textLowEmphasis.withOpacity(0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: assetPath.isNotEmpty
-                ? Image.asset(
-                    'assets/$assetPath', // Load image from assets
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: double.infinity,
-                    color: Colors.black.withOpacity(0.3),
-                    colorBlendMode: BlendMode.darken,
-                    errorBuilder: (context, error, stackTrace) {
-                      // Fallback if the image fails to load
-                      return Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              AppColors.textLowEmphasis,
-                              AppColors.textMedEmphasis,
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+        child: Stack(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: assetPath.isNotEmpty
+                  ? Image.asset(
+                      'assets/$assetPath', // Load image from assets
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
+                      color: Colors.black.withOpacity(0.3),
+                      colorBlendMode: BlendMode.darken,
+                      errorBuilder: (context, error, stackTrace) {
+                        // Fallback if the image fails to load
+                        return Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                AppColors.textLowEmphasis,
+                                AppColors.textMedEmphasis,
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
                           ),
-                        ),
-                        child: Center(
-                          child: Icon(
-                            Icons.local_offer,
-                            color: AppColors.backgroundPrimary.withOpacity(0.7),
-                            size: 50,
+                          child: Center(
+                            child: Icon(
+                              Icons.local_offer,
+                              color:
+                                  AppColors.backgroundPrimary.withOpacity(0.7),
+                              size: 50,
+                            ),
                           ),
+                        );
+                      },
+                    )
+                  : Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.textLowEmphasis,
+                            AppColors.textMedEmphasis,
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                      );
-                    },
-                  )
-                : Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          AppColors.textLowEmphasis,
-                          AppColors.textMedEmphasis,
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+                      ),
+                      child: Center(
+                        child: Icon(
+                          Icons.local_offer,
+                          color: AppColors.backgroundPrimary.withOpacity(0.7),
+                          size: 50,
+                        ),
                       ),
                     ),
-                    child: Center(
-                      child: Icon(
-                        Icons.local_offer,
-                        color: AppColors.backgroundPrimary.withOpacity(0.7),
-                        size: 50,
-                      ),
-                    ),
-                  ),
-          ),
-          if (isNew)
-            Positioned(
-              top: 10,
-              left: 10,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.warning,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  'New',
-                  style: AppTypography.labelSmall.copyWith(
-                    color: AppColors.backgroundPrimary,
-                  ),
-                ),
-              ),
             ),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              padding: AppSpacing.paddingM,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    ad['title'] ?? '',
-                    style: AppTypography.heading3.copyWith(
+            if (isNew)
+              Positioned(
+                top: 10,
+                left: 10,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.warning,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'New',
+                    style: AppTypography.labelSmall.copyWith(
                       color: AppColors.backgroundPrimary,
-                      shadows: [
-                        Shadow(
-                          color: AppColors.textHighestEmphasis.withOpacity(0.5),
-                          offset: const Offset(1, 1),
-                          blurRadius: 3,
-                        ),
-                      ],
                     ),
                   ),
-                  AppSpacing.gapXS,
-                  Text(
-                    ad['description'] ?? '',
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: AppColors.backgroundPrimary.withOpacity(0.9),
+                ),
+              ),
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                padding: AppSpacing.paddingM,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      ad['title'] ?? '',
+                      style: AppTypography.heading3.copyWith(
+                        color: AppColors.backgroundPrimary,
+                        shadows: [
+                          Shadow(
+                            color:
+                                AppColors.textHighestEmphasis.withOpacity(0.5),
+                            offset: const Offset(1, 1),
+                            blurRadius: 3,
+                          ),
+                        ],
+                      ),
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+                    AppSpacing.gapXS,
+                    Text(
+                      ad['description'] ?? '',
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: AppColors.backgroundPrimary.withOpacity(0.9),
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildKitchenSkeleton() {
     return Column(
@@ -813,7 +839,8 @@ return Text(
                       top: 12,
                       left: 12,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: AppColors.primary,
                           borderRadius: BorderRadius.circular(12),
@@ -912,14 +939,16 @@ return Text(
                   ),
                   // Rating (Right)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: AppColors.backgroundSecondary,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.star,
+                        Icon(
+                          Icons.star,
                           color: AppColors.warning,
                           size: 16,
                         ),

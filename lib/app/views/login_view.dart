@@ -5,7 +5,8 @@ import '../controllers/login_controller.dart';
 class LoginView extends GetView<LoginController> {
   const LoginView({Key? key}) : super(key: key);
 
-  static const Color kOrange = Color(0xFFFF3008);
+  static const Color kYellow = Color(0xFFF8D247);
+  static const Color kGrey = Color(0xFF8E8E93);
   static const Color kDarkGrey = Color(0xFF2A2A2A);
 
   @override
@@ -14,154 +15,176 @@ class LoginView extends GetView<LoginController> {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Colors.white,
       body: Obx(() {
         if (loginCtrl.isLoading.value) {
-          return const Center(child: CircularProgressIndicator(color: kOrange));
+          return const Center(child: CircularProgressIndicator(color: kYellow));
         }
 
         return SingleChildScrollView(
           child: Column(
             children: [
               // =============================
-              // Top Image Section with JPG
+              // Top Product Grid Section
               // =============================
-              Stack(
-                children: [
-                  SizedBox(
-                    width: double.infinity,
-                    height: size.height * 0.4,
-                    child: Image.asset(
-                      'assets/img/icon.jpg', // Ensure this matches your file path
-                      fit: BoxFit.cover,
-                      color: Colors.black38, // Overlay for darkening
-                      colorBlendMode: BlendMode.darken,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: Colors.grey[300],
-                          child: const Center(
-                            child: Text(
-                              'Image Failed to Load',
-                              style: TextStyle(color: Colors.red, fontSize: 16),
-                            ),
-                          ),
-                        );
-                      },
+              Container(
+                height: size.height * 0.4,
+                padding: const EdgeInsets.only(top: 50, left: 16, right: 16),
+                child: Column(
+                  children: [
+                    // Skip Login Button
+                    Align(
+                      alignment: Alignment.topRight,
+                      // child: Container(
+                      //   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      //   decoration: BoxDecoration(
+                      //     color: Colors.white,
+                      //     borderRadius: BorderRadius.circular(20),
+                      //     boxShadow: [
+                      //       BoxShadow(
+                      //         color: Colors.grey.withOpacity(0.2),
+                      //         blurRadius: 8,
+                      //         offset: const Offset(0, 2),
+                      //       ),
+                      //     ],
+                      //   ),
+                      //   child: const Text(
+                      //     'Skip login',
+                      //     style: TextStyle(
+                      //       fontSize: 14,
+                      //       fontWeight: FontWeight.w500,
+                      //       color: kDarkGrey,
+                      //     ),
+                      //   ),
+                      // ),
                     ),
-                  ),
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    child: SafeArea(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.arrow_back, color: Colors.white),
-                              onPressed: () => Get.back(),
-                            ),
-                            Text(
-                              'zero',
-                              style: TextStyle(
-                                fontSize: 32,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                shadows: [
-                                  Shadow(
-                                    color: Colors.black.withOpacity(0.3),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 48), // Balance the layout
-                          ],
-                        ),
+                    // const SizedBox(height: 20),
+                    
+                    // Product Grid (4 rows x 3 columns)
+                    Expanded(
+                      child: GridView.count(
+                        crossAxisCount: 3,
+                        childAspectRatio: 1.0,
+                        mainAxisSpacing: 16,
+                        crossAxisSpacing: 16,
+                        children: [
+                          _buildProductCard('assets/img/vaporub.png', Colors.blue[50]!),
+                          _buildProductCard('assets/img/banana.png', Colors.yellow[50]!),
+                          _buildProductCard('assets/img/pampers.png', Colors.teal[50]!),
+                          _buildProductCard('assets/img/daawat.png', Colors.orange[50]!),
+                          _buildProductCard('assets/img/durex.png', Colors.red[50]!),
+                          _buildProductCard('assets/img/icecream.png', Colors.blue[50]!),
+                          _buildProductCard('assets/img/broccoli.png', Colors.green[50]!),
+                          _buildProductCard('assets/img/nescafe.png', Colors.brown[50]!),
+                          _buildProductCard('assets/img/spoon.png', Colors.orange[50]!),
+                          _buildProductCard('assets/img/tata_tea.png', Colors.green[50]!),
+                          _buildProductCard('assets/img/cocacola.png', Colors.red[50]!),
+                          _buildProductCard('assets/img/jaggery.png', Colors.brown[50]!),
+                        ],
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
 
               // =============================
-              // Login Form Section
+              // Bottom Section
               // =============================
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+              Container(
+                padding: const EdgeInsets.all(24),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Welcome Text
-                    Text(
-                      'Let’s Get Started',
+                    // Blinkit Logo
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFF3008),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'Fresmo',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Color.fromARGB(255, 255, 255, 255),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Title
+                    const Text(
+                      'Experience the Luxury of Home-Cooked Art',
+                      textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w800,
                         color: kDarkGrey,
-                        letterSpacing: 0.5,
+                        letterSpacing: -0.5,
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      'Sign in with your phone number',
+
+                    // Subtitle
+                    const Text(
+                      'Log In or Sign Up',
                       style: TextStyle(
                         fontSize: 16,
-                        color: Colors.grey[600],
                         fontWeight: FontWeight.w400,
+                        color: kGrey,
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 40),
 
                     // =============================
-                    // Phone Number Field
+                    // Phone Number Input Field
                     // =============================
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
+                    Container(
+                      width: double.infinity,
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Colors.grey[100],
                         borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.2),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
+                        border: Border.all(color: Colors.grey[300]!),
                       ),
                       child: Row(
                         children: [
-                          DropdownButtonHideUnderline(
-                            child: DropdownButton<String>(
-                              value: '+91',
-                              items: const [
-                                DropdownMenuItem(
-                                  value: '+91',
-                                  child: Text(
-                                    '🇮🇳 +91',
-                                    style: TextStyle(fontSize: 16, color: kDarkGrey),
-                                  ),
-                                ),
-                              ],
-                              onChanged: (value) {},
-                              icon: Icon(Icons.arrow_drop_down, color: Colors.grey[600]),
+                          // Country Code
+                          Container(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            child: const Text(
+                              '+91',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: kDarkGrey,
+                              ),
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 16),
+                          // Phone Number Input
                           Expanded(
                             child: TextField(
-                              decoration: InputDecoration(
-                                hintText: 'Phone Number',
-                                hintStyle: TextStyle(color: Colors.grey[500], fontSize: 16),
+                              decoration: const InputDecoration(
+                                hintText: 'Enter mobile number',
+                                hintStyle: TextStyle(
+                                  color: kGrey,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400,
+                                ),
                                 border: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(vertical: 16),
                               ),
                               keyboardType: TextInputType.phone,
                               onChanged: loginCtrl.updatePhoneNumber,
-                              style: TextStyle(fontSize: 16, color: kDarkGrey),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                color: kDarkGrey,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
                         ],
@@ -177,17 +200,18 @@ class LoginView extends GetView<LoginController> {
                       height: 56,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: kOrange,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          elevation: 4,
-                          shadowColor: kOrange.withOpacity(0.4),
+                          backgroundColor: const Color(0xFFFF3008),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
                         ),
                         onPressed: () => loginCtrl.requestOtp(),
                         child: const Text(
-                          'Get OTP',
+                          'Continue',
                           style: TextStyle(
                             fontSize: 18,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w600,
                             color: Colors.white,
                           ),
                         ),
@@ -196,30 +220,16 @@ class LoginView extends GetView<LoginController> {
                     const SizedBox(height: 32),
 
                     // =============================
-                    // OR Divider
-                    // =============================
-                    Row(
-                      children: [
-                        Expanded(child: Divider(color: Colors.grey[300], thickness: 1)),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          child: Text(
-                            'OR',
-                            style: TextStyle(fontSize: 14, color: Colors.grey[600], fontWeight: FontWeight.w500),
-                          ),
-                        ),
-                        Expanded(child: Divider(color: Colors.grey[300], thickness: 1)),
-                      ],
-                    ),
-                    const SizedBox(height: 32),
-
-                    // =============================
                     // Terms and Conditions
                     // =============================
                     Text(
-                      'By continuing, you agree to our Terms & Conditions\nand Privacy Policy',
+                      'By continuing, you agree to our Terms of service & Privacy policy',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600], height: 1.5),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                        height: 1.5,
+                      ),
                     ),
                   ],
                 ),
@@ -228,6 +238,43 @@ class LoginView extends GetView<LoginController> {
           ),
         );
       }),
+    );
+  }
+
+  Widget _buildProductCard(String imagePath, Color backgroundColor) {
+    return Container(
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Image.asset(
+          imagePath,
+          fit: BoxFit.contain,
+          errorBuilder: (context, error, stackTrace) {
+            // Fallback to colored container if image fails to load
+            return Container(
+              decoration: BoxDecoration(
+                color: backgroundColor,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.shopping_bag_outlined,
+                color: Colors.grey,
+                size: 30,
+              ),
+            );
+          },
+        ),
+      ),
     );
   }
 }

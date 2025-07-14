@@ -58,7 +58,7 @@ class AuthRepository {
       'lastName': lastName,
     });
 
-    if (response.statusCode == 200) {
+    if (response.statusCode == 201) {
       return jsonDecode(response.body);
     } else {
       throw Exception(jsonDecode(response.body)['message']);

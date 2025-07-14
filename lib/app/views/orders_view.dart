@@ -84,7 +84,7 @@ class OrdersView extends GetView<OrdersController> {
                   width: 200,
                   height: 200,
                   child: Lottie.asset(
-                    'assets/lottie/empty_orders.json',
+                    'assets/lottie/empty_cart.json',
                     fit: BoxFit.contain,
                   ),
                 ),

@@ -14,4 +14,5 @@ abstract class AppRoutes {
   static const categoryVendors = '/category-vendors';
   static const addressForm = '/address-form';
   static const network = '/network'; // Network status page
+  static const welcomeOnboarding = '/welcome-onboarding'; // New route for Onboarding
 }

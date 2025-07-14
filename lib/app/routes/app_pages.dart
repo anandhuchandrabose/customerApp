@@ -12,6 +12,7 @@ import 'package:customerapp/app/views/address_input_view.dart'; // New import
 import 'package:customerapp/app/views/location_view.dart'; // Updated import
 import 'package:customerapp/app/views/profile_view.dart';
 import 'package:customerapp/app/views/razorpay_test_view.dart';
+import 'package:customerapp/app/views/welcome-onboarding.dart'; // Add this import
 import 'package:get/get.dart';
 import '../controllers/category_vendors_controller.dart';
 import '../controllers/location_controller.dart';
@@ -54,6 +55,11 @@ class AppPages {
       binding: BindingsBuilder(() {
         Get.lazyPut<OtpController>(() => OtpController());
       }),
+    ),
+    // Welcome Onboarding for new users
+    GetPage(
+      name: '/welcome-onboarding',
+      page: () => const WelcomeOnboardingView(),
     ),
     // Address Input Page
     GetPage(

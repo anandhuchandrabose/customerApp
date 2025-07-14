@@ -7,8 +7,9 @@ import '../controllers/otp_controller.dart';
 class OtpView extends GetView<OtpController> {
   const OtpView({Key? key}) : super(key: key);
 
-  static const Color kOrange = Color(0xFFFF3008);
+  static const Color kGrey = Color(0xFF8E8E93);
   static const Color kDarkGrey = Color(0xFF2A2A2A);
+  static const Color kLightGrey = Color(0xFFF5F5F5);
 
   @override
   Widget build(BuildContext context) {
@@ -16,257 +17,214 @@ class OtpView extends GetView<OtpController> {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: kDarkGrey),
+          onPressed: () => Get.back(),
+        ),
+        title: Text(
+          'OTP verification',
+          style: GoogleFonts.poppins(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: kDarkGrey,
+          ),
+        ),
+        centerTitle: false,
+      ),
       body: Obx(() {
         if (otpCtrl.isLoading.value) {
-          return const Center(child: CircularProgressIndicator(color: kOrange));
+          return const Center(child: CircularProgressIndicator(color: kGrey));
         }
 
         final phoneNumber = otpCtrl.phoneNumber.value;
 
         return SingleChildScrollView(
-          child: Column(
-            children: [
-              // =============================
-              // Top Header with Gradient
-              // =============================
-              Container(
-                width: double.infinity,
-                height: size.height * 0.25,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [kOrange, kOrange.withOpacity(0.9)],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
-                ),
-                child: SafeArea(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'zero',
-                        style: GoogleFonts.poppins(
-                          fontSize: 36,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          letterSpacing: 1.5,
-                          shadows: [
-                            Shadow(
-                              color: Colors.black.withOpacity(0.3),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Verify Your Number',
-                        style: GoogleFonts.poppins(
-                          fontSize: 18,
-                          color: Colors.white.withOpacity(0.9),
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const SizedBox(height: 40),
 
-              // =============================
-              // OTP Form Section
-              // =============================
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // Info Text
-                    Text(
-                      'Enter the 4-digit OTP sent to',
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        color: kDarkGrey,
-                        fontWeight: FontWeight.w500,
-                      ),
+                // =============================
+                // Info Text
+                // =============================
+                Text(
+                  'We\'ve sent a verification code to',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    color: kGrey,
+                    fontWeight: FontWeight.w400,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  phoneNumber,
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    color: kDarkGrey,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 50),
+
+                // DEV OTP (if present)
+                if (otpCtrl.devOtp.value.isNotEmpty) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.red[50],
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.red[200]!),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      phoneNumber,
+                    child: Text(
+                      'DEV OTP: ${otpCtrl.devOtp.value}',
                       style: GoogleFonts.poppins(
-                        fontSize: 18,
-                        color: kDarkGrey,
+                        fontSize: 14,
+                        color: Colors.red[600],
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                  ),
+                  const SizedBox(height: 30),
+                ],
 
-                    // DEV OTP (if present)
-                    if (otpCtrl.devOtp.value.isNotEmpty) ...[
-                      Text(
-                        'DEV OTP: ${otpCtrl.devOtp.value}',
+                // =============================
+                // OTP Input Fields
+                // =============================
+                Pinput(
+                  length: 4,
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  defaultPinTheme: PinTheme(
+                    width: 60,
+                    height: 60,
+                    textStyle: GoogleFonts.poppins(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w600,
+                      color: kDarkGrey,
+                    ),
+                    decoration: BoxDecoration(
+                      color: kLightGrey,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.transparent),
+                    ),
+                  ),
+                  focusedPinTheme: PinTheme(
+                    width: 60,
+                    height: 60,
+                    textStyle: GoogleFonts.poppins(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w600,
+                      color: kDarkGrey,
+                    ),
+                    decoration: BoxDecoration(
+                      color: kLightGrey,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: kDarkGrey, width: 2),
+                    ),
+                  ),
+                  submittedPinTheme: PinTheme(
+                    width: 60,
+                    height: 60,
+                    textStyle: GoogleFonts.poppins(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w600,
+                      color: kDarkGrey,
+                    ),
+                    decoration: BoxDecoration(
+                      color: kLightGrey,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey[300]!),
+                    ),
+                  ),
+                  onChanged: (value) => otpCtrl.updateOtp(value),
+                  onCompleted: (value) => otpCtrl.verifyOtp(),
+                  keyboardType: TextInputType.number,
+                  animationCurve: Curves.easeInOut,
+                  animationDuration: const Duration(milliseconds: 200),
+                ),
+                const SizedBox(height: 40),
+
+                // =============================
+                // Resend OTP Timer
+                // =============================
+                Obx(() {
+                  final remainingTime = otpCtrl.remainingTime.value;
+                  if (remainingTime > 0) {
+                    return Text(
+                      'Resend OTP in $remainingTime',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: kGrey,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    );
+                  } else {
+                    return GestureDetector(
+                      onTap: () => otpCtrl.resendOtp(),
+                      child: Text(
+                        'Resend OTP',
                         style: GoogleFonts.poppins(
                           fontSize: 14,
-                          color: Colors.redAccent,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-
-                    const SizedBox(height: 24),
-
-                    // =============================
-                    // Pinput OTP Field
-                    // =============================
-                    Pinput(
-                      length: 4,
-                      defaultPinTheme: PinTheme(
-                        width: 60,
-                        height: 60,
-                        textStyle: GoogleFonts.poppins(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w600,
                           color: kDarkGrey,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.2),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                      ),
-                      focusedPinTheme: PinTheme(
-                        width: 60,
-                        height: 60,
-                        textStyle: GoogleFonts.poppins(
-                          fontSize: 24,
                           fontWeight: FontWeight.w600,
-                          color: kDarkGrey,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: kOrange.withOpacity(0.3),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
+                          decoration: TextDecoration.underline,
                         ),
                       ),
-                      submittedPinTheme: PinTheme(
-                        width: 60,
-                        height: 60,
-                        textStyle: GoogleFonts.poppins(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w600,
-                          color: kDarkGrey,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: kOrange.withOpacity(0.1),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                      ),
-                      onChanged: (value) => otpCtrl.updateOtp(value),
-                      onCompleted: (value) => otpCtrl.verifyOtp(),
-                      keyboardType: TextInputType.number,
-                      animationCurve: Curves.easeInOut,
-                      animationDuration: const Duration(milliseconds: 200),
-                    ),
-                    const SizedBox(height: 32),
+                    );
+                  }
+                }),
+                const SizedBox(height: 100),
 
-                    // =============================
-                    // Continue Button
-                    // =============================
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: kOrange,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          elevation: 4,
-                          shadowColor: kOrange.withOpacity(0.4),
-                        ),
-                        onPressed: () {
-                          final otp = currentOtp(); // Use local method to get OTP
-                          if (otp.length == 4) {
-                            otpCtrl.updateOtp(otp); // Update controller with OTP
-                            otpCtrl.verifyOtp();
-                          }
-                        },
-                        child: Text(
-                          'Verify OTP',
-                          style: GoogleFonts.poppins(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
+                // =============================
+                // SMS Notification
+                // =============================
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: kDarkGrey,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'We have sent a verification code to you via SMS',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w400,
                     ),
-                    const SizedBox(height: 24),
-
-                    // =============================
-                    // Resend OTP
-                    // =============================
-                    GestureDetector(
-                      onTap: () => otpCtrl.resendOtp(),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'Resend OTP',
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: kOrange,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '(53s)',
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // =============================
-                    // Terms and Conditions
-                    // =============================
-                    Text(
-                      'By continuing, you agree to our Terms & Conditions\nand Privacy Policy',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                        height: 1.5,
-                      ),
-                    ),
-                  ],
+                    textAlign: TextAlign.center,
+                  ),
                 ),
-              ),
-            ],
+
+                // =============================
+                // Hidden Continue Button (for programmatic access)
+                // =============================
+                Opacity(
+                  opacity: 0,
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 0,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        final otp = currentOtp();
+                        if (otp.length == 4) {
+                          otpCtrl.updateOtp(otp);
+                          otpCtrl.verifyOtp();
+                        }
+                      },
+                      child: const SizedBox.shrink(),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       }),
