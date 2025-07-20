@@ -73,7 +73,7 @@ class OtpController extends GetxController {
           storage.write('customerName', customer['name']);
           storage.write('customerMobile', customer['mobileNumber']);
 
-          Get.snackbar('Success', 'Login successful!');
+          // Get.snackbar('Success', 'Login successful!');
           Get.offAllNamed('/dashboard');
         } else {
           Get.snackbar('Error', 'Login data incomplete');

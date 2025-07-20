@@ -111,7 +111,7 @@ class HomeView extends GetView<HomeController> {
                                     .toLowerCase();
 
                                 // -----------------------------------------------------------------
-                                // Choose icon + label (Dart 2 friendly)
+                                // Choose icon + label 
                                 // -----------------------------------------------------------------
                                 late Widget icon;
                                 late String label;

@@ -20,6 +20,7 @@ import '../controllers/login_controller.dart';
 import '../controllers/otp_controller.dart';
 import '../controllers/home_controller.dart';
 import '../controllers/search_results_controller.dart';
+import '../middleware/auth_middleware.dart';
 import '../views/address_form_view.dart';
 import '../views/category_vendors_view.dart';
 import '../views/login_view.dart';
@@ -28,6 +29,7 @@ import '../views/home_view.dart';
 import '../views/restaurant_details_view.dart';
 import '../views/network_view.dart';
 import '../views/search_results_view.dart';
+import '../views/splash_view.dart';
 import 'app_routes.dart';
 
 class AppPages {
@@ -35,6 +37,14 @@ class AppPages {
   static const initial = AppRoutes.login;
 
   static final routes = [
+
+     GetPage(name: '/splash', page: () => const SplashView()),
+  GetPage(
+    name: '/login',
+    page: () => const LoginView(),
+    middlewares: [AuthGuard()],
+  ),
+  
     GetPage(
       name: AppRoutes.network,
       page: () => const NetworkView(),
@@ -45,6 +55,7 @@ class AppPages {
     GetPage(
       name: AppRoutes.login,
       page: () => const LoginView(),
+      middlewares: [AuthGuard()],
       binding: BindingsBuilder(() {
         Get.lazyPut<LoginController>(() => LoginController());
       }),
@@ -52,6 +63,7 @@ class AppPages {
     GetPage(
       name: AppRoutes.otp,
       page: () => const OtpView(),
+      middlewares: [AuthGuard()],
       binding: BindingsBuilder(() {
         Get.lazyPut<OtpController>(() => OtpController());
       }),
@@ -60,6 +72,7 @@ class AppPages {
     GetPage(
       name: '/welcome-onboarding',
       page: () => const WelcomeOnboardingView(),
+            middlewares: [AuthGuard()],
     ),
     // Address Input Page
     GetPage(

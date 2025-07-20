@@ -24,7 +24,7 @@ class MyApp extends StatelessWidget {
         // Add more theme customizations here
       ),
       initialBinding: InitialBinding(),
-      initialRoute: AppPages.initial,
+      initialRoute: '/splash',
       getPages: AppPages.routes,
       // Optional: Set up localization, environment configurations, etc.
     );

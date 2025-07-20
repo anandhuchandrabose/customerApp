@@ -57,7 +57,7 @@ class CompleteSignupController extends GetxController {
       storage.write('customerName', '${firstName.value} ${lastName.value}');
       storage.write('customerMobile', phoneNumber.value);
 
-      Get.snackbar('Success', 'Signup completed successfully!');
+      // Get.snackbar('Success', 'Signup completed successfully!');
       Get.offAllNamed('/dashboard');
     } else {
       Get.snackbar('Error', 'Token not received from server');
