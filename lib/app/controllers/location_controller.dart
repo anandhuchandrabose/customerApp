@@ -16,6 +16,7 @@ class LocationController extends GetxController {
   var selectedLongitude = 0.0.obs;
   var selectedAddress = ''.obs;
   var addresses = <Map<String, dynamic>>[].obs;
+  final RxString selectedCategory = 'other'.obs;   // ← NEW
 
   GoogleMapController? mapController;
   final LocationRepository repository = Get.find<LocationRepository>();
@@ -86,6 +87,7 @@ class LocationController extends GetxController {
         currentLongitude.value = lng;
         selectedLatitude.value = lat;
         selectedLongitude.value = lng;
+        selectedCategory.value = (selected['category'] ?? 'other').toString();
         String geocodedString = await _reverseGeocodeWithReturn(lat, lng);
         String finalAddress = selected['flatHouseNo'] ?? '';
         if (geocodedString.isNotEmpty) {
@@ -126,11 +128,14 @@ class LocationController extends GetxController {
       addresses.forEach((addr) {
         addr['isSelected'] = addr['addressId'] == addressId;
       });
+
+      addresses.refresh();
       currentLatitude.value = (selected['latitude'] ?? 0).toDouble();
       currentLongitude.value = (selected['longitude'] ?? 0).toDouble();
       selectedLatitude.value = currentLatitude.value;
       selectedLongitude.value = currentLongitude.value;
       selectedAddress.value = '${selected['addressName'] ?? ''}, ${selected['flatHouseNo'] ?? ''}';
+      selectedCategory.value = (selected['category'] ?? 'other').toString();
       if (!Get.isSnackbarOpen) {
         Get.snackbar('Success', 'Default address updated: ${selectedAddress.value}');
       }
@@ -242,12 +247,15 @@ class LocationController extends GetxController {
           'isSelected': apiAddress['isSelected'] ?? newAddress['isSelected'],
           'createdAt': apiAddress['createdAt'] ?? '',
         });
+        addresses.refresh();  
         if (apiAddress['isSelected'] == true) {
           currentLatitude.value = latitude;
           currentLongitude.value = longitude;
           selectedLatitude.value = latitude;
           selectedLongitude.value = longitude;
           selectedAddress.value = '$addressName, $flatHouseNo';
+          selectedCategory.value =
+      (apiAddress['category'] ?? newAddress['category']).toString();
         }
         return {'success': true, 'message': 'Address saved successfully'};
       } else {

@@ -1,3 +1,4 @@
+import 'package:customerapp/app/views/home_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/location_controller.dart';
@@ -22,7 +23,7 @@ class AddressInputView extends GetView<LocationController> {
       appBar: AppBar(
         leading: IconButton(
           icon: AppIcons.backIcon(),
-          onPressed: () => Get.back(),
+          onPressed: () => Get.back(), // Using Get.back() to properly navigate back
         ),
         title: Text(
           'Select Address',

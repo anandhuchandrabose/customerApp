@@ -1,19 +1,21 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
-import 'dart:async';
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shimmer/shimmer.dart';
-import '../controllers/home_controller.dart';
+
 import '../controllers/cart_controller.dart';
+import '../controllers/home_controller.dart';
 import '../controllers/location_controller.dart';
 import 'cart_view.dart';
-import 'dart:ui';
-import 'design_system/typography.dart';
-import 'design_system/spacing.dart';
-import 'design_system/icons.dart';
 import 'design_system/colors.dart';
+import 'design_system/icons.dart';
+import 'design_system/spacing.dart';
+import 'design_system/typography.dart';
 
 class HomeView extends GetView<HomeController> {
   const HomeView({Key? key}) : super(key: key);
@@ -23,9 +25,11 @@ class HomeView extends GetView<HomeController> {
     final homeCtrl = Get.find<HomeController>();
     final cartCtrl = Get.find<CartController>();
     final locationCtrl = Get.find<LocationController>();
-    
 
-    final placeholderOptions = [
+    // -------------------------------------------------------------
+    // RANDOM PLACEHOLDER FOR THE SEARCH BAR
+    // -------------------------------------------------------------
+    const placeholderOptions = [
       'Search for Pizza...',
       'Discover Burgers...',
       'Find Shawarma...',
@@ -37,8 +41,10 @@ class HomeView extends GetView<HomeController> {
     final randomPlaceholder =
         placeholderOptions[Random().nextInt(placeholderOptions.length)];
 
-    // Simulate API response for ad cards
-    final adList = [
+    // -------------------------------------------------------------
+    // FAKE ADS (TO BE REPLACED BY API RESPONSE)
+    // -------------------------------------------------------------
+    const adList = [
       {
         'image': 'img/card.jpg',
         'title': 'Special Offer!',
@@ -71,19 +77,18 @@ class HomeView extends GetView<HomeController> {
       backgroundColor: AppColors.backgroundPrimary,
       body: Obx(() {
         return RefreshIndicator(
-          onRefresh: () async {
-            await homeCtrl.fetchHomeData();
-          },
+          onRefresh: homeCtrl.fetchHomeData,
           color: AppColors.primary,
           child: ScrollConfiguration(
             behavior: NoScrollGlow(),
             child: CustomScrollView(
               controller: scrollController,
               slivers: [
-                // Modern App Bar
+                // =====================================================
+                // APP-BAR
+                // =====================================================
                 SliverAppBar(
                   pinned: true,
-                  floating: false,
                   expandedHeight: 160,
                   backgroundColor: AppColors.backgroundPrimary,
                   automaticallyImplyLeading: false,
@@ -95,39 +100,76 @@ class HomeView extends GetView<HomeController> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                GestureDetector(
-                                  onTap: () {
-                                    Get.toNamed('/address-input');
-                                  },
-                                  child: Row(
-                                    children: [
-                                      AppIcons.homeIcon(
-                                          color: AppColors.primary, size: 30),
-                                      AppSpacing.gapS,
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Home',
-                                            style: AppTypography.heading2
-                                                .copyWith(
-                                                    color: AppColors
-                                                        .textHighestEmphasis),
-                                          ),
-                                          Obx(() {
-                                            final flatHouseNo = locationCtrl
-                                                    .addresses
-                                                    .firstWhereOrNull((addr) =>
-                                                        addr['isSelected'] ==
-                                                        true)?['flatHouseNo'] ??
-                                                '';
-                                            return Text(
-                                              flatHouseNo.isNotEmpty
-                                                  ? flatHouseNo
+                            // -------------------------------
+                            // TOP ROW: ADDRESS SWITCHER
+                            // -------------------------------
+                            GestureDetector(
+                              onTap: () => Get.toNamed('/address-input'),
+                              child: Obx(() {
+                                final cat = locationCtrl.selectedCategory.value
+                                    .trim()
+                                    .toLowerCase();
+
+                                // -----------------------------------------------------------------
+                                // Choose icon + label (Dart 2 friendly)
+                                // -----------------------------------------------------------------
+                                late Widget icon;
+                                late String label;
+
+                                switch (cat) {
+                                  case 'home':
+                                    icon = AppIcons.homeIcon(
+                                        color: AppColors.primary, size: 30);
+                                    label = 'Home';
+                                    break;
+                                  case 'office':
+                                  case 'work':
+                                    icon = AppIcons.locationPinIcon(
+                                        color: AppColors.primary, size: 30);
+                                    label = 'Office';
+                                    break;
+                                  default:
+                                    icon = AppIcons.locationPinIcon(
+                                        color: AppColors.primary, size: 30);
+                                    label = cat.isEmpty
+                                        ? 'Address'
+                                        : cat.capitalize!;
+                                }
+
+                                // -----------------------------------------------------------------
+                                // Trim subtitle so it never overruns the bar
+                                // -----------------------------------------------------------------
+                                const maxLen = 25; // tweak width here
+                                final raw = locationCtrl.selectedAddress.value;
+                                final subtitle = raw.length > maxLen
+                                    ? '${raw.substring(0, maxLen)}…'
+                                    : raw;
+
+                                // -----------------------------------------------------------------
+                                // UI
+                                // -----------------------------------------------------------------
+                                return Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        icon,
+                                        AppSpacing.gapS,
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              label,
+                                              style: AppTypography.heading2
+                                                  .copyWith(
+                                                      color: AppColors
+                                                          .textHighestEmphasis),
+                                            ),
+                                            Text(
+                                              subtitle.isNotEmpty
+                                                  ? subtitle
                                                   : 'Select a location',
                                               style: AppTypography.bodySmall
                                                   .copyWith(
@@ -135,25 +177,20 @@ class HomeView extends GetView<HomeController> {
                                                           .textMedEmphasis),
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
-                                            );
-                                          }),
-                                        ],
-                                      ),
-                                      AppSpacing.gapS,
-                                      // Icon(Icons.keyboard_arrow_down,
-                                      //     color: AppColors.textMedEmphasis),
-                                    ],
-                                  ),
-                                ),
-                                IconButton(
-                                  icon: AppIcons.profileIcon(),
-                                  iconSize: 36,
-                                  padding: const EdgeInsets.all(12),
-                                  onPressed: () {
-                                    Get.toNamed('/profile');
-                                  },
-                                ),
-                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                    IconButton(
+                                      icon: AppIcons.profileIcon(),
+                                      iconSize: 36,
+                                      padding: const EdgeInsets.all(12),
+                                      onPressed: () => Get.toNamed('/profile'),
+                                    ),
+                                  ],
+                                );
+                              }),
                             ),
                             AppSpacing.gapL,
                             _buildSearchBar(randomPlaceholder),
@@ -163,7 +200,10 @@ class HomeView extends GetView<HomeController> {
                     ),
                   ),
                 ),
-                // Categories Section
+
+                // =====================================================
+                // CATEGORIES
+                // =====================================================
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: AppSpacing.paddingL,
@@ -189,11 +229,11 @@ class HomeView extends GetView<HomeController> {
                                           AppSpacing.gapM,
                                       itemBuilder: (_, index) {
                                         final cat = homeCtrl.categories[index];
-                                        final catName =
-                                            cat['name'] ?? 'Unnamed';
-                                        final catImage = cat['image'] ?? '';
                                         return _buildCategoryCard(
-                                            catName, catImage, index);
+                                          cat['name'] ?? 'Unnamed',
+                                          cat['image'] ?? '',
+                                          index,
+                                        );
                                       },
                                     ),
                                   ),
@@ -201,7 +241,10 @@ class HomeView extends GetView<HomeController> {
                     ),
                   ),
                 ),
-                // Ads Section with Auto-Scrolling
+
+                // =====================================================
+                // AUTO-SCROLLING ADS
+                // =====================================================
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: AppSpacing.paddingHorizontalL,
@@ -211,38 +254,20 @@ class HomeView extends GetView<HomeController> {
                     ),
                   ),
                 ),
-                // Nearby Kitchens Section
+
+                // =====================================================
+                // NEARBY KITCHENS
+                // =====================================================
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: AppSpacing.paddingL,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Nearby Kitchens',
-                              style: AppTypography.heading3.copyWith(
-                                  color: AppColors.textHighestEmphasis),
-                            ),
-                            // Row(
-                            //   children: [
-                            //     IconButton(
-                            //       icon: const Icon(Icons.filter_list),
-                            //       onPressed: () {
-                            //         // Add filter functionality
-                            //       },
-                            //     ),
-                            //     IconButton(
-                            //       icon: const Icon(Icons.sort),
-                            //       onPressed: () {
-                            //         // Add sort functionality
-                            //       },
-                            //     ),
-                            //   ],
-                            // ),
-                          ],
+                        Text(
+                          'Nearby Kitchens',
+                          style: AppTypography.heading3
+                              .copyWith(color: AppColors.textHighestEmphasis),
                         ),
                         AppSpacing.gapM,
                         homeCtrl.isLoading.value
@@ -254,29 +279,20 @@ class HomeView extends GetView<HomeController> {
                                         .asMap()
                                         .entries
                                         .map((entry) {
-                                      final index = entry.key;
-                                      final vendor = entry.value;
-                                      final vendorId = vendor['id'] ?? '';
-                                      final name =
-                                          vendor['kitchenName'] ?? 'Unnamed';
-                                      final imageUrl = vendor['profile']
-                                              ?['profileImage'] ??
-                                          '';
-                                      final rating =
-                                          vendor['rating']?.toString() ?? '4.5';
-                                      final isVeg = vendor['isVeg'] ?? false;
-                                      final isFeatured = index % 2 == 0;
+                                      final i = entry.key;
+                                      final v = entry.value;
                                       return Padding(
                                         padding:
                                             const EdgeInsets.only(bottom: 12),
                                         child: _buildKitchenCard(
-                                            name,
-                                            imageUrl,
-                                            rating,
-                                            isVeg,
-                                            vendorId,
-                                            index,
-                                            isFeatured),
+                                          v['kitchenName'] ?? 'Unnamed',
+                                          v['profile']?['profileImage'] ?? '',
+                                          (v['rating'] ?? '4.5').toString(),
+                                          v['isVeg'] ?? false,
+                                          v['id'] ?? '',
+                                          i,
+                                          i.isEven,
+                                        ),
                                       );
                                     }).toList(),
                                   ),
@@ -289,9 +305,13 @@ class HomeView extends GetView<HomeController> {
           ),
         );
       }),
+
+      // =============================================================
+      // “VIEW CART” BOTTOM BAR
+      // =============================================================
       bottomNavigationBar: Obx(() {
-        final int itemCount = cartCtrl.totalItemCount;
-        if (itemCount == 0) return const SizedBox.shrink();
+        final count = cartCtrl.totalItemCount;
+        if (count == 0) return const SizedBox.shrink();
         return Padding(
           padding: AppSpacing.paddingL,
           child: ElevatedButton(
@@ -307,22 +327,18 @@ class HomeView extends GetView<HomeController> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 AppIcons.cartIcon(color: AppColors.backgroundPrimary),
-                Text(
-                  'View Cart',
-                  style: AppTypography.labelLarge
-                      .copyWith(color: AppColors.backgroundPrimary),
-                ),
+                Text('View Cart',
+                    style: AppTypography.labelLarge
+                        .copyWith(color: AppColors.backgroundPrimary)),
                 Container(
                   padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     color: AppColors.backgroundPrimary,
                     shape: BoxShape.circle,
                   ),
-                  child: Text(
-                    '$itemCount',
-                    style: AppTypography.labelSmall
-                        .copyWith(color: AppColors.primary),
-                  ),
+                  child: Text('$count',
+                      style: AppTypography.labelSmall
+                          .copyWith(color: AppColors.primary)),
                 ),
               ],
             ),

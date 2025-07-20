@@ -53,7 +53,7 @@ class PaymentSuccessScreen extends StatelessWidget {
                       arguments: {'showBottomNav': true});
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFFFF3008), // Hex color #FF3008
+                  backgroundColor: Color(0xFFFF3008), 
                   padding: EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),

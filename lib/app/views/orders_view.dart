@@ -126,13 +126,18 @@ class OrdersView extends GetView<OrdersController> {
               if (createdAt.isNotEmpty) {
                 try {
                   final DateTime parsedDate = DateTime.parse(createdAt);
-                  orderDateTime = DateFormat('MMM d, h:mm a').format(parsedDate);
+                  orderDateTime =
+                      DateFormat('MMM d, h:mm a').format(parsedDate);
                 } catch (e) {
                   orderDateTime = order['orderDate']?.toString() ?? 'N/A';
                 }
               }
-              final String totalAmount = order['totalAmount']?.toString() ?? '0.00';
-              final List<Map<String, dynamic>> subOrders = (order['subOrders'] as List<dynamic>?)?.cast<Map<String, dynamic>>() ?? [];
+              final String totalAmount =
+                  order['totalAmount']?.toString() ?? '0.00';
+              final List<Map<String, dynamic>> subOrders =
+                  (order['subOrders'] as List<dynamic>?)
+                          ?.cast<Map<String, dynamic>>() ??
+                      [];
 
               return _buildOrderCard(
                 context,
@@ -256,9 +261,12 @@ class OrdersView extends GetView<OrdersController> {
             subOrders[0]['orderItems'] != null &&
             subOrders[0]['orderItems'].isNotEmpty &&
             subOrders[0]['orderItems'][0]['vendorDish'] != null
-        ? (subOrders[0]['orderItems'][0]['vendorDish']['imagePath']?.toString() ?? '')
+        ? (subOrders[0]['orderItems'][0]['vendorDish']['imagePath']
+                ?.toString() ??
+            '')
         : '';
-    final String fullImagePath = imagePath.isNotEmpty ? 'https://api.fresmo.in/$imagePath' : '';
+    final String fullImagePath =
+        imagePath.isNotEmpty ? 'https://api.fresmo.in/$imagePath' : '';
 
     // Debug print to check image paths
     print('Image Path: $imagePath');
@@ -335,7 +343,8 @@ class OrdersView extends GetView<OrdersController> {
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: _getStatusColor(status).withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12),
@@ -373,13 +382,18 @@ class OrdersView extends GetView<OrdersController> {
             final subOrder = entry.value;
             final String mealType = subOrder['mealType']?.toString() ?? 'N/A';
             final List orderItems = subOrder['orderItems'] ?? [];
-            final String subOrderStatus = subOrder['status']?.toString().toLowerCase() ?? '';
-            final bool isCancellable = subOrderStatus == 'created' || subOrderStatus == 'placed';
+            final String subOrderStatus =
+                subOrder['status']?.toString().toLowerCase() ?? '';
+            final bool isCancellable =
+                subOrderStatus == 'created' || subOrderStatus == 'placed';
             final String? subOrderId = subOrder['id']?.toString();
-            final String? vendorId = subOrder['vendor'] != null ? subOrder['vendor']['id']?.toString() : null;
+            final String? vendorId = subOrder['vendor'] != null
+                ? subOrder['vendor']['id']?.toString()
+                : null;
 
             // Debug prints to verify data
-            print('SubOrder ID: $subOrderId, Vendor ID: $vendorId, Status: $subOrderStatus');
+            print(
+                'SubOrder ID: $subOrderId, Vendor ID: $vendorId, Status: $subOrderStatus');
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -399,51 +413,56 @@ class OrdersView extends GetView<OrdersController> {
                     Row(
                       children: [
                         if (subOrderStatus == 'cancelled')
-  Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-    decoration: BoxDecoration(
-      color: Colors.red.withOpacity(0.1),
-      borderRadius: BorderRadius.circular(12),
-    ),
-    child: Text(
-      'Cancelled',
-      style: GoogleFonts.workSans(
-        fontSize: 12,
-        fontWeight: FontWeight.bold,
-        color: Colors.red,
-      ),
-    ),
-  )
-else if (isCancellable && subOrderId != null)if (isCancellable && subOrderId != null)
-
-                          Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: ElevatedButton(
-                              onPressed: () {
-                                _showCancelSubOrderDialog(context, subOrderId);
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
-                                foregroundColor: const Color.fromARGB(255, 255, 255, 255),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                minimumSize: const Size(0, 0),
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              child: Text(
-  "Cancel",
-  style: GoogleFonts.workSans(
-    fontSize: 12,
-    fontWeight: FontWeight.w600,
-    color: Colors.white, // Fix text color
-  ),
-),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.red.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                          ),
+                            child: Text(
+                              'Cancelled',
+                              style: GoogleFonts.workSans(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.red,
+                              ),
+                            ),
+                          )
+                        else if (isCancellable && subOrderId != null)
+                          if (isCancellable && subOrderId != null)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  _showCancelSubOrderDialog(
+                                      context, subOrderId);
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                  foregroundColor:
+                                      const Color.fromARGB(255, 255, 255, 255),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 4),
+                                  minimumSize: const Size(0, 0),
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                child: Text(
+                                  "Cancel",
+                                  style: GoogleFonts.workSans(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white, // Fix text color
+                                  ),
+                                ),
+                              ),
+                            ),
                         // Show Rate button for all sub-orders (for testing)
-                        if (subOrderId != null)
+                        if (subOrderId != null && subOrderStatus != 'cancelled')
                           ElevatedButton(
                             onPressed: () {
                               // Use a placeholder vendorId if null for testing
@@ -461,13 +480,13 @@ else if (isCancellable && subOrderId != null)if (isCancellable && subOrderId != 
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
                             child: Text(
-  "Rate",
-  style: GoogleFonts.workSans(
-    fontSize: 12,
-    fontWeight: FontWeight.w600,
-    color: Colors.white, // ✅ FIXED
-  ),
-),
+                              "Rate",
+                              style: GoogleFonts.workSans(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white, // ✅ FIXED
+                              ),
+                            ),
                           ),
                       ],
                     ),
@@ -476,7 +495,8 @@ else if (isCancellable && subOrderId != null)if (isCancellable && subOrderId != 
                 const SizedBox(height: 8),
                 // Order Items
                 ...orderItems.map<Widget>((item) {
-                  final String dishName = item['vendorDish']?['dishName']?.toString() ?? 'N/A';
+                  final String dishName =
+                      item['vendorDish']?['dishName']?.toString() ?? 'N/A';
                   final int quantity = item['quantity'] ?? 0;
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4),
@@ -529,7 +549,8 @@ else if (isCancellable && subOrderId != null)if (isCancellable && subOrderId != 
                   ratedSubOrders++;
                 }
               }
-              averageRating = ratedSubOrders > 0 ? averageRating / ratedSubOrders : 0.0;
+              averageRating =
+                  ratedSubOrders > 0 ? averageRating / ratedSubOrders : 0.0;
               return Icon(
                 index < averageRating ? Icons.star : Icons.star_border,
                 size: 20,
